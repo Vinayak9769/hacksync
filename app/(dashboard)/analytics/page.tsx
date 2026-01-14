@@ -1,0 +1,463 @@
+"use client"
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts"
+import { Users, Eye, Heart, MessageSquare, TrendingUp, TrendingDown, Download } from "lucide-react"
+
+const engagementData = [
+  { name: "Jan 1", instagram: 4000, twitter: 2400, linkedin: 1200 },
+  { name: "Jan 3", instagram: 3000, twitter: 1398, linkedin: 2210 },
+  { name: "Jan 5", instagram: 2000, twitter: 9800, linkedin: 2290 },
+  { name: "Jan 7", instagram: 2780, twitter: 3908, linkedin: 2000 },
+  { name: "Jan 9", instagram: 1890, twitter: 4800, linkedin: 2181 },
+  { name: "Jan 11", instagram: 2390, twitter: 3800, linkedin: 2500 },
+  { name: "Jan 13", instagram: 3490, twitter: 4300, linkedin: 2100 },
+  { name: "Jan 15", instagram: 4000, twitter: 5200, linkedin: 2800 },
+]
+
+const audienceData = [
+  { name: "18-24", value: 25 },
+  { name: "25-34", value: 35 },
+  { name: "35-44", value: 22 },
+  { name: "45-54", value: 12 },
+  { name: "55+", value: 6 },
+]
+
+const postPerformanceData = [
+  { name: "Mon", posts: 3, engagement: 4500 },
+  { name: "Tue", posts: 5, engagement: 7200 },
+  { name: "Wed", posts: 4, engagement: 6800 },
+  { name: "Thu", posts: 6, engagement: 9100 },
+  { name: "Fri", posts: 4, engagement: 5600 },
+  { name: "Sat", posts: 2, engagement: 3200 },
+  { name: "Sun", posts: 1, engagement: 2100 },
+]
+
+const bestTimesData = [
+  { hour: "6am", engagement: 1200 },
+  { hour: "9am", engagement: 4500 },
+  { hour: "12pm", engagement: 5800 },
+  { hour: "3pm", engagement: 4200 },
+  { hour: "6pm", engagement: 5100 },
+  { hour: "9pm", engagement: 3800 },
+]
+
+const COLORS = [
+  "oklch(0.7 0.18 165)",
+  "oklch(0.65 0.15 250)",
+  "oklch(0.75 0.15 50)",
+  "oklch(0.6 0.2 330)",
+  "oklch(0.7 0.15 200)",
+]
+
+const topPosts = [
+  {
+    id: 1,
+    content: "Excited to announce our new product launch!",
+    platform: "instagram",
+    engagement: 12500,
+    reach: 45000,
+  },
+  {
+    id: 2,
+    content: "5 tips for better social media marketing",
+    platform: "linkedin",
+    engagement: 8900,
+    reach: 32000,
+  },
+  { id: 3, content: "Behind the scenes at our office", platform: "twitter", engagement: 6200, reach: 28000 },
+]
+
+const platformIcons: Record<string, string> = {
+  instagram: "📷",
+  twitter: "𝕏",
+  linkedin: "in",
+}
+
+export default function AnalyticsPage() {
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Analytics</h1>
+          <p className="text-muted-foreground">Track your social media performance across all platforms</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select defaultValue="7d">
+            <SelectTrigger className="w-[140px] bg-secondary/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+              <SelectItem value="90d">Last 90 days</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Followers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">25,847</div>
+            <div className="flex items-center text-xs text-success mt-1">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              +12.5% from last period
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Reach</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">142,380</div>
+            <div className="flex items-center text-xs text-success mt-1">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              +18.2% from last period
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Engagement Rate</CardTitle>
+            <Heart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">4.6%</div>
+            <div className="flex items-center text-xs text-destructive mt-1">
+              <TrendingDown className="h-3 w-3 mr-1" />
+              -0.3% from last period
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Engagements</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">38,549</div>
+            <div className="flex items-center text-xs text-success mt-1">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              +8.1% from last period
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="bg-secondary">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="audience">Audience</TabsTrigger>
+          <TabsTrigger value="content">Content</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* Engagement Over Time */}
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-base">Engagement Over Time</CardTitle>
+              <CardDescription>Engagement metrics across all connected platforms</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={engagementData}>
+                    <defs>
+                      <linearGradient id="instagramGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="oklch(0.7 0.18 165)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="oklch(0.7 0.18 165)" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="twitterGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="oklch(0.65 0.15 250)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="oklch(0.65 0.15 250)" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="linkedinGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="oklch(0.75 0.15 50)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="oklch(0.75 0.15 50)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="name" stroke="oklch(0.65 0 0)" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis
+                      stroke="oklch(0.65 0 0)"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `${value / 1000}k`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "oklch(0.16 0.005 285)",
+                        border: "1px solid oklch(0.25 0.01 285)",
+                        borderRadius: "8px",
+                        color: "oklch(0.95 0 0)",
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="instagram"
+                      stroke="oklch(0.7 0.18 165)"
+                      strokeWidth={2}
+                      fill="url(#instagramGradient)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="twitter"
+                      stroke="oklch(0.65 0.15 250)"
+                      strokeWidth={2}
+                      fill="url(#twitterGradient)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="linkedin"
+                      stroke="oklch(0.75 0.15 50)"
+                      strokeWidth={2}
+                      fill="url(#linkedinGradient)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex justify-center gap-6 mt-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: "oklch(0.7 0.18 165)" }} />
+                  <span className="text-sm text-muted-foreground">Instagram</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: "oklch(0.65 0.15 250)" }} />
+                  <span className="text-sm text-muted-foreground">Twitter</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: "oklch(0.75 0.15 50)" }} />
+                  <span className="text-sm text-muted-foreground">LinkedIn</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Best Posting Times */}
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="text-base">Best Posting Times</CardTitle>
+                <CardDescription>When your audience is most active</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={bestTimesData}>
+                      <XAxis dataKey="hour" stroke="oklch(0.65 0 0)" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="oklch(0.65 0 0)" fontSize={12} tickLine={false} axisLine={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "oklch(0.16 0.005 285)",
+                          border: "1px solid oklch(0.25 0.01 285)",
+                          borderRadius: "8px",
+                          color: "oklch(0.95 0 0)",
+                        }}
+                      />
+                      <Bar dataKey="engagement" fill="oklch(0.7 0.18 165)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Top Performing Posts */}
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="text-base">Top Performing Posts</CardTitle>
+                <CardDescription>Your best content this period</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {topPosts.map((post, index) => (
+                    <div key={post.id} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
+                      <span className="text-lg font-bold text-muted-foreground">#{index + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="flex h-5 w-5 items-center justify-center rounded bg-background text-xs">
+                            {platformIcons[post.platform]}
+                          </span>
+                          <span className="text-xs text-muted-foreground capitalize">{post.platform}</span>
+                        </div>
+                        <p className="text-sm truncate">{post.content}</p>
+                        <div className="flex items-center gap-4 mt-2">
+                          <span className="text-xs text-muted-foreground">
+                            <Heart className="h-3 w-3 inline mr-1" />
+                            {post.engagement.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            <Eye className="h-3 w-3 inline mr-1" />
+                            {post.reach.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="audience" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Age Demographics */}
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="text-base">Age Demographics</CardTitle>
+                <CardDescription>Age distribution of your audience</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={audienceData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}%`}
+                      >
+                        {audienceData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "oklch(0.16 0.005 285)",
+                          border: "1px solid oklch(0.25 0.01 285)",
+                          borderRadius: "8px",
+                          color: "oklch(0.95 0 0)",
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Follower Growth */}
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="text-base">Follower Growth</CardTitle>
+                <CardDescription>Net new followers over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={engagementData}>
+                      <defs>
+                        <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="oklch(0.7 0.18 165)" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="oklch(0.7 0.18 165)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="name" stroke="oklch(0.65 0 0)" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="oklch(0.65 0 0)" fontSize={12} tickLine={false} axisLine={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "oklch(0.16 0.005 285)",
+                          border: "1px solid oklch(0.25 0.01 285)",
+                          borderRadius: "8px",
+                          color: "oklch(0.95 0 0)",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="instagram"
+                        stroke="oklch(0.7 0.18 165)"
+                        strokeWidth={2}
+                        fill="url(#growthGradient)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="content" className="space-y-6">
+          {/* Post Performance */}
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-base">Post Performance by Day</CardTitle>
+              <CardDescription>Number of posts and engagement by day of week</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={postPerformanceData}>
+                    <XAxis dataKey="name" stroke="oklch(0.65 0 0)" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis yAxisId="left" stroke="oklch(0.65 0 0)" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="oklch(0.65 0 0)"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "oklch(0.16 0.005 285)",
+                        border: "1px solid oklch(0.25 0.01 285)",
+                        borderRadius: "8px",
+                        color: "oklch(0.95 0 0)",
+                      }}
+                    />
+                    <Bar yAxisId="left" dataKey="posts" fill="oklch(0.65 0.15 250)" radius={[4, 4, 0, 0]} />
+                    <Bar yAxisId="right" dataKey="engagement" fill="oklch(0.7 0.18 165)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex justify-center gap-6 mt-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: "oklch(0.65 0.15 250)" }} />
+                  <span className="text-sm text-muted-foreground">Posts</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: "oklch(0.7 0.18 165)" }} />
+                  <span className="text-sm text-muted-foreground">Engagement</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}

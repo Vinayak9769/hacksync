@@ -1,0 +1,60 @@
+import { Users, Eye, Heart, MessageSquare } from "lucide-react"
+import { StatsCard } from "@/components/dashboard/stats-card"
+import { ConnectedAccounts } from "@/components/dashboard/connected-accounts"
+import { ScheduledPosts } from "@/components/dashboard/scheduled-posts"
+import { EngagementChart } from "@/components/dashboard/engagement-chart"
+import { TrendingMentions } from "@/components/dashboard/trending-mentions"
+import { QuickActions } from "@/components/dashboard/quick-actions"
+
+export default function DashboardPage() {
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Welcome back, John</h1>
+        <p className="text-muted-foreground">Here's what's happening with your social presence today.</p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatsCard
+          title="Total Followers"
+          value="25.8K"
+          change="+2.5% from last week"
+          changeType="positive"
+          icon={Users}
+        />
+        <StatsCard
+          title="Total Impressions"
+          value="142.3K"
+          change="+18.2% from last week"
+          changeType="positive"
+          icon={Eye}
+        />
+        <StatsCard
+          title="Engagement Rate"
+          value="4.6%"
+          change="-0.3% from last week"
+          changeType="negative"
+          icon={Heart}
+        />
+        <StatsCard title="Messages" value="23" change="5 unread" changeType="neutral" icon={MessageSquare} />
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left Column */}
+        <div className="lg:col-span-2 space-y-6">
+          <EngagementChart />
+          <ScheduledPosts />
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          <QuickActions />
+          <ConnectedAccounts />
+          <TrendingMentions />
+        </div>
+      </div>
+    </div>
+  )
+}
