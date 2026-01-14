@@ -1,0 +1,30 @@
+{
+  "name": "twilio-sales-agent",
+  "version": "1.0.0",
+  "description": "A sales conversational agent built with Express.js and Twilio.",
+  "main": "src/app.ts",
+  "scripts": {
+    "start": "ts-node src/app.ts",
+    "build": "tsc",
+    "dev": "ts-node-dev src/app.ts"
+  },
+  "dependencies": {
+    "@deepgram/sdk": "^4.11.3",
+    "@google/generative-ai": "^0.24.1",
+    "@types/node": "^25.0.8",
+    "body-parser": "^2.2.2",
+    "dotenv": "^17.2.3",
+    "express": "^4.17.1",
+    "twilio": "^3.67.0",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.4.0",
+    "ts-node-dev": "^1.1.8",
+    "typescript": "^5.9.3"
+  },
+  "author": "",
+  "license": "ISC"
+}
