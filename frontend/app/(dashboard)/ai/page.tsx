@@ -141,35 +141,49 @@ export default function AIPage() {
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsGenerating(true)
+    try {
+      // Determine backend API base. Prefer NEXT_PUBLIC_API_BASE, otherwise assume backend on localhost:3001 in dev.
+      const apiBase = (typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : '')) ) || '';
+      const url = apiBase ? `${apiBase}/api/nestgpt/chat` : '/api/nestgpt/chat';
 
-    // Simulate AI response
-    await new Promise((r) => setTimeout(r, 2000))
+      // Send message field for conversational chat (NestGPT will handle intake collection via progressive Q&A)
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: messageText })
+      })
 
-    // Determine response type based on prompt
-    let response = {
-      content:
-        "I can help you with that! Let me generate some content for you. What specific platform or audience are you targeting?",
-      platforms: undefined as PlatformContent[] | undefined,
+      const data = await resp.json()
+      if (!resp.ok) {
+        const assistantMessage: Message = {
+          id: Math.random().toString(36).substr(2, 9),
+          role: 'assistant',
+          content: data.error || data.details || 'Sorry, something went wrong while generating a reply.',
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, assistantMessage])
+      } else {
+        const assistantMessage: Message = {
+          id: Math.random().toString(36).substr(2, 9),
+          role: 'assistant',
+          content: data.reply || 'No reply from AI',
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, assistantMessage])
+      }
+    } catch (err: any) {
+      const assistantMessage: Message = {
+        id: Math.random().toString(36).substr(2, 9),
+        role: 'assistant',
+        content: err?.message || 'Network error',
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, assistantMessage])
+    } finally {
+      setIsGenerating(false)
     }
-
-    if (messageText.toLowerCase().includes("idea") || messageText.toLowerCase().includes("post")) {
-      response = sampleResponses.ideas
-    } else if (messageText.toLowerCase().includes("campaign") || messageText.toLowerCase().includes("plan")) {
-      response = sampleResponses.campaign
-    } else if (messageText.toLowerCase().includes("trending") || messageText.toLowerCase().includes("topic")) {
-      response = sampleResponses.trending
-    }
-
-    const assistantMessage: Message = {
-      id: Math.random().toString(36).substr(2, 9),
-      role: "assistant",
-      content: response.content,
-      timestamp: new Date(),
-      platformOutputs: response.platforms,
-    }
-
-    setMessages((prev) => [...prev, assistantMessage])
-    setIsGenerating(false)
   }
 
   const handleSuggestionSelect = (suggestion: string) => {

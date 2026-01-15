@@ -24,7 +24,10 @@ const upload = multer({
             cb(new Error("Only image and video files are allowed"));
         }
     },
-});
+});import strategistController from '../controllers/strategistController';
+import chatController from '../controllers/chatController';
+import nestgptController from '../controllers/nestgptController';
+
 const router = Router();
 
 // Health check
@@ -66,6 +69,13 @@ router.get("/reddit/test-auth", redditController.testAuth);
 router.post("/reddit/post", redditController.submitPost);
 router.get("/reddit/posts/:subreddit", redditController.getSubredditPosts);
 router.get("/reddit/comments/:postId", redditController.getPostComments);
+
+// BRANDPULSE strategist endpoints
+// router.get('/strategist/metrics', strategistController.getMetrics);
+router.post('/strategist/generate', strategistController.generateStrategy);
+router.post('/strategist/chat', chatController.chat);
+// Dedicated NestGPT strategist chat (separate from Twilio sales flows)
+router.post('/nestgpt/chat', nestgptController.chat);
 
 // Legacy: Twilio webhook endpoints for voice calls (TwiML-based)
 router.post("/webhook/voice", conversationController.handleIncomingCall);

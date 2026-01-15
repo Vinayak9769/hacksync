@@ -21,7 +21,11 @@ export class ConversationalAIService extends EventEmitter {
         this.deepgramClient = createClient(process.env.DEEPGRAM_API_KEY);
         
         // Initialize Gemini
-        this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+        const geminiKey = process.env.GEMINI_API_KEY || '';
+        if (!geminiKey) {
+            console.warn('GEMINI_API_KEY is not set. Gemini calls will likely fail.');
+        }
+        this.genAI = new GoogleGenerativeAI(geminiKey);
         this.model = this.genAI.getGenerativeModel({ 
             model: 'gemini-2.5-flash',
             generationConfig: {
@@ -49,7 +53,7 @@ Remember: You're having a real phone conversation, so be natural and engaging!`;
 
         this.conversationHistory = [
             {
-                role: 'user',
+                role: 'system',
                 parts: [{ text: this.systemPrompt }]
             },
             {
@@ -112,36 +116,51 @@ Remember: You're having a real phone conversation, so be natural and engaging!`;
             });
 
             // Generate response using Gemini
-            const chat = this.model.startChat({
-                history: this.conversationHistory.slice(0, -1),
-            });
+            try {
+                const chat = this.model.startChat({ history: this.conversationHistory.slice(0, -1) });
+                // Log prompt size for debugging
+                console.log('Sending chat request to Gemini; message length:', userMessage?.length || 0);
+                const result = await chat.sendMessage(userMessage);
+                const response = result.response.text();
 
-            const result = await chat.sendMessage(userMessage);
-            const response = result.response.text();
+                // Add AI response to history
+                this.conversationHistory.push({
+                    role: 'model',
+                    parts: [{ text: response }]
+                });
 
-            // Add AI response to history
-            this.conversationHistory.push({
-                role: 'model',
-                parts: [{ text: response }]
-            });
+                // Keep conversation history manageable (last 20 messages)
+                if (this.conversationHistory.length > 22) {
+                    this.conversationHistory = [
+                        this.conversationHistory[0],
+                        this.conversationHistory[1],
+                        ...this.conversationHistory.slice(-20)
+                    ];
+                }
 
-            // Keep conversation history manageable (last 20 messages)
-            if (this.conversationHistory.length > 22) {
-                this.conversationHistory = [
-                    this.conversationHistory[0],
-                    this.conversationHistory[1],
-                    ...this.conversationHistory.slice(-20)
-                ];
+                console.log('AI Response:', response);
+                return response;
+            } catch (inner) {
+                console.error('Gemini chat/sendMessage error:', inner);
+                console.error('Conversation history snapshot:', JSON.stringify(this.conversationHistory.slice(-10), null, 2));
+                throw inner;
             }
 
-            console.log('AI Response:', response);
-            return response;
 
         } catch (error) {
-            console.error('Error getting AI response:', error);
+            console.error('Error getting AI response (top-level):', error);
+            console.error('Last user message:', userMessage);
+            console.error('Recent conversation history:', JSON.stringify(this.conversationHistory.slice(-10), null, 2));
+            if (process.env.DEBUG_AI === 'true') {
+                // Re-throw so controllers can include error details in dev responses
+                throw error;
+            }
             return "I apologize, I'm having trouble processing that. Could you please repeat?";
         }
     }
+
+    // Strategist pipeline has been moved to strategistAIService to keep
+    // conversational (call-based) flows separate from NestGPT strategist flows.
 
     sendAudioToDeepgram(audioData: Buffer) {
         if (this.deepgramLive) {
