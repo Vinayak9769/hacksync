@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Search,
   Palette,
+  MessageSquare,
   Video,
   Target,
 } from "lucide-react"
@@ -59,6 +60,7 @@ const analyzeNavItems = [
 ]
 
 const manageNavItems = [
+  { title: "CRM", href: "/crm", icon: MessageSquare },
   { title: "Team", href: "/team", icon: Users },
   { title: "Whiteboard", href: "/whiteboard", icon: Layout },
   { title: "Settings", href: "/settings", icon: Settings },
