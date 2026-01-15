@@ -59,9 +59,10 @@ interface CollectedInfo {
   tone?: string
 }
 
-type Phase = 'gathering' | 'analyzing' | 'planning' | 'creating' | 'complete'
+type Phase = 'ready' | 'gathering' | 'analyzing' | 'planning' | 'creating' | 'complete'
 
 const phaseInfo: Record<Phase, { label: string; icon: any; progress: number; color: string }> = {
+  ready: { label: 'Ready', icon: Sparkles, progress: 0, color: 'text-muted-foreground' },
   gathering: { label: 'Gathering Info', icon: Brain, progress: 20, color: 'text-blue-500' },
   analyzing: { label: 'Analyzing Data', icon: BarChart3, progress: 40, color: 'text-purple-500' },
   planning: { label: 'Creating Plan', icon: FileText, progress: 60, color: 'text-orange-500' },
@@ -76,7 +77,7 @@ export default function AIPage() {
   const [input, setInput] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [phase, setPhase] = useState<Phase>('gathering')
+  const [phase, setPhase] = useState<Phase>('ready')
   const [collectedInfo, setCollectedInfo] = useState<CollectedInfo>({})
   const [currentThoughts, setCurrentThoughts] = useState<string[]>([])
   const [showThoughts, setShowThoughts] = useState(false)
@@ -123,6 +124,11 @@ export default function AIPage() {
     setIsGenerating(true)
     setCurrentThoughts([])
     setShowThoughts(true)
+
+    // Move from ready to gathering when user sends first message
+    if (phase === 'ready') {
+      setPhase('gathering')
+    }
 
     try {
       // Determine backend API base. Prefer NEXT_PUBLIC_API_BASE, otherwise assume backend on localhost:3000 in dev.
@@ -272,7 +278,7 @@ export default function AIPage() {
     }
     setSessionId(null)
     setMessages([])
-    setPhase('gathering')
+    setPhase('ready')
     setCollectedInfo({})
     setCanvasData(null)
     setMarketingPlan("")
@@ -318,7 +324,9 @@ export default function AIPage() {
 
           {/* Phase indicators */}
           <div className="flex justify-between mt-3 px-1">
-            {Object.entries(phaseInfo).map(([key, info]) => {
+            {Object.entries(phaseInfo)
+              .filter(([key]) => key !== 'ready')
+              .map(([key, info]) => {
               const isActive = key === phase
               const isPast = phaseInfo[phase].progress > info.progress
               const Icon = info.icon
