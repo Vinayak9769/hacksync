@@ -38,6 +38,56 @@ class CanvasController {
   }
 
   /**
+   * Create a new canvas with uploaded image
+   * POST /api/canvas/create-with-image
+   */
+  async createCanvasWithImage(req: Request, res: Response): Promise<void> {
+    try {
+      const name = req.body.name;
+      const aspectRatio = req.body.aspectRatio;
+      const brandName = req.body.brandName;
+      const brandColors = req.body.brandColors ? JSON.parse(req.body.brandColors) : undefined;
+      
+      if (!name) {
+        res.status(400).json({ error: 'Canvas name is required' });
+        return;
+      }
+
+      const file = req.file;
+      if (!file) {
+        res.status(400).json({ error: 'Image file is required' });
+        return;
+      }
+
+      if (!file.mimetype.startsWith('image/')) {
+        res.status(400).json({ error: 'File must be an image' });
+        return;
+      }
+
+      const canvas = await canvasService.createCanvasWithImage(
+        name,
+        file.buffer,
+        file.mimetype,
+        aspectRatio,
+        brandName,
+        brandColors
+      );
+      
+      res.json({
+        success: true,
+        message: 'Canvas created successfully with uploaded image',
+        canvas
+      });
+    } catch (error) {
+      console.error('Error creating canvas with image:', error);
+      res.status(500).json({ 
+        error: 'Failed to create canvas with image', 
+        details: (error as Error).message 
+      });
+    }
+  }
+
+  /**
    * Get canvas by ID
    * GET /api/canvas/:id
    */

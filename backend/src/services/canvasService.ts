@@ -94,6 +94,64 @@ class CanvasService {
     return this.canvasStore.get(canvasId) || canvas;
   }
 
+  async createCanvasWithImage(
+    name: string,
+    imageBuffer: Buffer,
+    imageMimeType: string,
+    aspectRatio?: string,
+    brandName?: string,
+    brandColors?: string[]
+  ): Promise<CanvasState> {
+    const canvasId = this.generateId();
+    const now = Date.now();
+    const dimensions = this.getCanvasDimensions(aspectRatio || '1:1');
+
+    // Convert image buffer to base64 data URL
+    const base64Image = imageBuffer.toString('base64');
+    const imageUrl = `data:${imageMimeType};base64,${base64Image}`;
+
+    // Create canvas with uploaded image
+    const canvas: CanvasState = {
+      id: canvasId,
+      name,
+      width: dimensions.width,
+      height: dimensions.height,
+      aspectRatio: aspectRatio || '1:1',
+      backgroundColor: '#ffffff',
+      layers: [],
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+      metadata: {
+        brandName,
+        brandColors,
+      },
+    };
+
+    // Create primary image layer with uploaded image
+    const primaryLayer: CanvasLayer = {
+      id: this.generateLayerId(),
+      type: 'primary-image',
+      name: 'Primary Image',
+      zIndex: 0,
+      bounds: { x: 0, y: 0, width: dimensions.width, height: dimensions.height },
+      visible: true,
+      locked: false,
+      opacity: 1,
+      imageData: {
+        imageUrl,
+        generationStatus: 'complete',
+      },
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    canvas.layers.push(primaryLayer);
+    this.canvasStore.set(canvasId, canvas);
+
+    return canvas;
+  }
+
   getCanvas(canvasId: string): CanvasState | null {
     return this.canvasStore.get(canvasId) || null;
   }

@@ -91,6 +91,7 @@ router.post("/webhook/pitch/demo", conversationController.handleDemoRequest);
 
 // Canvas endpoints - Structured visual canvas system for brand posters
 router.post("/canvas/create", canvasController.createCanvas);
+router.post("/canvas/create-with-image", upload.single("image"), canvasController.createCanvasWithImage);
 router.get("/canvas/list", canvasController.listCanvases);
 router.get("/canvas/:id", canvasController.getCanvas);
 router.put("/canvas/:canvasId/layer/:layerId", canvasController.updateLayer);

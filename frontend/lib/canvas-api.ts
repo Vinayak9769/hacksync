@@ -22,6 +22,34 @@ class CanvasAPI {
   }
 
   /**
+   * Create a new canvas with uploaded image
+   */
+  async createCanvasWithImage(request: CreateCanvasRequest & { imageFile: File }): Promise<{ success: boolean; canvas: CanvasState }> {
+    const formData = new FormData();
+    formData.append('name', request.name);
+    formData.append('aspectRatio', request.aspectRatio || '1:1');
+    if (request.brandName) {
+      formData.append('brandName', request.brandName);
+    }
+    if (request.brandColors) {
+      formData.append('brandColors', JSON.stringify(request.brandColors));
+    }
+    formData.append('image', request.imageFile);
+
+    const response = await fetch(`${API_BASE_URL}/canvas/create-with-image`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create canvas with image');
+    }
+
+    return response.json();
+  }
+
+  /**
    * Get canvas by ID
    */
   async getCanvas(id: string): Promise<{ success: boolean; canvas: CanvasState }> {

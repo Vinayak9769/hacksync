@@ -48,6 +48,9 @@ export default function CanvasPage() {
     brandName: '',
     brandColors: ['#3b82f6', '#ffffff']
   })
+  const [imageSource, setImageSource] = useState<'generate' | 'upload'>('generate')
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null)
+  const [uploadedImagePreview, setUploadedImagePreview] = useState<string | null>(null)
   const [addLayerForm, setAddLayerForm] = useState({
     layerType: 'text' as 'text' | 'shape',
     name: '',
@@ -86,10 +89,33 @@ export default function CanvasPage() {
   const handleCreateCanvas = async () => {
     setIsLoading(true)
     try {
-      const result = await canvasAPI.createCanvas(createForm)
+      let result
+      if (imageSource === 'upload' && uploadedImage) {
+        // Create canvas with uploaded image
+        result = await canvasAPI.createCanvasWithImage({
+          ...createForm,
+          imageFile: uploadedImage
+        })
+      } else {
+        // Create canvas with generated image
+        result = await canvasAPI.createCanvas(createForm)
+      }
+      
       setCanvases([...canvases, result.canvas])
       setCurrentCanvas(result.canvas)
       setShowCreateDialog(false)
+      
+      // Reset form
+      setImageSource('generate')
+      setUploadedImage(null)
+      setUploadedImagePreview(null)
+      setCreateForm({
+        name: 'My Brand Poster',
+        imagePrompt: '',
+        aspectRatio: '1:1',
+        brandName: '',
+        brandColors: ['#3b82f6', '#ffffff']
+      })
 
       toast({
         title: 'Success',
@@ -103,6 +129,18 @@ export default function CanvasPage() {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      setUploadedImage(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setUploadedImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
   }
 
@@ -383,18 +421,101 @@ export default function CanvasPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Image Prompt *</Label>
-              <textarea
-                value={createForm.imagePrompt}
-                onChange={(e) => setCreateForm({ ...createForm, imagePrompt: e.target.value })}
-                placeholder="Describe the image you want to generate (e.g., 'A modern smartphone on a clean white surface with soft lighting and minimal shadows')"
-                className="w-full min-h-[100px] border rounded px-3 py-2 text-sm resize-none"
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                This will be the main background image. You can add text, shapes, and other elements on top later.
-              </p>
+              <Label>Image Source *</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={imageSource === 'generate' ? 'default' : 'outline'}
+                  className="flex-1"
+                  onClick={() => {
+                    setImageSource('generate')
+                    setUploadedImage(null)
+                    setUploadedImagePreview(null)
+                  }}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generate with AI
+                </Button>
+                <Button
+                  type="button"
+                  variant={imageSource === 'upload' ? 'default' : 'outline'}
+                  className="flex-1"
+                  onClick={() => {
+                    setImageSource('upload')
+                    setCreateForm({ ...createForm, imagePrompt: '' })
+                  }}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Image
+                </Button>
+              </div>
             </div>
+
+            {imageSource === 'generate' ? (
+              <div className="space-y-2">
+                <Label>Image Prompt *</Label>
+                <textarea
+                  value={createForm.imagePrompt}
+                  onChange={(e) => setCreateForm({ ...createForm, imagePrompt: e.target.value })}
+                  placeholder="Describe the image you want to generate (e.g., 'A modern smartphone on a clean white surface with soft lighting and minimal shadows')"
+                  className="w-full min-h-[100px] border rounded px-3 py-2 text-sm resize-none"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  This will be the main background image. You can add text, shapes, and other elements on top later.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Upload Image *</Label>
+                <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="cursor-pointer flex flex-col items-center gap-2"
+                  >
+                    {uploadedImagePreview ? (
+                      <>
+                        <img
+                          src={uploadedImagePreview}
+                          alt="Preview"
+                          className="max-h-48 max-w-full rounded"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          {uploadedImage?.name}
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setUploadedImage(null)
+                            setUploadedImagePreview(null)
+                          }}
+                        >
+                          Change Image
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-muted-foreground" />
+                        <p className="text-sm font-medium">Click to upload or drag and drop</p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG, GIF up to 10MB
+                        </p>
+                      </>
+                    )}
+                  </label>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Brand Name (Optional)</Label>
@@ -439,7 +560,11 @@ export default function CanvasPage() {
             </Button>
             <Button
               onClick={handleCreateCanvas}
-              disabled={isLoading || !createForm.imagePrompt.trim()}
+              disabled={
+                isLoading ||
+                (imageSource === 'generate' && !createForm.imagePrompt.trim()) ||
+                (imageSource === 'upload' && !uploadedImage)
+              }
             >
               {isLoading ? (
                 <>

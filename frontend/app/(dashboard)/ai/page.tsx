@@ -88,11 +88,22 @@ export default function AIPage() {
   const [calendarData, setCalendarData] = useState<any>(null)
   const [showAnalytics, setShowAnalytics] = useState(false)
   const [analyticsData, setAnalyticsData] = useState<any>(null)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    // Scroll to bottom when messages change
+    if (messagesEndRef.current && scrollContainerRef.current) {
+      // Use requestAnimationFrame for smooth scrolling
+      requestAnimationFrame(() => {
+        const viewport = scrollContainerRef.current?.querySelector('[data-slot="scroll-area-viewport"]') as HTMLElement
+        if (viewport) {
+          viewport.scrollTo({
+            top: viewport.scrollHeight,
+            behavior: 'smooth'
+          })
+        }
+      })
     }
   }, [messages])
 
@@ -115,7 +126,8 @@ export default function AIPage() {
 
     try {
       // Determine backend API base. Prefer NEXT_PUBLIC_API_BASE, otherwise assume backend on localhost:3000 in dev.
-      const apiBase = (typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : '')) ) || '';
+      // const apiBase = (typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : '')) ) || '';
+      const apiBase = "http://localhost:3000/api";
       const url = apiBase ? `${apiBase}/nestgpt/chat` : '/api/nestgpt/chat';
 
       // Send message field for conversational chat (NestGPT will handle intake collection via progressive Q&A)
@@ -372,71 +384,74 @@ export default function AIPage() {
                 </div>
               )}
 
-              <ScrollArea className="flex-1 pr-4 p-4" ref={scrollRef}>
-                {messages.length === 0 ? (
-                  <div className="space-y-6 py-8">
-                    <div className="text-center">
-                      <Sparkles className="h-12 w-12 text-primary mx-auto mb-4" />
-                      <h3 className="text-lg font-medium">Ready to Build Your Campaign</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        I'll help you create a complete marketing campaign with strategy, visuals, and a content calendar.
-                      </p>
-                    </div>
-                    <SuggestionChips onSelect={handleSuggestionSelect} />
-                  </div>
-                ) : (
-                  <div className="space-y-4 pb-4">
-                    {messages.map((message) => (
-                      <div key={message.id}>
-                        <ChatMessage
-                          role={message.role}
-                          content={message.content}
-                          timestamp={message.timestamp}
-                          onSendToCreate={message.role === "assistant" ? () => handleSendToCreate() : undefined}
-                        />
-                        {/* Action buttons for assistant messages */}
-                        {message.role === 'assistant' && message.actions && message.actions.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2 ml-11">
-                            {message.actions.some(a => a.type === 'canvas') && (
-                              <Button variant="outline" size="sm" onClick={() => setShowCanvas(true)} className="h-7 text-xs">
-                                <Eye className="h-3 w-3 mr-1" />
-                                View Canvas
-                              </Button>
-                            )}
-                            {message.actions.some(a => a.type === 'marketingPlan') && (
-                              <Button variant="outline" size="sm" onClick={() => setShowPlan(true)} className="h-7 text-xs">
-                                <FileText className="h-3 w-3 mr-1" />
-                                View Plan
-                              </Button>
-                            )}
-                            {message.actions.some(a => a.type === 'contentCalendar') && (
-                              <Button variant="outline" size="sm" onClick={() => setShowCalendar(true)} className="h-7 text-xs">
-                                <Calendar className="h-3 w-3 mr-1" />
-                                View Calendar
-                              </Button>
-                            )}
-                            {message.actions.some(a => a.type === 'analytics') && (
-                              <Button variant="outline" size="sm" onClick={() => setShowAnalytics(true)} className="h-7 text-xs">
-                                <BarChart3 className="h-3 w-3 mr-1" />
-                                View Analytics
-                              </Button>
-                            )}
-                          </div>
-                        )}
-                        {message.platformOutputs && (
-                          <div className="mt-4 ml-11">
-                            <PlatformOutput
-                              outputs={message.platformOutputs}
-                              onSendToCreate={(content) => handleSendToCreate(content.content)}
-                            />
-                          </div>
-                        )}
+              <div className="flex-1 overflow-hidden" ref={scrollContainerRef}>
+                <ScrollArea className="h-full pr-4 p-4">
+                  {messages.length === 0 ? (
+                    <div className="space-y-6 py-8">
+                      <div className="text-center">
+                        <Sparkles className="h-12 w-12 text-primary mx-auto mb-4" />
+                        <h3 className="text-lg font-medium">Ready to Build Your Campaign</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          I'll help you create a complete marketing campaign with strategy, visuals, and a content calendar.
+                        </p>
                       </div>
-                    ))}
-                    {isGenerating && <ChatMessage role="assistant" content="" isGenerating />}
-                  </div>
-                )}
-              </ScrollArea>
+                      <SuggestionChips onSelect={handleSuggestionSelect} />
+                    </div>
+                  ) : (
+                    <div className="space-y-4 pb-4">
+                      {messages.map((message) => (
+                        <div key={message.id}>
+                          <ChatMessage
+                            role={message.role}
+                            content={message.content}
+                            timestamp={message.timestamp}
+                            onSendToCreate={message.role === "assistant" ? () => handleSendToCreate() : undefined}
+                          />
+                          {/* Action buttons for assistant messages */}
+                          {message.role === 'assistant' && message.actions && message.actions.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2 ml-11">
+                              {message.actions.some(a => a.type === 'canvas') && (
+                                <Button variant="outline" size="sm" onClick={() => setShowCanvas(true)} className="h-7 text-xs">
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View Canvas
+                                </Button>
+                              )}
+                              {message.actions.some(a => a.type === 'marketingPlan') && (
+                                <Button variant="outline" size="sm" onClick={() => setShowPlan(true)} className="h-7 text-xs">
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  View Plan
+                                </Button>
+                              )}
+                              {message.actions.some(a => a.type === 'contentCalendar') && (
+                                <Button variant="outline" size="sm" onClick={() => setShowCalendar(true)} className="h-7 text-xs">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  View Calendar
+                                </Button>
+                              )}
+                              {message.actions.some(a => a.type === 'analytics') && (
+                                <Button variant="outline" size="sm" onClick={() => setShowAnalytics(true)} className="h-7 text-xs">
+                                  <BarChart3 className="h-3 w-3 mr-1" />
+                                  View Analytics
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                          {message.platformOutputs && (
+                            <div className="mt-4 ml-11">
+                              <PlatformOutput
+                                outputs={message.platformOutputs}
+                                onSendToCreate={(content) => handleSendToCreate(content.content)}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {isGenerating && <ChatMessage role="assistant" content="" isGenerating />}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
 
               {/* Input Area */}
               <div className="p-4 border-t border-border shrink-0 mt-auto">
@@ -636,7 +651,7 @@ export default function AIPage() {
 
       {/* Marketing Plan Dialog */}
       <Dialog open={showPlan} onOpenChange={setShowPlan}>
-        <DialogContent className="max-w-4xl w-[95vw] h-[85vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-5xl w-[95vw] h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
