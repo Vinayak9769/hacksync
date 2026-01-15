@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Search,
   Palette,
+  Target,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -51,6 +52,7 @@ const engageNavItems = [
 
 const analyzeNavItems = [
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
+  { title: "Competitor Analysis", href: "/competitor-analysis", icon: Target },
   { title: "Ads Manager", href: "/ads", icon: Megaphone },
 ]
 
