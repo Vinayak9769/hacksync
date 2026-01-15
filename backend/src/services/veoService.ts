@@ -32,7 +32,11 @@ class VeoService {
      PUBLIC ENTRY
   ========================== */
 
-  async generateVideo(): Promise<{ videoUri: string }> {
+  tunePrompt(request: any): any {
+    return request?.prompt ?? "";
+  }
+
+  async generateVideo(_request?: any): Promise<{ videoUri: string }> {
     const accessToken = await this.getAccessToken();
 
     // 1️⃣ START OPERATION (predictLongRunning)

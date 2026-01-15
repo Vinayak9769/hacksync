@@ -36,7 +36,14 @@ async function handleRequest(
   method: string
 ) {
   try {
-    const path = params.path.join('/')
+    const derivedPath = request.nextUrl.pathname.replace(/^\/api\/proxy\/?/, '')
+    const path = params?.path?.join('/') || derivedPath
+    if (!path) {
+      return NextResponse.json(
+        { success: false, error: 'Missing proxy path' },
+        { status: 400 }
+      )
+    }
     const searchParams = request.nextUrl.searchParams.toString()
     const url = `${BACKEND_URL}/api/${path}${searchParams ? `?${searchParams}` : ''}`
 
