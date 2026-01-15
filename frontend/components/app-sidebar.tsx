@@ -19,10 +19,10 @@ import {
   Palette,
   MessageSquare,
   Video,
-  Eye,
-  EyeIcon,
   FileText,
   AlertTriangle,
+  Target,
+  EyeIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -48,23 +48,26 @@ const mainNavItems = [
   { title: "Media Library", href: "/media", icon: ImageIcon },
 ]
 
-const aiStudioItems = [
-  { title: "NestGPT Agent", href: "/ai", icon: Sparkles },
+const aiSidebarItems = [
+  { title: "NestGPT", href: "/ai", icon: Sparkles },
+  { title: "Veo Studio", href: "/veo", icon: Video },
   { title: "Canvas Studio", href: "/canvas", icon: Palette },
-  { title: "Veo Video", href: "/veo", icon: Video },
 ]
 
 const engageNavItems = [
   { title: "Inbox", href: "/inbox", icon: Inbox },
   { title: "Listening", href: "/listening", icon: Radio },
+]
+
+const analyzeNavItems = [
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
+  { title: "Competitor Analysis", href: "/competitor-analysis", icon: EyeIcon },
   { title: "Ads Manager", href: "/ads", icon: Megaphone },
   { title: "Anti-Campaign", href: "/anti-campaign", icon: AlertTriangle },
 ]
 
 const manageNavItems = [
   { title: "CRM", href: "/crm", icon: MessageSquare },
-  { title: "Competitor Analysis", href: "/competitor-analysis", icon: EyeIcon },
   { title: "Team", href: "/team", icon: Users },
   { title: "Whiteboard", href: "/whiteboard", icon: Layout },
   { title: "Saved Plans", href: "/plans", icon: FileText },
@@ -112,10 +115,10 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>AI Studio</SidebarGroupLabel>
+          <SidebarGroupLabel>Ai Studio</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {aiStudioItems.map((item) => (
+              {aiStudioNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={pathname === item.href}>
                     <Link href={item.href}>
@@ -130,10 +133,28 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Engage & Analyze</SidebarGroupLabel>
+          <SidebarGroupLabel>Engage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {engageNavItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton asChild isActive={pathname === item.href}>
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Analyze</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {analyzeNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={pathname === item.href}>
                     <Link href={item.href}>

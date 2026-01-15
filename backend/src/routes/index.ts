@@ -4,7 +4,6 @@ import conversationController from "../controllers/conversationController";
 import conversationalAIController from "../controllers/conversationalAIController";
 import redditController from "../controllers/redditController";
 import socialMediaController from "../controllers/socialMediaController";
-import socialListeningController from "../controllers/socialListeningController";
 
 import canvasController from "../controllers/canvasController";
 import veoController from "../controllers/veoController";
@@ -72,25 +71,6 @@ router.get(
     redditController.getSubredditEngagement,
 );
 
-// Social Listening endpoints (Coffee brand monitoring)
-router.get(
-    "/social-listening/keywords",
-    socialListeningController.getTrackedKeywords,
-);
-router.get(
-    "/social-listening/mentions",
-    socialListeningController.getRecentMentions,
-);
-router.get(
-    "/social-listening/trends",
-    socialListeningController.getMentionTrends,
-);
-router.get("/social-listening/alerts", socialListeningController.getAlerts);
-router.get(
-    "/social-listening/competitors",
-    socialListeningController.getCompetitorAnalysis,
-);
-
 // BRANDPULSE strategist endpoints
 // router.get('/strategist/metrics', strategistController.getMetrics);
 router.post("/strategist/generate", strategistController.generateStrategy);
@@ -115,11 +95,7 @@ router.post("/webhook/pitch/demo", conversationController.handleDemoRequest);
 
 // Canvas endpoints - Structured visual canvas system for brand posters
 router.post("/canvas/create", canvasController.createCanvas);
-router.post(
-    "/canvas/create-with-image",
-    upload.single("image"),
-    canvasController.createCanvasWithImage,
-);
+router.post("/canvas/create-with-image", upload.single("image"), canvasController.createCanvasWithImage);
 router.get("/canvas/list", canvasController.listCanvases);
 router.get("/canvas/:id", canvasController.getCanvas);
 router.put("/canvas/:canvasId/layer/:layerId", canvasController.updateLayer);
@@ -131,10 +107,7 @@ router.post(
 );
 router.post("/canvas/regenerate-layer", canvasController.regenerateLayer);
 router.post("/canvas/generate-text", canvasController.generateText);
-router.post(
-    "/canvas/:canvasId/generate-element",
-    canvasController.generateElement,
-);
+router.post("/canvas/:canvasId/generate-element", canvasController.generateElement);
 router.get("/canvas/:id/export", canvasController.exportCanvas);
 router.post("/canvas/import", canvasController.importCanvas);
 router.delete("/canvas/:id", canvasController.deleteCanvas);

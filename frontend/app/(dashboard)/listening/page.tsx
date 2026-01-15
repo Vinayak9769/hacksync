@@ -1,125 +1,98 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { TrendingUp, TrendingDown, AlertTriangle, Plus, X, Bell, ThumbsUp, ThumbsDown, Minus, RefreshCw, ExternalLink } from "lucide-react"
+import { TrendingUp, TrendingDown, AlertTriangle, Plus, X, Bell, ThumbsUp, ThumbsDown, Minus } from "lucide-react"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { API_ENDPOINTS, API_FETCH_OPTIONS } from "@/lib/api-config"
 
-interface KeywordData {
-  keyword: string
-  mentions: number
-  change: number
-  sentiment: "positive" | "negative" | "neutral"
-  platforms?: {
-    reddit: number
-    twitter: number
-    instagram: number
-  }
-}
+const trackedKeywords = [
+  { keyword: "#SocialNest", mentions: 1234, change: 23, sentiment: "positive" },
+  { keyword: "@SocialNest", mentions: 856, change: 12, sentiment: "positive" },
+  { keyword: "social media tool", mentions: 543, change: -5, sentiment: "neutral" },
+  { keyword: "competitor brand", mentions: 321, change: 8, sentiment: "negative" },
+]
 
-interface Mention {
-  id: string
-  platform: string
-  author: string
-  content: string
-  sentiment: "positive" | "negative" | "neutral"
-  timestamp: string
-  url?: string
-  engagement?: {
-    score: number
-    comments: number
-  }
-}
+const mentionsTrend = [
+  { name: "Mon", mentions: 120, positive: 80, negative: 20, neutral: 20 },
+  { name: "Tue", mentions: 180, positive: 120, negative: 30, neutral: 30 },
+  { name: "Wed", mentions: 250, positive: 150, negative: 50, neutral: 50 },
+  { name: "Thu", mentions: 320, positive: 200, negative: 60, neutral: 60 },
+  { name: "Fri", mentions: 280, positive: 180, negative: 50, neutral: 50 },
+  { name: "Sat", mentions: 150, positive: 100, negative: 25, neutral: 25 },
+  { name: "Sun", mentions: 100, positive: 70, negative: 15, neutral: 15 },
+]
 
-interface Alert {
-  id: string
-  type: "spike" | "negative" | "positive" | "trending"
-  message: string
-  severity: "info" | "warning" | "alert" | "critical"
-  timestamp: string
-  keyword?: string
-}
+const recentMentions = [
+  {
+    id: 1,
+    platform: "twitter",
+    author: "@techblogger",
+    content: "Just discovered @SocialNest - this is exactly what I needed for managing my social presence!",
+    sentiment: "positive",
+    timestamp: "2 hours ago",
+  },
+  {
+    id: 2,
+    platform: "linkedin",
+    author: "Marketing Pro",
+    content: "Been comparing social media tools and SocialNest stands out for its AI features.",
+    sentiment: "positive",
+    timestamp: "4 hours ago",
+  },
+  {
+    id: 3,
+    platform: "twitter",
+    author: "@skeptic_user",
+    content: "Not sure about the pricing of @SocialNest. Seems expensive compared to alternatives.",
+    sentiment: "negative",
+    timestamp: "6 hours ago",
+  },
+  {
+    id: 4,
+    platform: "instagram",
+    author: "@smm_expert",
+    content: "Trying out various social media schedulers this week. SocialNest is one of them.",
+    sentiment: "neutral",
+    timestamp: "8 hours ago",
+  },
+]
 
-interface TrendPoint {
-  name: string
-  mentions: number
-  positive: number
-  negative: number
-  neutral: number
-}
+const alerts = [
+  {
+    id: 1,
+    type: "spike",
+    message: "Unusual spike in mentions detected - 150% increase in the last hour",
+    severity: "warning",
+    timestamp: "30 min ago",
+  },
+  {
+    id: 2,
+    type: "negative",
+    message: "Negative sentiment trending for keyword 'competitor brand'",
+    severity: "alert",
+    timestamp: "2 hours ago",
+  },
+]
 
 const platformIcons: Record<string, string> = {
   instagram: "📷",
   twitter: "𝕏",
   linkedin: "in",
   facebook: "f",
-  reddit: "🔴",
 }
 
 export default function ListeningPage() {
-  const [keywords, setKeywords] = useState<KeywordData[]>([])
-  const [mentions, setMentions] = useState<Mention[]>([])
-  const [trends, setTrends] = useState<TrendPoint[]>([])
-  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [keywords, setKeywords] = useState(trackedKeywords)
   const [newKeyword, setNewKeyword] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [dataSource, setDataSource] = useState<"mock" | "reddit">("mock")
-
-  // Fetch all listening data
-  const fetchListeningData = async () => {
-    try {
-      setRefreshing(true)
-
-      // Fetch keywords
-      const keywordsRes = await fetch(API_ENDPOINTS.socialListening.keywords, API_FETCH_OPTIONS)
-      const keywordsData = await keywordsRes.json()
-      if (keywordsData.success && keywordsData.keywords) {
-        setKeywords(keywordsData.keywords)
-        setDataSource(keywordsData.source || "mock")
-      }
-
-      // Fetch mentions
-      const mentionsRes = await fetch(API_ENDPOINTS.socialListening.mentions, API_FETCH_OPTIONS)
-      const mentionsData = await mentionsRes.json()
-      if (mentionsData.success && mentionsData.mentions) {
-        setMentions(mentionsData.mentions)
-      }
-
-      // Fetch trends
-      const trendsRes = await fetch(API_ENDPOINTS.socialListening.trends, API_FETCH_OPTIONS)
-      const trendsData = await trendsRes.json()
-      if (trendsData.success && trendsData.trends) {
-        setTrends(trendsData.trends)
-      }
-
-      // Fetch alerts
-      const alertsRes = await fetch(API_ENDPOINTS.socialListening.alerts, API_FETCH_OPTIONS)
-      const alertsData = await alertsRes.json()
-      if (alertsData.success && alertsData.alerts) {
-        setAlerts(alertsData.alerts)
-      }
-    } catch (error) {
-      console.error("Error fetching listening data:", error)
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchListeningData()
-  }, [])
 
   const addKeyword = () => {
     if (newKeyword.trim()) {
-      setKeywords([...keywords, { keyword: newKeyword, mentions: 0, change: 0, sentiment: "neutral" }])
+      setKeywords([...keywords, { keyword: newKeyword, mentions: 0, change: 0, sentiment: "neutral" as const }])
       setNewKeyword("")
     }
   }
@@ -128,21 +101,10 @@ export default function ListeningPage() {
     setKeywords(keywords.filter((k) => k.keyword !== keyword))
   }
 
-  const dismissAlert = (alertId: string) => {
-    setAlerts(alerts.filter((a) => a.id !== alertId))
-  }
-
   const overallSentiment = {
-    positive: keywords.reduce((sum, k) => sum + (k.sentiment === "positive" ? k.mentions : 0), 0),
-    neutral: keywords.reduce((sum, k) => sum + (k.sentiment === "neutral" ? k.mentions : 0), 0),
-    negative: keywords.reduce((sum, k) => sum + (k.sentiment === "negative" ? k.mentions : 0), 0),
-  }
-
-  const totalMentions = overallSentiment.positive + overallSentiment.neutral + overallSentiment.negative
-  const sentimentPercentages = {
-    positive: totalMentions > 0 ? Math.round((overallSentiment.positive / totalMentions) * 100) : 0,
-    neutral: totalMentions > 0 ? Math.round((overallSentiment.neutral / totalMentions) * 100) : 0,
-    negative: totalMentions > 0 ? Math.round((overallSentiment.negative / totalMentions) * 100) : 0,
+    positive: 65,
+    neutral: 25,
+    negative: 10,
   }
 
   return (
@@ -151,27 +113,11 @@ export default function ListeningPage() {
         <div>
           <h1 className="text-2xl font-bold">Social Listening</h1>
           <p className="text-muted-foreground">Monitor keywords, hashtags, and brand mentions across social media</p>
-          {dataSource === "reddit" && (
-            <Badge variant="outline" className="mt-2">
-              <span className="mr-1">🔴</span> Live Reddit Data
-            </Badge>
-          )}
-          {dataSource === "mock" && (
-            <Badge variant="secondary" className="mt-2">
-              Mock Data (Reddit not configured)
-            </Badge>
-          )}
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchListeningData} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-          <Button variant="outline">
-            <Bell className="h-4 w-4 mr-2" />
-            Alert Settings
-          </Button>
-        </div>
+        <Button variant="outline">
+          <Bell className="h-4 w-4 mr-2" />
+          Alert Settings
+        </Button>
       </div>
 
       {/* Alerts */}
@@ -181,30 +127,22 @@ export default function ListeningPage() {
             <Card
               key={alert.id}
               className={
-                alert.severity === "alert" || alert.severity === "critical"
+                alert.severity === "alert"
                   ? "bg-destructive/10 border-destructive/50"
-                  : alert.severity === "warning"
-                  ? "bg-warning/10 border-warning/50"
-                  : "bg-primary/10 border-primary/50"
+                  : "bg-warning/10 border-warning/50"
               }
             >
-              <CardContent className="pt-4 flex items-center justify-between">
+              <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <AlertTriangle
-                    className={`h-5 w-5 ${
-                      alert.severity === "alert" || alert.severity === "critical"
-                        ? "text-destructive"
-                        : alert.severity === "warning"
-                        ? "text-warning"
-                        : "text-primary"
-                    }`}
+                    className={`h-5 w-5 ${alert.severity === "alert" ? "text-destructive" : "text-warning"}`}
                   />
                   <div>
                     <p className="text-sm font-medium">{alert.message}</p>
                     <p className="text-xs text-muted-foreground">{alert.timestamp}</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => dismissAlert(alert.id)}>
+                <Button variant="ghost" size="sm">
                   Dismiss
                 </Button>
               </CardContent>
@@ -213,308 +151,263 @@ export default function ListeningPage() {
         </div>
       )}
 
-      {/* Overview Stats */}
-      <div className="grid gap-6 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Mentions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalMentions.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">Across all keywords</p>
-          </CardContent>
-        </Card>
+      {/* Tracked Keywords */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-base">Tracked Keywords</CardTitle>
+          <CardDescription>Add keywords, hashtags, or competitors to monitor</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2 mb-4">
+            <Input
+              value={newKeyword}
+              onChange={(e) => setNewKeyword(e.target.value)}
+              placeholder="Add keyword or hashtag..."
+              className="bg-secondary/50"
+              onKeyDown={(e) => e.key === "Enter" && addKeyword()}
+            />
+            <Button onClick={addKeyword}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add
+            </Button>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {keywords.map((item) => (
+              <div key={item.keyword} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="font-medium text-sm">{item.keyword}</p>
+                    <p className="text-xs text-muted-foreground">{item.mentions.toLocaleString()} mentions</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="secondary"
+                    className={
+                      item.sentiment === "positive"
+                        ? "bg-success/20 text-success"
+                        : item.sentiment === "negative"
+                          ? "bg-destructive/20 text-destructive"
+                          : "bg-muted text-muted-foreground"
+                    }
+                  >
+                    {item.change > 0 ? (
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                    ) : item.change < 0 ? (
+                      <TrendingDown className="h-3 w-3 mr-1" />
+                    ) : (
+                      <Minus className="h-3 w-3 mr-1" />
+                    )}
+                    {item.change > 0 ? "+" : ""}
+                    {item.change}%
+                  </Badge>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeKeyword(item.keyword)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Positive Sentiment</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{sentimentPercentages.positive}%</div>
-            <Progress value={sentimentPercentages.positive} className="mt-2 h-2" />
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Mentions Trend */}
+        <div className="lg:col-span-2">
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-base">Mentions Over Time</CardTitle>
+              <CardDescription>Total mentions and sentiment breakdown</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={mentionsTrend}>
+                    <defs>
+                      <linearGradient id="mentionsGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="oklch(0.7 0.18 165)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="oklch(0.7 0.18 165)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="name" stroke="oklch(0.65 0 0)" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="oklch(0.65 0 0)" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "oklch(0.16 0.005 285)",
+                        border: "1px solid oklch(0.25 0.01 285)",
+                        borderRadius: "8px",
+                        color: "oklch(0.95 0 0)",
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="mentions"
+                      stroke="oklch(0.7 0.18 165)"
+                      strokeWidth={2}
+                      fill="url(#mentionsGradient)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Neutral Sentiment</CardTitle>
+        {/* Sentiment Analysis */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-base">Sentiment Analysis</CardTitle>
+            <CardDescription>Overall sentiment breakdown</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{sentimentPercentages.neutral}%</div>
-            <Progress value={sentimentPercentages.neutral} className="mt-2 h-2" />
-          </CardContent>
-        </Card>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <ThumbsUp className="h-4 w-4 text-success" />
+                  <span>Positive</span>
+                </div>
+                <span className="font-medium">{overallSentiment.positive}%</span>
+              </div>
+              <Progress value={overallSentiment.positive} className="h-2 bg-secondary [&>div]:bg-success" />
+            </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Negative Sentiment</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{sentimentPercentages.negative}%</div>
-            <Progress value={sentimentPercentages.negative} className="mt-2 h-2" />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <Minus className="h-4 w-4 text-muted-foreground" />
+                  <span>Neutral</span>
+                </div>
+                <span className="font-medium">{overallSentiment.neutral}%</span>
+              </div>
+              <Progress value={overallSentiment.neutral} className="h-2 bg-secondary [&>div]:bg-muted-foreground" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <ThumbsDown className="h-4 w-4 text-destructive" />
+                  <span>Negative</span>
+                </div>
+                <span className="font-medium">{overallSentiment.negative}%</span>
+              </div>
+              <Progress value={overallSentiment.negative} className="h-2 bg-secondary [&>div]:bg-destructive" />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="keywords" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="keywords">Tracked Keywords</TabsTrigger>
-          <TabsTrigger value="mentions">Recent Mentions</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
-        </TabsList>
+      {/* Recent Mentions */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-base">Recent Mentions</CardTitle>
+          <CardDescription>Latest mentions across all platforms</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="all">
+            <TabsList className="bg-secondary mb-4">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="positive">Positive</TabsTrigger>
+              <TabsTrigger value="neutral">Neutral</TabsTrigger>
+              <TabsTrigger value="negative">Negative</TabsTrigger>
+            </TabsList>
 
-        {/* Tracked Keywords */}
-        <TabsContent value="keywords" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tracked Keywords</CardTitle>
-              <CardDescription>Monitor specific keywords, hashtags, and brand mentions</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Add Keyword */}
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add keyword (e.g., #coffee, specialty coffee, Ettara)"
-                  value={newKeyword}
-                  onChange={(e) => setNewKeyword(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && addKeyword()}
-                />
-                <Button onClick={addKeyword}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add
-                </Button>
-              </div>
-
-              {/* Keywords List */}
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading keywords...</div>
-              ) : (
-                <div className="space-y-3">
-                  {keywords.map((item) => (
-                    <div
-                      key={item.keyword}
-                      className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition"
-                    >
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="flex-1">
-                          <p className="font-semibold">{item.keyword}</p>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-sm text-muted-foreground">
-                              {item.mentions.toLocaleString()} mentions
-                            </span>
-                            {item.platforms && (
-                              <span className="text-xs text-muted-foreground">
-                                Reddit: {item.platforms.reddit}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {item.change > 0 ? (
-                            <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-500/20">
-                              <TrendingUp className="h-3 w-3 mr-1" />
-                              {item.change}%
-                            </Badge>
-                          ) : item.change < 0 ? (
-                            <Badge variant="outline" className="bg-red-500/10 text-red-700 border-red-500/20">
-                              <TrendingDown className="h-3 w-3 mr-1" />
-                              {Math.abs(item.change)}%
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-500/20">
-                              <Minus className="h-3 w-3 mr-1" />
-                              0%
-                            </Badge>
-                          )}
-                        </div>
-
-                        <Badge
-                          variant={
-                            item.sentiment === "positive"
-                              ? "default"
-                              : item.sentiment === "negative"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                        >
-                          {item.sentiment === "positive" && <ThumbsUp className="h-3 w-3 mr-1" />}
-                          {item.sentiment === "negative" && <ThumbsDown className="h-3 w-3 mr-1" />}
-                          {item.sentiment}
-                        </Badge>
-                      </div>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeKeyword(item.keyword)}
-                        className="ml-2"
+            <TabsContent value="all" className="space-y-3">
+              {recentMentions.map((mention) => (
+                <div key={mention.id} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
+                  <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
+                    {platformIcons[mention.platform]}
+                  </span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-sm">{mention.author}</span>
+                      <Badge
+                        variant="secondary"
+                        className={
+                          mention.sentiment === "positive"
+                            ? "bg-success/20 text-success"
+                            : mention.sentiment === "negative"
+                              ? "bg-destructive/20 text-destructive"
+                              : "bg-muted text-muted-foreground"
+                        }
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
+                        {mention.sentiment}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground ml-auto">{mention.timestamp}</span>
                     </div>
-                  ))}
-
-                  {keywords.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No keywords tracked yet. Add your first keyword above.
-                    </div>
-                  )}
+                    <p className="text-sm">{mention.content}</p>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+              ))}
+            </TabsContent>
 
-        {/* Recent Mentions */}
-        <TabsContent value="mentions" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Mentions</CardTitle>
-              <CardDescription>Latest social media posts mentioning your keywords</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading mentions...</div>
-              ) : (
-                <div className="space-y-4">
-                  {mentions.map((mention) => (
-                    <div
-                      key={mention.id}
-                      className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-lg">{platformIcons[mention.platform]}</span>
-                            <span className="font-semibold text-sm">{mention.author}</span>
-                            <span className="text-xs text-muted-foreground capitalize">{mention.platform}</span>
-                            <span className="text-xs text-muted-foreground">•</span>
-                            <span className="text-xs text-muted-foreground">{mention.timestamp}</span>
-                          </div>
-                          <p className="text-sm leading-relaxed">{mention.content}</p>
-                          {mention.engagement && (
-                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                              <span>👍 {mention.engagement.score}</span>
-                              <span>💬 {mention.engagement.comments}</span>
-                            </div>
-                          )}
-                          {mention.url && (
-                            <a
-                              href={mention.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-2"
-                            >
-                              View on Reddit
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          )}
-                        </div>
-                        <Badge
-                          variant={
-                            mention.sentiment === "positive"
-                              ? "default"
-                              : mention.sentiment === "negative"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                        >
-                          {mention.sentiment}
+            <TabsContent value="positive" className="space-y-3">
+              {recentMentions
+                .filter((m) => m.sentiment === "positive")
+                .map((mention) => (
+                  <div key={mention.id} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
+                    <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
+                      {platformIcons[mention.platform]}
+                    </span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm">{mention.author}</span>
+                        <Badge variant="secondary" className="bg-success/20 text-success">
+                          positive
                         </Badge>
+                        <span className="text-xs text-muted-foreground ml-auto">{mention.timestamp}</span>
                       </div>
+                      <p className="text-sm">{mention.content}</p>
                     </div>
-                  ))}
+                  </div>
+                ))}
+            </TabsContent>
 
-                  {mentions.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No recent mentions found.
+            <TabsContent value="neutral" className="space-y-3">
+              {recentMentions
+                .filter((m) => m.sentiment === "neutral")
+                .map((mention) => (
+                  <div key={mention.id} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
+                    <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
+                      {platformIcons[mention.platform]}
+                    </span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm">{mention.author}</span>
+                        <Badge variant="secondary" className="bg-muted text-muted-foreground">
+                          neutral
+                        </Badge>
+                        <span className="text-xs text-muted-foreground ml-auto">{mention.timestamp}</span>
+                      </div>
+                      <p className="text-sm">{mention.content}</p>
                     </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  </div>
+                ))}
+            </TabsContent>
 
-        {/* Trends */}
-        <TabsContent value="trends" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Mention Trends</CardTitle>
-              <CardDescription>Track mentions and sentiment over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading trends...</div>
-              ) : trends.length > 0 ? (
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={trends}>
-                      <XAxis dataKey="name" stroke="#888888" fontSize={12} />
-                      <YAxis stroke="#888888" fontSize={12} />
-                      <Tooltip
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            return (
-                              <div className="rounded-lg border bg-background p-3 shadow-md">
-                                <p className="font-semibold mb-2">{payload[0].payload.name}</p>
-                                <div className="space-y-1">
-                                  <p className="text-sm text-green-600">
-                                    Positive: {payload.find((p) => p.dataKey === "positive")?.value}
-                                  </p>
-                                  <p className="text-sm text-blue-600">
-                                    Neutral: {payload.find((p) => p.dataKey === "neutral")?.value}
-                                  </p>
-                                  <p className="text-sm text-red-600">
-                                    Negative: {payload.find((p) => p.dataKey === "negative")?.value}
-                                  </p>
-                                  <p className="text-sm font-semibold mt-1">
-                                    Total: {payload.find((p) => p.dataKey === "mentions")?.value}
-                                  </p>
-                                </div>
-                              </div>
-                            )
-                          }
-                          return null
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="positive"
-                        stackId="1"
-                        stroke="rgb(34, 197, 94)"
-                        fill="rgb(34, 197, 94)"
-                        fillOpacity={0.6}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="neutral"
-                        stackId="1"
-                        stroke="rgb(59, 130, 246)"
-                        fill="rgb(59, 130, 246)"
-                        fillOpacity={0.6}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="negative"
-                        stackId="1"
-                        stroke="rgb(239, 68, 68)"
-                        fill="rgb(239, 68, 68)"
-                        fillOpacity={0.6}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No trend data available yet.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="negative" className="space-y-3">
+              {recentMentions
+                .filter((m) => m.sentiment === "negative")
+                .map((mention) => (
+                  <div key={mention.id} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
+                    <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
+                      {platformIcons[mention.platform]}
+                    </span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm">{mention.author}</span>
+                        <Badge variant="secondary" className="bg-destructive/20 text-destructive">
+                          negative
+                        </Badge>
+                        <span className="text-xs text-muted-foreground ml-auto">{mention.timestamp}</span>
+                      </div>
+                      <p className="text-sm">{mention.content}</p>
+                    </div>
+                  </div>
+                ))}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   )
 }

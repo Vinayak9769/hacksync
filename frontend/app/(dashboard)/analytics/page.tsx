@@ -18,7 +18,7 @@ import {
   Pie,
   Cell,
 } from "recharts"
-import { Users, Eye, Heart, MessageSquare, TrendingUp, TrendingDown, Download, ExternalLink, Share2, Repeat2, Bookmark, ArrowUpRight } from "lucide-react"
+import { Users, Eye, Heart, MessageSquare, TrendingUp, TrendingDown, Download, ExternalLink } from "lucide-react"
 import { API_FETCH_OPTIONS, API_URL } from "@/lib/api-config"
 
 type EngagementPoint = {
@@ -145,11 +145,11 @@ const releventInfluencers = [
 ];
 
 const influencerBadgeGradients = [
-  "from-rose-200/80 to-orange-200/80",
-  "from-sky-200/80 to-cyan-200/80",
-  "from-emerald-200/80 to-lime-200/80",
-  "from-violet-200/80 to-fuchsia-200/80",
-  "from-amber-200/80 to-pink-200/80",
+  "from-rose-500/80 to-orange-400/70",
+  "from-sky-500/80 to-cyan-400/70",
+  "from-emerald-500/80 to-lime-400/70",
+  "from-violet-500/80 to-fuchsia-400/70",
+  "from-amber-500/80 to-pink-400/70",
 ]
 
 const getInitials = (name: string) =>
@@ -184,61 +184,31 @@ const COLORS = [
 const topPosts = [
   {
     id: 1,
-    content: "Ettara Coffee House — Where every cup tells a story. ☕✨ Our signature blend crafted with love, served with warmth.",
+    content: "Ettara Coffee House — Where every cup tells a story.",
     platform: "instagram",
-    likes: 2847,
-    comments: 156,
-    shares: 89,
-    saves: 421,
-    reach: 18500,
-    impressions: 24300,
-    engagementRate: 18.9,
-    timestamp: "2 days ago",
-    trend: "up",
-    compareAvg: 245,
+    engagement: 2,
+    reach: 50,
   },
   {
     id: 2,
-    content: "Sip the moment at Ettara ☕ Fresh roasts, cozy vibes, and conversations that matter. Join us today!",
+    content: "Sip the moment at Ettara",
     platform: "Twitter/X",
-    likes: 1523,
-    comments: 87,
-    shares: 234,
-    saves: 0,
-    reach: 12400,
-    impressions: 16800,
-    engagementRate: 14.8,
-    timestamp: "3 days ago",
-    trend: "up",
-    compareAvg: 180,
+    engagement: 1,
+    reach: 32,
   },
   {
     id: 3,
-    content: "Your daily coffee, the Ettara way. Behind the scenes of our brewing process 🎥",
+    content: "Your daily coffee, the Ettara way.",
     platform: "instagram",
-    likes: 1891,
-    comments: 92,
-    shares: 45,
-    saves: 312,
-    reach: 14200,
-    impressions: 19600,
-    engagementRate: 16.2,
-    timestamp: "5 days ago",
-    trend: "stable",
-    compareAvg: 165,
+    engagement: 1,
+    reach: 28,
   },
 ];
 
-const platformIcons: Record<string, JSX.Element> = {
-  instagram: <span className="text-pink-500">📷</span>,
-  "Twitter/X": <span className="font-bold">𝕏</span>,
-  linkedin: <span className="text-blue-600 font-semibold text-[10px]">in</span>,
-}
-
-const platformColors: Record<string, string> = {
-  instagram: "from-pink-500/10 to-purple-500/10 border-pink-500/20",
-  "Twitter/X": "from-slate-500/10 to-slate-600/10 border-slate-500/20",
-  linkedin: "from-blue-500/10 to-blue-600/10 border-blue-500/20",
+const platformIcons: Record<string, string> = {
+  instagram: "📷",
+  twitter: "𝕏",
+  linkedin: "in",
 }
 
 export default function AnalyticsPage() {
@@ -642,7 +612,7 @@ export default function AnalyticsPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          className={`flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br text-base font-semibold text-white ${
+                          className={`flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br text-base font-semibold text-white shadow-lg shadow-black/20 ${
                             influencerBadgeGradients[
                               index % influencerBadgeGradients.length
                             ]
@@ -685,119 +655,40 @@ export default function AnalyticsPage() {
             {/* Top Performing Posts */}
             <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="text-base">
                   Top Performing Posts
-                  <TrendingUp className="h-4 w-4 text-primary" />
                 </CardTitle>
                 <CardDescription>Your best content this period</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {topPosts.map((post, index) => (
                     <div
                       key={post.id}
-                      className={`group relative overflow-hidden rounded-xl border bg-gradient-to-br p-4 transition-all hover:shadow-md ${
-                        platformColors[post.platform]
-                      }`}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50"
                     >
-                      {/* Rank Badge */}
-                      <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-gradient-to-br from-primary/5 to-primary/10" />
-                      <div className="relative">
-                        {/* Header */}
-                        <div className="mb-3 flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background/80 shadow-sm">
-                              <span className="text-sm font-bold text-primary">
-                                {index + 1}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-background/60">
-                                {platformIcons[post.platform]}
-                              </div>
-                              <span className="text-xs font-medium text-muted-foreground">
-                                {post.platform}
-                              </span>
-                              <span className="text-xs text-muted-foreground/60">•</span>
-                              <span className="text-xs text-muted-foreground/80">
-                                {post.timestamp}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Engagement Rate Badge */}
-                          <div className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1">
-                            {post.trend === "up" ? (
-                              <TrendingUp className="h-3 w-3 text-green-600" />
-                            ) : (
-                              <TrendingDown className="h-3 w-3 text-orange-600" />
-                            )}
-                            <span className="text-xs font-semibold text-primary">
-                              {post.engagementRate}%
-                            </span>
-                          </div>
+                      <span className="text-lg font-bold text-muted-foreground">
+                        #{index + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="flex h-5 w-5 items-center justify-center rounded bg-background text-xs">
+                            {platformIcons[post.platform]}
+                          </span>
+                          <span className="text-xs text-muted-foreground capitalize">
+                            {post.platform}
+                          </span>
                         </div>
-
-                        {/* Content */}
-                        <p className="mb-3 text-sm leading-relaxed text-foreground/90 line-clamp-2">
-                          {post.content}
-                        </p>
-
-                        {/* Metrics Grid */}
-                        <div className="mb-3 grid grid-cols-4 gap-2 rounded-lg bg-background/40 p-2">
-                          <div className="text-center">
-                            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-                              <Heart className="h-3 w-3" />
-                            </div>
-                            <p className="mt-0.5 text-xs font-semibold">
-                              {post.likes.toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="text-center">
-                            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-                              <MessageSquare className="h-3 w-3" />
-                            </div>
-                            <p className="mt-0.5 text-xs font-semibold">
-                              {post.comments.toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="text-center">
-                            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-                              <Share2 className="h-3 w-3" />
-                            </div>
-                            <p className="mt-0.5 text-xs font-semibold">
-                              {post.shares.toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="text-center">
-                            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-                              <Eye className="h-3 w-3" />
-                            </div>
-                            <p className="mt-0.5 text-xs font-semibold">
-                              {(post.reach / 1000).toFixed(1)}k
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Performance Indicator */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <ArrowUpRight className="h-3 w-3 text-green-600" />
-                            <span>
-                              <span className="font-semibold text-green-600">
-                                {post.compareAvg}%
-                              </span>{" "}
-                              above average
-                            </span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 gap-1 text-xs opacity-0 transition-opacity group-hover:opacity-100"
-                          >
-                            View Post
-                            <ExternalLink className="h-3 w-3" />
-                          </Button>
+                        <p className="text-sm truncate">{post.content}</p>
+                        <div className="flex items-center gap-4 mt-2">
+                          <span className="text-xs text-muted-foreground">
+                            <Heart className="h-3 w-3 inline mr-1" />
+                            {post.engagement.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            <Eye className="h-3 w-3 inline mr-1" />
+                            {post.reach.toLocaleString()}
+                          </span>
                         </div>
                       </div>
                     </div>
