@@ -150,10 +150,10 @@ export default function InboxPage() {
     <div className="p-6 h-[calc(100vh-3.5rem)] flex flex-col">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Inbox</h1>
-        <p className="text-muted-foreground">Manage all your messages, mentions, and comments in one place</p>
+        <p className="text-muted-foreground">Manage all your messages, mentions, and comments</p>
       </div>
 
-      <div className="flex-1 grid grid-cols-12 gap-6 min-h-0">
+      <div className="flex-1 grid grid-cols-12 gap-5 min-h-0">
         {/* Sidebar */}
         <div className="col-span-12 md:col-span-3 lg:col-span-2">
           <Card className="bg-card border-border p-3">

@@ -29,18 +29,18 @@ export function InboxSidebar({ activeFilter, onFilterChange, counts }: InboxSide
   ]
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-0">
       {filters.map((filter) => (
         <Button
           key={filter.id}
           variant={activeFilter === filter.id ? "secondary" : "ghost"}
-          className={cn("w-full justify-start", activeFilter === filter.id && "bg-secondary")}
+          className={cn("w-full justify-start relative", activeFilter === filter.id && "bg-secondary")}
           onClick={() => onFilterChange(filter.id)}
         >
           <filter.icon className="h-4 w-4 mr-2" />
           <span className="flex-1 text-left">{filter.label}</span>
           {filter.count > 0 && (
-            <Badge variant="secondary" className="ml-auto bg-primary/20 text-primary">
+            <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary absolute -left-3 -top-1">
               {filter.count}
             </Badge>
           )}

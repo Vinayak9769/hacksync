@@ -1,6 +1,7 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useCommandMenu } from "@/components/command-menu-provider"
 import {
   Home,
   PenSquare,
@@ -61,7 +62,11 @@ const engageNavItems = [
 
 const analyzeNavItems = [
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
+<<<<<<< HEAD
   { title: "Competitor Analysis", href: "/competitor-analysis", icon: EyeIcon },
+=======
+  { title: "Competitor Analysis", href: "/competitor-analysis", icon: Eye },
+>>>>>>> 4793630 (qq)
   { title: "Ads Manager", href: "/ads", icon: Megaphone },
   { title: "Anti-Campaign", href: "/anti-campaign", icon: AlertTriangle },
 ]
@@ -76,6 +81,7 @@ const manageNavItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { setOpen } = useCommandMenu()
 
   return (
     <Sidebar>
@@ -87,11 +93,16 @@ export function AppSidebar() {
           <span className="text-lg font-semibold">SocialNest</span>
         </div>
         <div className="px-2 pb-2">
-          <Button variant="outline" size="sm" className="w-full justify-start gap-2 bg-transparent">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2 bg-transparent"
+            onClick={() => setOpen(true)}
+          >
             <Search className="h-4 w-4" />
             <span className="text-muted-foreground">Search...</span>
             <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium text-muted-foreground sm:flex">
-              ⌘K
+              <span className="text-[10px] translate-y-[0.5px] translate-x-[1px]">⌘</span>K
             </kbd>
           </Button>
         </div>
@@ -118,7 +129,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Ai Studio</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {aiStudioNavItems.map((item) => (
+              {aiSidebarItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={pathname === item.href}>
                     <Link href={item.href}>
@@ -131,7 +142,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
         <SidebarGroup>
           <SidebarGroupLabel>Engage</SidebarGroupLabel>
           <SidebarGroupContent>

@@ -31,17 +31,16 @@ interface TeamMember {
 }
 
 const teamMembers: TeamMember[] = [
-  { id: "1", name: "John Doe", email: "john@example.com", role: "admin", status: "active", lastActive: "Just now" },
-  { id: "2", name: "Jane Smith", email: "jane@example.com", role: "editor", status: "active", lastActive: "2h ago" },
+  { id: "1", name: "Yanshuman Yadav", email: "yanshuman.yadav@gmail.com", role: "admin", status: "active", lastActive: "Just now" },
+  { id: "2", name: "Vaibhav Sharma", email: "vaiibhav@gmail.com", role: "editor", status: "active", lastActive: "Just Now" },
   {
     id: "3",
-    name: "Mike Johnson",
-    email: "mike@example.com",
+    name: "Vinayak Mohanty",
+    email: "vinayak.mohanty@gmail.com",
     role: "editor",
     status: "active",
-    lastActive: "1 day ago",
   },
-  { id: "4", name: "Sarah Williams", email: "sarah@example.com", role: "viewer", status: "pending" },
+  { id: "4", name: "Devansh Nair", email: "devansh.nair@gmail.com", role: "viewer", status: "active" },
 ]
 
 const rolePermissions = {
