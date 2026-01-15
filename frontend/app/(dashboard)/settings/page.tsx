@@ -22,37 +22,8 @@ export default function SettingsPage() {
   const [isDisconnectingTwitter, setIsDisconnectingTwitter] = useState(false)
 
   useEffect(() => {
-    // Check if user just connected Twitter
-    const justConnected = localStorage.getItem('twitterJustConnected')
-    if (justConnected) {
-      localStorage.removeItem('twitterJustConnected')
-      // Wait a bit for session to be fully established
-      setTimeout(() => {
-        checkTwitterConnection()
-      }, 500)
-    } else {
-      checkTwitterConnection()
-    }
-
-    // Refresh status when window gains focus (user returns from Twitter auth)
-    const handleFocus = () => {
-      checkTwitterConnection()
-    }
-
-    // Also check when page becomes visible
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        checkTwitterConnection()
-      }
-    }
-
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
+    // Only check Twitter connection once on mount
+    checkTwitterConnection()
   }, [])
 
   const checkTwitterConnection = async () => {

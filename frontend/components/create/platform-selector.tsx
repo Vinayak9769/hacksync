@@ -80,7 +80,6 @@ const initialPlatforms: Platform[] = [
   { id: "instagram", name: "Instagram", icon: Instagram(), connected: true, charLimit: 2200 },
   { id: "twitter", name: "Twitter/X", icon: X(), connected: true, charLimit: 280 },
   { id: "reddit", name: "Reddit", icon: redditSvg, connected: true, charLimit: 40000 },
-  // { id: "linkedin", name: "LinkedIn", icon: <Linkedin />, connected: true, charLimit: 3000 },
   { id: "facebook", name: "Facebook", icon: Facebook(), connected: true, charLimit: 63206 },
   { id: "bluesky", name: "Bluesky", icon: BlueSky(), connected: false, charLimit: 300 },
 ]
@@ -93,39 +92,8 @@ interface PlatformSelectorProps {
 export function PlatformSelector({ selectedPlatforms, onPlatformToggle }: PlatformSelectorProps) {
   const [platforms, setPlatforms] = useState<Platform[]>(initialPlatforms)
 
-  useEffect(() => {
-    checkTwitterConnection()
-
-    // Add event listener to refresh when window gains focus
-    const handleFocus = () => {
-      checkTwitterConnection()
-    }
-
-    window.addEventListener('focus', handleFocus)
-
-    return () => {
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [])
-
-  const checkTwitterConnection = async () => {
-    try {
-      const response = await fetch(API_ENDPOINTS.twitter.status, {
-        ...API_FETCH_OPTIONS
-      })
-      const data = await response.json()
-
-      if (data.connected) {
-        setPlatforms(prev =>
-          prev.map(p =>
-            p.id === 'twitter' ? { ...p, connected: true } : p
-          )
-        )
-      }
-    } catch (error) {
-      console.error('Error checking Twitter connection:', error)
-    }
-  }
+  // Twitter is already set as connected by default
+  // No need to poll the status endpoint repeatedly
 
   return (
     <div className="space-y-3">
