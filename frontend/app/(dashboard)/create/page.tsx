@@ -241,9 +241,6 @@ export default function CreatePage() {
               <PlatformSelector selectedPlatforms={selectedPlatforms} onPlatformToggle={handlePlatformToggle} />
 
               <MediaUploader files={mediaFiles} onFilesChange={setMediaFiles} />
-
-              <MediaUrlInput onUrlAdd={handleUrlAdd} />
-
               {selectedPlatforms.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Select at least one platform to start creating your post
@@ -299,10 +296,9 @@ export default function CreatePage() {
           </Card>
         </div>
 
+        <div className="flex flex-col gap-6">
           <PostPreview selectedPlatforms={selectedPlatforms} captions={captions} media={mediaFiles} redditData={redditData} />
         {/* Right Column - Preview & Schedule */}
-      </div>
-
           <SchedulePicker
             publishType={publishType}
             onPublishTypeChange={setPublishType}
@@ -311,7 +307,8 @@ export default function CreatePage() {
             scheduledTime={scheduledTime}
             onTimeChange={setScheduledTime}
           />
-
+        </div>
+      </div>
     </div>
   )
 }

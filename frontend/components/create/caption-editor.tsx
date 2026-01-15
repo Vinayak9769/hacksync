@@ -140,7 +140,7 @@ export function CaptionEditor({
               </div>
 
               <Tabs defaultValue="improve" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-secondary">
+                <TabsList className="grid w-full grid-cols-3 bg-secondary">
                   <TabsTrigger value="improve" className="text-xs">
                     Improve
                   </TabsTrigger>
@@ -149,9 +149,6 @@ export function CaptionEditor({
                   </TabsTrigger>
                   <TabsTrigger value="hashtags" className="text-xs">
                     Tags
-                  </TabsTrigger>
-                  <TabsTrigger value="timing" className="text-xs">
-                    Timing
                   </TabsTrigger>
                 </TabsList>
 
