@@ -8,12 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlatformSelector, platforms } from "@/components/create/platform-selector"
 import { CaptionEditor } from "@/components/create/caption-editor"
 import { MediaUploader, type MediaFile } from "@/components/create/media-uploader"
-<<<<<<< HEAD
 import { MediaUrlInput } from "@/components/create/media-url-input"
 import { AIToolsPanel } from "@/components/create/ai-tools-panel"
-=======
 
->>>>>>> 0dece71 (hg)
 import { SchedulePicker } from "@/components/create/schedule-picker"
 import { PostPreview } from "@/components/create/post-preview"
 import { Send, Save, Loader2 } from "lucide-react"
@@ -68,8 +65,7 @@ export default function CreatePage() {
     }
 
     setIsPublishing(true)
-<<<<<<< HEAD
-    
+
     try {
       if (publishType === "now") {
         // Get media URLs
@@ -96,7 +92,7 @@ export default function CreatePage() {
                 mediaUrl: mediaUrls[platform]
               }
             })
-            
+
             console.log(`✅ Successfully posted to ${platform}:`, result)
             results.push({ platform, success: true, result })
           } catch (error: any) {
@@ -142,7 +138,8 @@ export default function CreatePage() {
       toast({
         title: "Error",
         description: error.message || "Failed to publish post. Please try again.",
-=======
+      })
+    }
 
     try {
       // Check if user is connected to Twitter
@@ -204,7 +201,6 @@ export default function CreatePage() {
       toast({
         title: "Error",
         description: error.message || "Failed to connect to server",
->>>>>>> 0dece71 (hg)
         variant: "destructive"
       })
     } finally {
@@ -254,7 +250,7 @@ export default function CreatePage() {
               <PlatformSelector selectedPlatforms={selectedPlatforms} onPlatformToggle={handlePlatformToggle} />
 
               <MediaUploader files={mediaFiles} onFilesChange={setMediaFiles} />
-              
+
               <MediaUrlInput onUrlAdd={handleUrlAdd} />
 
               {selectedPlatforms.length > 0 ? (
