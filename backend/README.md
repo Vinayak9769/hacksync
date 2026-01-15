@@ -11,6 +11,7 @@ A TypeScript-based Express.js application that creates an intelligent **real-tim
 - 🎙️ Speech recognition with Deepgram
 - 🧠 Intelligent responses powered by Google Gemini
 - 📞 Twilio Media Streams for low-latency audio
+- 🎬 Veo 3 video generation endpoints (prompt tuning + video output)
 - 🚀 Express.js REST API
 - 📝 TypeScript for type safety
 - ✅ Health check endpoint
@@ -123,6 +124,12 @@ curl -X POST http://localhost:3000/api/make-call \
     "to": "+1234567890"
   }'
 ```
+
+### POST /api/veo/tune
+Return a tuned Veo 3 prompt based on user details.
+
+### POST /api/veo/generate
+Generate a video with Veo 3 using the tuned prompt and video settings.
 
 Or use the convenient script:
 ```bash

@@ -122,7 +122,10 @@ class RedditController {
             }
 
             const result = await redditService.getSubredditPosts(subreddit, options);
+            console.log(result);
             res.json(result);
+
+            
         } catch (error: any) {
             console.error('Error in getSubredditPosts:', error);
             res.status(500).json({
@@ -196,7 +199,7 @@ class RedditController {
 
             const result = await redditService.getSubredditEngagement(subreddit, options);
             res.json(result);
-            
+
         } catch (error: any) {
             console.error('Error in getSubredditEngagement:', error);
             res.status(500).json({

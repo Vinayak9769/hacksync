@@ -8,6 +8,8 @@ import { WebSocketServer } from "ws";
 import session from "express-session";
 import { setRoutes } from "./routes/index";
 import { handleMediaStream } from "./services/mediaStreamHandler";
+import path from "path";
+
 
 dotenv.config();
 
@@ -84,64 +86,35 @@ async function startServer() {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
 
-    // Session middleware - MUST be before routes
-    const isProduction = process.env.NODE_ENV === "production";
-    const frontendUrl =
-        process.env.FRONTEND_URL || "https://b0x456pd-8000.inc1.devtunnels.ms";
-    const isFrontendHttps = frontendUrl.startsWith("https://");
-    const useSecureCookies =
-        process.env.USE_SECURE_COOKIES === "true" ||
-        isProduction ||
-        isFrontendHttps;
+  app.use("/media", express.static(path.resolve(process.cwd(), "public")));
+  // Simple request logger + safety-net CORS headers for credentialed requests
+  app.use((req, res, next) => {
+    const existingOriginHeader = res.getHeader('Access-Control-Allow-Origin');
+    if (!existingOriginHeader) {
+      const configuredOrigin = process.env.ALLOWED_ORIGIN || req.headers.origin || '*';
+      res.setHeader('Access-Control-Allow-Origin', configuredOrigin);
+      if (configuredOrigin !== '*') {
+        res.setHeader('Vary', 'Origin');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+      }
+    }
 
-    console.log("=== SESSION CONFIGURATION ===");
-    console.log("Environment:", process.env.NODE_ENV || "development");
-    console.log("Frontend URL:", frontendUrl);
-    console.log("Frontend is HTTPS:", isFrontendHttps);
-    console.log("Secure cookies:", useSecureCookies);
-    console.log(
-        "Session secret:",
-        process.env.SESSION_SECRET ? "SET" : "NOT SET",
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization, ngrok-skip-browser-warning'
     );
 
-    app.use(
-        session({
-            secret: process.env.SESSION_SECRET || "your-secret-key-change-this",
-            resave: false,
-            saveUninitialized: true,
-            cookie: {
-                secure: useSecureCookies, // Auto-detect based on frontend URL
-                httpOnly: true,
-                sameSite: useSecureCookies ? "none" : "lax", // Use 'none' for cross-site HTTPS
-                maxAge: 24 * 60 * 60 * 1000, // 24 hours
-                path: "/",
-                domain: undefined, // Don't set domain to work with both localhost and ngrok
-            },
-            proxy: true,
-            rolling: true, // Extend session on each request
-        }),
-    );
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
 
-    // Debug middleware - log session info for every request
-    app.use((req: any, res, next) => {
-        console.log(
-            `\n[${new Date().toISOString()}] ${req.method} ${req.path}`,
-        );
-        console.log("Session ID:", req.sessionID);
-        console.log("Cookie header:", req.headers.cookie);
-        console.log("Has Twitter token:", !!req.session?.twitterAccessToken);
-        next();
+    const start = Date.now();
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      console.log(`${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`);
     });
-
-    // Logging middleware
-    app.use((req, res, next) => {
-        const start = Date.now();
-        res.on("finish", () => {
-            const duration = Date.now() - start;
-            console.log(
-                `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`,
-            );
-        });
 
         next();
     });

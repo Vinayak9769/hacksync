@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Search,
   Palette,
+  Video,
   Target,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,7 @@ const mainNavItems = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Create", href: "/create", icon: PenSquare },
   { title: "Canvas Studio", href: "/canvas", icon: Palette },
+  { title: "Veo Studio", href: "/veo", icon: Video },
   { title: "Calendar", href: "/calendar", icon: Calendar },
   { title: "Media Library", href: "/media", icon: ImageIcon },
   { title: "NestGPT", href: "/ai", icon: Sparkles },

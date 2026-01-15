@@ -251,66 +251,84 @@ class RedditService {
         const postsResult = await this.getSubredditPosts(subredditName, { limit, sort });
         const posts = Array.isArray(postsResult.posts) ? postsResult.posts : [];
 
-        const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-        const bucketMap = new Map<string, {
-            date: string;
-            label: string;
-            posts: Array<{
-                id: string;
-                title: string;
-                author: string;
-                createdAt: string;
-                permalink: string;
-                score: number;
-                numComments: number;
-            }>;
-        }>();
+        const computeTimeline = (cutoff?: number) => {
+            const bucketMap = new Map<string, {
+                date: string;
+                label: string;
+                posts: Array<{
+                    id: string;
+                    title: string;
+                    author: string;
+                    createdAt: string;
+                    permalink: string;
+                    score: number;
+                    numComments: number;
+                }>;
+            }>();
 
-        posts.forEach((post: any) => {
-            const timestamp = post.created ? new Date(post.created).getTime() : Date.now();
-            if (Number.isNaN(timestamp) || timestamp < cutoff) {
-                return;
-            }
+            posts.forEach((post: any) => {
+                const timestamp = post.created ? new Date(post.created).getTime() : Date.now();
+                if (Number.isNaN(timestamp)) {
+                    return;
+                }
+                if (cutoff && timestamp < cutoff) {
+                    return;
+                }
 
-            const dateIso = new Date(timestamp).toISOString().split('T')[0];
-            const label = new Date(timestamp).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-            });
-
-            if (!bucketMap.has(dateIso)) {
-                bucketMap.set(dateIso, {
-                    date: dateIso,
-                    label,
-                    posts: [],
+                const date = new Date(timestamp);
+                const dateIso = date.toISOString().split('T')[0];
+                const label = date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
                 });
-            }
 
-            bucketMap.get(dateIso)!.posts.push({
-                id: post.id,
-                title: post.title,
-                author: post.author,
-                createdAt: post.created,
-                permalink: post.permalink,
-                score: post.score,
-                numComments: post.numComments,
+                if (!bucketMap.has(dateIso)) {
+                    bucketMap.set(dateIso, {
+                        date: dateIso,
+                        label,
+                        posts: [],
+                    });
+                }
+
+                bucketMap.get(dateIso)!.posts.push({
+                    id: post.id,
+                    title: post.title,
+                    author: post.author,
+                    createdAt: post.created,
+                    permalink: post.permalink,
+                    score: post.score,
+                    numComments: post.numComments,
+                });
             });
-        });
 
-        const timeline = Array.from(bucketMap.values()).sort((a, b) =>
-            a.date.localeCompare(b.date)
-        ).map(bucket => ({
-            date: bucket.date,
-            label: bucket.label,
-            postCount: bucket.posts.length,
-            posts: bucket.posts,
-        }));
+            return Array.from(bucketMap.values()).sort((a, b) =>
+                a.date.localeCompare(b.date)
+            ).map(bucket => ({
+                date: bucket.date,
+                label: bucket.label,
+                postCount: bucket.posts.length,
+                posts: bucket.posts,
+            }));
+        };
+
+        const cutoff = days && days > 0 ? Date.now() - days * 24 * 60 * 60 * 1000 : undefined;
+        let timeline = computeTimeline(cutoff);
+
+        // If the subreddit has been quiet recently, fall back to the raw dataset
+        if (!timeline.length) {
+            timeline = computeTimeline();
+        }
 
         return {
             success: true,
             subreddit: subredditName,
             totalPosts: timeline.reduce((sum, bucket) => sum + bucket.postCount, 0),
-            metadata: { limit, days, sort },
+            metadata: {
+                requestedDays: days,
+                effectiveDays: timeline.length ? timeline.length : 0,
+                limit,
+                sort,
+            },
             timeline,
         };
     }
