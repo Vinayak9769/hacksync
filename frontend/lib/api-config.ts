@@ -1,14 +1,14 @@
 // API Configuration
 const BACKEND_URL =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://b0x456pd-3000.inc1.devtunnels.ms";
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://toucan-driven-admittedly.ngrok-free.app";
 
 // Detect the current frontend URL (dev tunnel, localhost, etc.)
 const getFrontendUrl = () => {
-    if (typeof window !== "undefined") {
-        return window.location.origin;
-    }
-    return process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:8000";
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return "https://b0x456pd-8000.inc1.devtunnels.ms";
 };
 
 const FRONTEND_URL = getFrontendUrl();
@@ -23,31 +23,31 @@ console.log("Using Proxy:", USE_PROXY);
 
 // Helper function to get API URL
 const getApiUrl = (path: string) => {
-    if (USE_PROXY) {
-        // Use local proxy endpoint
-        return PROXY_URL + path.replace("/api", "");
-    }
-    return BACKEND_URL + path;
+  if (USE_PROXY) {
+    // Use local proxy endpoint
+    return PROXY_URL + path.replace("/api", "");
+  }
+  return BACKEND_URL + path;
 };
 
 // API Endpoints
 export const API_ENDPOINTS = {
-    twitter: {
-        status: getApiUrl("/api/twitter/status"),
-        // Auth must use direct backend URL for OAuth redirect
-        auth: BACKEND_URL + "/api/twitter/auth",
-        post: getApiUrl("/api/twitter/post"),
-        disconnect: getApiUrl("/api/twitter/disconnect"),
-    },
-    health: getApiUrl("/api/health"),
+  twitter: {
+    status: getApiUrl("/api/twitter/status"),
+    // Auth must use direct backend URL for OAuth redirect
+    auth: BACKEND_URL + "/api/twitter/auth",
+    post: getApiUrl("/api/twitter/post"),
+    disconnect: getApiUrl("/api/twitter/disconnect"),
+  },
+  health: getApiUrl("/api/health"),
 };
 
 // Default fetch options
 export const API_FETCH_OPTIONS: RequestInit = {
-    credentials: "include",
-    headers: {
-        "Content-Type": "application/json",
-    },
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json",
+  },
 };
 
 export { BACKEND_URL as API_URL, FRONTEND_URL };
