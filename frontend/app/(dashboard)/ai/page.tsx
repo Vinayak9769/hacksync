@@ -664,6 +664,13 @@ export default function AIPage() {
                 plan={marketingPlan}
                 brandName={collectedInfo.brandName}
                 campaignName={collectedInfo.campaignGoal ? `${collectedInfo.campaignGoal} Campaign` : undefined}
+                collectedInfo={collectedInfo}
+                onSave={() => {
+                  toast({
+                    title: "Plan Saved",
+                    description: "Marketing plan has been saved successfully.",
+                  })
+                }}
               />
             ) : (
               <p className="text-center text-muted-foreground py-8">No marketing plan created yet</p>

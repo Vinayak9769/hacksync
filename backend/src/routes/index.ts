@@ -10,6 +10,8 @@ import veoController from "../controllers/veoController";
 import strategistController from "../controllers/strategistController";
 import chatController from "../controllers/chatController";
 import nestgptController from "../controllers/nestgptController";
+import marketingPlanController from "../controllers/marketingPlanController";
+import antiCampaignController from "../controllers/antiCampaignController";
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -110,6 +112,15 @@ router.delete("/canvas/:id", canvasController.deleteCanvas);
 // Veo 3 video generation endpoints
 router.post("/veo/tune", veoController.tunePrompt);
 router.post("/veo/generate", veoController.generateVideo);
+
+// Marketing Plans endpoints
+router.post("/marketing-plans", marketingPlanController.savePlan);
+router.get("/marketing-plans", marketingPlanController.getAllPlans);
+router.get("/marketing-plans/:id", marketingPlanController.getPlan);
+router.delete("/marketing-plans/:id", marketingPlanController.deletePlan);
+
+// Anti-Campaign Generator endpoints
+router.post("/anti-campaign/analyze", antiCampaignController.analyzeCampaign);
 export const setRoutes = (app: Express): void => {
     // Session middleware is now configured in app.ts before routes
     app.use("/api", router);

@@ -18,19 +18,24 @@ import {
   Megaphone,
   CheckCircle2,
   Copy,
-  Check
+  Check,
+  Save
 } from "lucide-react"
 
 interface MarketingPlanViewerProps {
   plan: string
   brandName?: string
   campaignName?: string
+  onSave?: () => void
+  collectedInfo?: any
 }
 
-export function MarketingPlanViewer({ plan, brandName, campaignName }: MarketingPlanViewerProps) {
+export function MarketingPlanViewer({ plan, brandName, campaignName, onSave, collectedInfo }: MarketingPlanViewerProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const [isExporting, setIsExporting] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   const decodeEscapedUnicode = (value: string) => {
     return value
@@ -173,6 +178,39 @@ export function MarketingPlanViewer({ plan, brandName, campaignName }: Marketing
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const handleSave = async () => {
+    if (!onSave) return
+    
+    setIsSaving(true)
+    try {
+      const apiBase = typeof window !== 'undefined'
+        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api')
+        : ''
+      
+      const title = campaignName || `${brandName || 'Marketing'} Campaign Plan`
+      
+      await fetch(`${apiBase}/marketing-plans`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          plan,
+          brandName,
+          campaignName,
+          collectedInfo,
+        }),
+      })
+
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+      if (onSave) onSave()
+    } catch (error) {
+      console.error('Failed to save plan:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Action Bar */}
@@ -186,6 +224,26 @@ export function MarketingPlanViewer({ plan, brandName, campaignName }: Marketing
             {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
             {copied ? 'Copied!' : 'Copy'}
           </Button>
+          {onSave && (
+            <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving || saved}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  Saving...
+                </>
+              ) : saved ? (
+                <>
+                  <Check className="h-4 w-4 mr-1" />
+                  Saved!
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-1" />
+                  Save Plan
+                </>
+              )}
+            </Button>
+          )}
           <Button onClick={handleExportPDF} disabled={isExporting}>
             {isExporting ? (
               <>
