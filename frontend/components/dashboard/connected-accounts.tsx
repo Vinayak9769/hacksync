@@ -112,7 +112,7 @@ export function ConnectedAccounts() {
       icon: Instagram(),
       connected: false,
       followers: null,
-      status: "disconnected",
+      status: "active",
       comingSoon: true,
     },
     {
@@ -133,7 +133,7 @@ export function ConnectedAccounts() {
       icon: <Linkedin/>,
       connected: false,
       followers: null,
-      status: "disconnected",
+      status: "active",
       comingSoon: true,
     },
     {
@@ -155,78 +155,60 @@ export function ConnectedAccounts() {
   ]
 
   return (
-    <Card className="bg-card ">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Social Accounts</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3 -mt-2">
-          {socialPlatforms.map((platform) => (
-            <div key={platform.name} className="flex items-center justify-between p-2 rounded-lg bg-secondary/50">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 p-1.5 items-center justify-center rounded-md bg-background text-sm font-medium">
-                  {platform.icon}
-                </div>
-                <div>
-                  <p className="text-sm font-medium">{platform.name}</p>
-                  {platform.connected && platform.followers && (
-                    <p className="text-xs text-muted-foreground">{platform.followers}</p>
-                  )}
-                  {platform.comingSoon && (
-                    <p className="text-xs text-muted-foreground">Coming Soon</p>
-                  )}
-                </div>
-              </div>
+    // <Card className="bg-card ">
+    //   <CardHeader className="flex flex-row items-center justify-between">
+    //     <CardTitle className="text-base">Social Accounts</CardTitle>
+    //   </CardHeader>
+    //   <CardContent>
+    //     <div className="space-y-3 -mt-2">
+    //       {socialPlatforms.map((platform) => (
+    //         <div key={platform.name} className="flex items-center justify-between p-2 rounded-lg bg-secondary/50">
+    //           <div className="flex items-center gap-3">
+    //             <div className="flex h-8 w-8 p-1.5 items-center justify-center rounded-md bg-background text-sm font-medium">
+    //               {platform.icon}
+    //             </div>
+    //             <div>
+    //               <p className="text-sm font-medium">{platform.name}</p>
+                  
+    //             </div>
+    //           </div>
 
-              {platform.isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              ) : platform.connected ? (
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-success/20 text-success border-0">
-                    <Check className="h-3 w-3 mr-1" />
-                    Active
-                  </Badge>
-                  {platform.onDisconnect && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={platform.onDisconnect}
-                      disabled={platform.isDisconnecting}
-                      className="h-7 px-2 text-xs"
-                    >
-                      {platform.isDisconnecting ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        "Disconnect"
-                      )}
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={platform.onConnect}
-                  disabled={platform.comingSoon || platform.isConnecting}
-                >
-                  {platform.isConnecting ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Connecting...
-                    </>
-                  ) : (
-                    "Connect"
-                  )}
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
-        <Button variant="outline" size="sm" className="mt-6 bg-white border-border rounded-sm w-full">
-          <Plus className="h-4 w-4 mr-2" />
-          Connect more account
-        </Button>
-      </CardContent>
-    </Card>
+    //           {platform.isLoading ? (
+    //             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+    //           ) : platform.connected ? (
+    //             <div className="flex items-center gap-2">
+    //               <Badge variant="secondary" className="bg-success/20 text-success border-0">
+    //                 <Check className="h-3 w-3 mr-1" />
+    //                 Active
+    //               </Badge>
+                  
+    //             </div>
+    //           ) : (
+    //             <Button
+    //               variant="outline"
+    //               size="sm"
+    //               onClick={platform.onConnect}
+    //               disabled={platform.comingSoon || platform.isConnecting}
+    //             >
+    //               {platform.isConnecting ? (
+    //                 <>
+    //                   <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+    //                   Connecting...
+    //                 </>
+    //               ) : (
+    //                 "Connect"
+    //               )}
+    //             </Button>
+    //           )}
+    //         </div>
+    //       ))}
+    //     </div>
+    //     <Button variant="outline" size="sm" className="mt-6 bg-white border-border rounded-sm w-full">
+    //       <Plus className="h-4 w-4 mr-2" />
+    //       Connect more account
+    //     </Button>
+    //   </CardContent>
+    // </Card>
+    <></>
   )
 }
