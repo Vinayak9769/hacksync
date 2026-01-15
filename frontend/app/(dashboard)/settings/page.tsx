@@ -39,34 +39,10 @@ export default function SettingsPage() {
     }
   }
 
-  const handleTwitterConnect = async () => {
-    setIsConnectingTwitter(true)
-    try {
-      const response = await fetch(API_ENDPOINTS.twitter.auth, {
-        ...API_FETCH_OPTIONS
-      })
-      const data = await response.json()
-
-      if (data.success && data.authUrl) {
-        // Open Twitter OAuth in a popup or redirect
-        window.location.href = data.authUrl
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to initiate Twitter connection",
-          variant: "destructive"
-        })
-      }
-    } catch (error) {
-      console.error('Error connecting to Twitter:', error)
-      toast({
-        title: "Error",
-        description: "Failed to connect to Twitter",
-        variant: "destructive"
-      })
-    } finally {
-      setIsConnectingTwitter(false)
-    }
+  const handleTwitterConnect = () => {
+    // Redirect directly to backend auth endpoint
+    // This ensures the session cookie is set properly before Twitter redirects back
+    window.location.href = API_ENDPOINTS.twitter.auth
   }
 
   const handleTwitterDisconnect = async () => {

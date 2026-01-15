@@ -14,7 +14,7 @@ interface RequestWithSession extends Request {
 }
 
 class TwitterController {
-    // Step 1: Initiate OAuth flow
+    // Step 1: Initiate OAuth flow - now redirects directly instead of returning JSON
     async initiateAuth(req: RequestWithSession, res: Response): Promise<void> {
         try {
             const { url, codeVerifier, state } =
@@ -24,16 +24,30 @@ class TwitterController {
             req.session.twitterCodeVerifier = codeVerifier;
             req.session.twitterState = state;
 
-            res.json({
-                success: true,
-                authUrl: url,
+            // Save the session before redirecting
+            req.session.save((err) => {
+                if (err) {
+                    console.error("Session save error:", err);
+                    res.status(500).send("Failed to initialize authentication");
+                    return;
+                }
+
+                console.log("=== TWITTER AUTH INITIATED ===");
+                console.log("Session ID:", req.sessionID);
+                console.log("Stored state:", state);
+                console.log(
+                    "Stored codeVerifier:",
+                    codeVerifier?.substring(0, 10) + "...",
+                );
+                console.log("Auth URL:", url);
+                console.log("Session saved, redirecting to Twitter...");
+
+                // Redirect directly to Twitter OAuth page
+                res.redirect(url);
             });
         } catch (error: any) {
             console.error("Error initiating auth:", error);
-            res.status(500).json({
-                success: false,
-                error: error.message,
-            });
+            res.status(500).send(`Authentication error: ${error.message}`);
         }
     }
 
@@ -46,8 +60,22 @@ class TwitterController {
             const { code, state } = req.query;
             const { twitterCodeVerifier, twitterState } = req.session;
 
+            console.log("=== TWITTER CALLBACK RECEIVED ===");
+            console.log("Session ID:", req.sessionID);
+            console.log("Received state:", state);
+            console.log("Session state:", twitterState);
+            console.log("Received code:", code ? "present" : "missing");
+            console.log(
+                "Session codeVerifier:",
+                twitterCodeVerifier ? "present" : "missing",
+            );
+            console.log("Session keys:", Object.keys(req.session));
+
             // Verify state to prevent CSRF
             if (state !== twitterState) {
+                console.error("STATE MISMATCH!");
+                console.error("Expected:", twitterState);
+                console.error("Received:", state);
                 res.status(400).send("State mismatch. Possible CSRF attack.");
                 return;
             }

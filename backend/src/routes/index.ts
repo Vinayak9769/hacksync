@@ -1,16 +1,9 @@
-<<<<<<< HEAD
+
 import { Express, Router } from 'express';
 import conversationController from '../controllers/conversationController';
 import conversationalAIController from '../controllers/conversationalAIController';
 import redditController from '../controllers/redditController';
 import socialMediaController from '../controllers/socialMediaController';
-=======
-import { Express, Router } from "express";
-import session from "express-session";
-import conversationController from "../controllers/conversationController";
-import conversationalAIController from "../controllers/conversationalAIController";
-import twitterController from "../controllers/twitterController";
-import multer from "multer";
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -29,8 +22,6 @@ const upload = multer({
         }
     },
 });
->>>>>>> 0dece71 (hg)
-
 const router = Router();
 
 // Health check
@@ -48,10 +39,16 @@ router.post(
 );
 
 // Social Media Integration endpoints
-router.post('/social/post', socialMediaController.createPost);
-router.get('/social/facebook/validate', socialMediaController.validateFacebookToken);
-router.get('/social/facebook/page-info', socialMediaController.getFacebookPageInfo);
-router.get('/social/health', socialMediaController.healthCheck);
+router.post("/social/post", socialMediaController.createPost);
+router.get(
+    "/social/facebook/validate",
+    socialMediaController.validateFacebookToken,
+);
+router.get(
+    "/social/facebook/page-info",
+    socialMediaController.getFacebookPageInfo,
+);
+router.get("/social/health", socialMediaController.healthCheck);
 
 // NEW: Conversational AI endpoints (Deepgram + Gemini)
 router.post(
@@ -85,12 +82,14 @@ export const setRoutes = (app: Express): void => {
         session({
             secret: process.env.SESSION_SECRET || "your-secret-key-change-this",
             resave: false,
-            saveUninitialized: false,
+            saveUninitialized: true, // Changed to true to ensure session is created
             cookie: {
-                secure: process.env.NODE_ENV === "production",
+                secure: false, // Set to false to work with both HTTP and HTTPS during development
                 httpOnly: true,
+                sameSite: "lax", // Allow cookie to be sent on redirects from Twitter
                 maxAge: 24 * 60 * 60 * 1000, // 24 hours
             },
+            proxy: true, // Trust the reverse proxy (ngrok)
         }),
     );
 
@@ -98,12 +97,11 @@ export const setRoutes = (app: Express): void => {
 
     // Root endpoint
     app.get("/", (req, res) => {
-        res.json({
-<<<<<<< HEAD
-            message: 'SocialNest API - Conversational AI & Social Media Platform',
+        res.json({            message: 'SocialNest API - Conversational AI & Social Media Platform',
             features: {
-                conversational_ai: 'Real-time AI Conversation',
-                social_media: 'Multi-platform posting (Facebook, Instagram, Twitter, LinkedIn)'
+                conversational_ai: "Real-time AI Conversation",
+                social_media:
+                    "Multi-platform posting (Facebook, Instagram, Twitter, LinkedIn)",
             },
             tech_stack: {
                 speech_to_text: 'Deepgram',
@@ -126,27 +124,19 @@ export const setRoutes = (app: Express): void => {
                 getPosts: 'GET /api/reddit/posts/:subreddit?limit=25&sort=hot',
                 getComments: 'GET /api/reddit/comments/:postId?limit=50'
             }
-=======
-            message: "SocialNest API",
-            version: "1.0.0",
-            features: {
-                social_media: ["Twitter/X"],
-                conversational_ai: "Twilio + Deepgram + Gemini",
             },
             endpoints: {
                 health: "GET /api/health",
-                twitter: {
-                    connect: "GET /api/twitter/auth",
-                    status: "GET /api/twitter/status",
-                    post: "POST /api/twitter/post",
-                    disconnect: "POST /api/twitter/disconnect",
-                },
-                calls: {
-                    makeCall: 'POST /api/make-call { "to": "+1234567890" }',
-                    webhook: "POST /api/webhook/conversational",
-                },
+                social_health: "GET /api/social/health",
+                create_post: "POST /api/social/post",
+                validate_facebook: "GET /api/social/facebook/validate",
+                facebook_page_info: "GET /api/social/facebook/page-info",
+                makeCall: 'POST /api/make-call { "to": "+1234567890" }',
+                conversationalWebhook:
+                    "POST /api/webhook/conversational (for Twilio)",
+                mediaStream: "WS /media-stream (WebSocket for audio)",
             },
->>>>>>> 0dece71 (hg)
+            version: "1.0.0",
         });
     });
 };

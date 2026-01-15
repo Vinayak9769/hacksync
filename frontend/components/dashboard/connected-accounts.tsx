@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Check, Linkedin, Loader2 } from "lucide-react"
 import { BlueSky, Facebook, Instagram, X } from "../brand-icons"
-<<<<<<< HEAD
+import { useToast } from "@/hooks/use-toast"
 
 const socialPlatforms = [
   {
@@ -46,9 +46,6 @@ const socialPlatforms = [
     status: "disconnected",
   },
 ]
-=======
-import { useToast } from "@/hooks/use-toast"
->>>>>>> 0dece71 (hg)
 
 export function ConnectedAccounts() {
   const { toast } = useToast()
@@ -75,34 +72,10 @@ export function ConnectedAccounts() {
     }
   }
 
-  const handleTwitterConnect = async () => {
-    setIsConnectingTwitter(true)
-    try {
-      const response = await fetch(API_ENDPOINTS.twitter.auth, {
-        ...API_FETCH_OPTIONS
-      })
-      const data = await response.json()
-
-      if (data.success && data.authUrl) {
-        // Redirect to Twitter OAuth
-        window.location.href = data.authUrl
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to initiate Twitter connection",
-          variant: "destructive"
-        })
-        setIsConnectingTwitter(false)
-      }
-    } catch (error) {
-      console.error('Error connecting to Twitter:', error)
-      toast({
-        title: "Error",
-        description: "Failed to connect to Twitter",
-        variant: "destructive"
-      })
-      setIsConnectingTwitter(false)
-    }
+  const handleTwitterConnect = () => {
+    // Redirect directly to backend auth endpoint
+    // This ensures the session cookie is set properly before Twitter redirects back
+    window.location.href = API_ENDPOINTS.twitter.auth
   }
 
   const handleTwitterDisconnect = async () => {
