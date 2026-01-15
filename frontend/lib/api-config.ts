@@ -1,23 +1,53 @@
 // API Configuration
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://toucan-driven-admittedly.ngrok-free.app';
+const BACKEND_URL =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://toucan-driven-admittedly.ngrok-free.app";
+
+// Detect the current frontend URL (dev tunnel, localhost, etc.)
+const getFrontendUrl = () => {
+    if (typeof window !== "undefined") {
+        return window.location.origin;
+    }
+    return process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:8000";
+};
+
+const FRONTEND_URL = getFrontendUrl();
+
+// Use proxy for API calls to avoid CORS/cookie issues
+const USE_PROXY = true;
+const PROXY_URL = "/api/proxy";
+
+console.log("Backend URL:", BACKEND_URL);
+console.log("Frontend URL:", FRONTEND_URL);
+console.log("Using Proxy:", USE_PROXY);
+
+// Helper function to get API URL
+const getApiUrl = (path: string) => {
+    if (USE_PROXY) {
+        // Use local proxy endpoint
+        return PROXY_URL + path.replace("/api", "");
+    }
+    return BACKEND_URL + path;
+};
 
 // API Endpoints
 export const API_ENDPOINTS = {
-  twitter: {
-    status: API_URL + '/api/twitter/status',
-    auth: API_URL + '/api/twitter/auth',
-    post: API_URL + '/api/twitter/post',
-    disconnect: API_URL + '/api/twitter/disconnect',
-  },
-  health: API_URL + '/api/health',
+    twitter: {
+        status: getApiUrl("/api/twitter/status"),
+        // Auth must use direct backend URL for OAuth redirect
+        auth: BACKEND_URL + "/api/twitter/auth",
+        post: getApiUrl("/api/twitter/post"),
+        disconnect: getApiUrl("/api/twitter/disconnect"),
+    },
+    health: getApiUrl("/api/health"),
 };
 
-// Default fetch options to bypass ngrok warning
+// Default fetch options
 export const API_FETCH_OPTIONS: RequestInit = {
-  credentials: 'include',
-  headers: {
-    'ngrok-skip-browser-warning': 'true',
-  },
+    credentials: "include",
+    headers: {
+        "Content-Type": "application/json",
+    },
 };
 
-export { API_URL };
+export { BACKEND_URL as API_URL, FRONTEND_URL };

@@ -1,7 +1,7 @@
 "use client"
 import { API_ENDPOINTS, API_FETCH_OPTIONS } from '@/lib/api-config'
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -20,7 +20,7 @@ import socialMediaAPI from "@/lib/social-media-api"
 
 export default function CreatePage() {
   const { toast } = useToast()
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["instagram", "twitter"])
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["facebook"])
   const [captions, setCaptions] = useState<Record<string, string>>({})
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
   const [redditData, setRedditData] = useState<RedditPostData>({
@@ -37,6 +37,26 @@ export default function CreatePage() {
   const [activeTab, setActiveTab] = useState<string>("")
   const isRedditSelected = selectedPlatforms.includes("reddit")
   const nonRedditPlatforms = selectedPlatforms.filter((platformId) => platformId !== "reddit")
+
+  useEffect(() => {
+    // Check Twitter connection and auto-select if connected
+    checkTwitterConnection()
+  }, [])
+
+  const checkTwitterConnection = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.twitter.status, {
+        ...API_FETCH_OPTIONS
+      })
+      const data = await response.json()
+
+      if (data.connected && !selectedPlatforms.includes('twitter')) {
+        setSelectedPlatforms(prev => [...prev, 'twitter'])
+      }
+    } catch (error) {
+      console.error('Error checking Twitter connection:', error)
+    }
+  }
 
   const handlePlatformToggle = useCallback((platformId: string) => {
     setSelectedPlatforms((prev) =>
@@ -68,189 +88,85 @@ export default function CreatePage() {
   )
 
   const handlePublish = async () => {
-    if (selectedPlatforms.length === 0) {
-      toast({
-        title: "No platform selected",
-        description: "Please select at least one platform to publish.",
-        variant: "destructive"
-      })
-      return
-    }
-
     setIsPublishing(true)
 
-    if (isRedditSelected) {
-      if (!redditData.title.trim()) {
-        toast({
-          title: "Reddit title required",
-          description: "Add a title before publishing to Reddit.",
-          variant: "destructive"
-        })
-        setIsPublishing(false)
-        return
-      }
-
-      if (redditData.type === "link" && !redditData.url?.trim()) {
-        toast({
-          title: "Reddit URL required",
-          description: "Link posts must include a valid URL.",
-          variant: "destructive"
-        })
-        setIsPublishing(false)
-        return
-      }
-    }
-
     try {
-      try {
-        if (publishType === "now") {
-          // Get media URLs
-          const mediaUrls: Record<string, string> = {}
-          if (mediaFiles.length > 0 && mediaFiles[0].url) {
-            selectedPlatforms.forEach((platform) => {
-              mediaUrls[platform] = mediaFiles[0].url!
-            })
-          }
-
-          // Post to each platform
-          const results: Array<{ platform: string; success: boolean; result?: any; error?: string }> = []
-          for (const platform of selectedPlatforms) {
-            try {
-              console.log(
-                `📤 Posting to ${platform}...`,
-                platform === "reddit"
-                  ? redditData
-                  : {
-                      caption: captions[platform] || "",
-                      mediaUrl: mediaUrls[platform] || "none"
-                    }
-              )
-
-              let result
-              if (platform === "reddit") {
-                result = await socialMediaAPI.postToReddit(redditData)
-              } else {
-                result = await socialMediaAPI.createPost({
-                  platform,
-                  content: {
-                    caption: captions[platform] || "",
-                    mediaUrl: mediaUrls[platform]
-                  }
-                })
-              }
-
-              console.log(`✅ Successfully posted to ${platform}:`, result)
-              results.push({ platform, success: true, result })
-            } catch (error: any) {
-              console.error(`❌ Failed to post to ${platform}:`, error)
-              results.push({ platform, success: false, error: error.message })
-            }
-          }
-
-          // Show results
-          const successCount = results.filter((r) => r.success).length
-          const failCount = results.length - successCount
-          const successPlatforms = results.filter((r) => r.success).map((r) => r.platform).join(", ")
-          const failedPlatforms = results.filter((r) => !r.success).map((r) => r.platform).join(", ")
-
-          if (successCount > 0 && failCount === 0) {
-            toast({
-              title: "Posts published! 🎉",
-              description: `Successfully posted to ${successPlatforms}`,
-            })
-          } else if (successCount > 0) {
-            toast({
-              title: "Partial success",
-              description: `Posted to ${successPlatforms}. Failed: ${failedPlatforms}`,
-              variant: "default"
-            })
-          } else {
-            toast({
-              title: "Publishing failed",
-              description: `Failed to post to ${failedPlatforms}. ${results[0]?.error || "Check console for details."}`,
-              variant: "destructive"
-            })
-          }
-        } else {
-          // Schedule for later (mock for now)
-          await new Promise((r) => setTimeout(r, 1000))
-          toast({
-            title: "Post scheduled! 📅",
-            description: `Your post will be published on ${scheduledDate?.toLocaleDateString()} at ${scheduledTime}.`,
+      if (publishType === "now") {
+        // Get media URLs
+        const mediaUrls: Record<string, string> = {}
+        if (mediaFiles.length > 0 && mediaFiles[0].url) {
+          selectedPlatforms.forEach(platform => {
+            mediaUrls[platform] = mediaFiles[0].url!
           })
         }
-      } catch (error: any) {
-        console.error("Error publishing post:", error)
-        toast({
-          title: "Error",
-          description: error.message || "Failed to publish post. Please try again.",
-        })
-      }
 
-      if (selectedPlatforms.includes("twitter")) {
-        try {
-          // Check if user is connected to Twitter
-          const statusResponse = await fetch(API_ENDPOINTS.twitter.status, {
-            ...API_FETCH_OPTIONS
-          })
-          const statusData = await statusResponse.json()
-
-          if (!statusData.connected) {
-            toast({
-              title: "Not connected to Twitter",
-              description: "Please connect your Twitter account first from Settings",
-              variant: "destructive"
+        // Post to each platform
+        const results = []
+        for (const platform of selectedPlatforms) {
+          try {
+            console.log(`📤 Posting to ${platform}...`, {
+              caption: captions[platform] || '',
+              mediaUrl: mediaUrls[platform] || 'none'
             })
-            return
-          }
 
-          const formData = new FormData()
-
-          // Add caption text
-          const twitterCaption = captions["twitter"] || ""
-          formData.append("text", twitterCaption)
-
-          // Add media files if any
-          if (mediaFiles.length > 0) {
-            for (const mediaFile of mediaFiles) {
-              if (mediaFile.file) {
-                formData.append("media", mediaFile.file)
+            const result = await socialMediaAPI.createPost({
+              platform,
+              content: {
+                caption: captions[platform] || '',
+                mediaUrl: mediaUrls[platform]
               }
-            }
-          }
-
-          // Call backend API
-          const response = await fetch(API_ENDPOINTS.twitter.post, {
-            method: "POST",
-            body: formData,
-            ...API_FETCH_OPTIONS
-          })
-
-          const result = await response.json()
-
-          if (result.success) {
-            toast({
-              title: "Posted to Twitter!",
-              description: "Your tweet has been published successfully.",
             })
-            // Clear the form
-            setCaptions((prev) => ({ ...prev, twitter: "" }))
-          } else {
-            toast({
-              title: "Failed to post",
-              description: result.error || "Something went wrong",
-              variant: "destructive"
-            })
+
+            console.log(`✅ Successfully posted to ${platform}:`, result)
+            results.push({ platform, success: true, result })
+          } catch (error: any) {
+            console.error(`❌ Failed to post to ${platform}:`, error)
+            results.push({ platform, success: false, error: error.message })
           }
-        } catch (error: any) {
-          console.error("Error publishing:", error)
+        }
+
+        // Show results
+        const successCount = results.filter(r => r.success).length
+        const failCount = results.length - successCount
+        const successPlatforms = results.filter(r => r.success).map(r => r.platform).join(', ')
+        const failedPlatforms = results.filter(r => !r.success).map(r => r.platform).join(', ')
+
+        if (successCount > 0 && failCount === 0) {
           toast({
-            title: "Error",
-            description: error.message || "Failed to connect to server",
+            title: "Posts published! 🎉",
+            description: `Successfully posted to ${successPlatforms}`,
+          })
+          // Clear the form
+          setCaptions({})
+          setMediaFiles([])
+        } else if (successCount > 0) {
+          toast({
+            title: "Partial success",
+            description: `Posted to ${successPlatforms}. Failed: ${failedPlatforms}`,
+            variant: "default"
+          })
+        } else {
+          toast({
+            title: "Publishing failed",
+            description: `Failed to post to ${failedPlatforms}. ${results[0]?.error || 'Check console for details.'}`,
             variant: "destructive"
           })
         }
+      } else {
+        // Schedule for later (mock for now)
+        await new Promise((r) => setTimeout(r, 1000))
+        toast({
+          title: "Post scheduled! 📅",
+          description: `Your post will be published on ${scheduledDate?.toLocaleDateString()} at ${scheduledTime}.`,
+        })
       }
+    } catch (error: any) {
+      console.error('Error publishing post:', error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to publish post. Please try again.",
+        variant: "destructive"
+      })
     } finally {
       setIsPublishing(false)
     }

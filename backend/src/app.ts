@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import mongoose from 'mongoose';
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
+import session from "express-session";
 import { setRoutes } from "./routes/index";
 import { handleMediaStream } from "./services/mediaStreamHandler";
 
@@ -36,10 +37,28 @@ async function startServer() {
 // Trust proxy - needed for ngrok and other reverse proxies
 app.set("trust proxy", 1);
 
-// CORS Configuration - Allow all origins with credentials
+// CORS Configuration - Allow specific origins with credentials
 app.use(
     cors({
-        origin: true, // This allows any origin and reflects it back
+        origin: (origin, callback) => {
+            // Allow requests with no origin (mobile apps, curl, etc)
+            if (!origin) return callback(null, true);
+
+            // Allow localhost, ngrok, and dev tunnels
+            const allowedOrigins = [
+                "http://localhost:8000",
+                "http://localhost:3000",
+                "https://toucan-driven-admittedly.ngrok-free.app",
+                "https://b0x456pd-4000.inc1.devtunnels.ms",
+                process.env.FRONTEND_URL,
+            ].filter(Boolean);
+
+            if (allowedOrigins.some((allowed) => origin.startsWith(allowed!))) {
+                callback(null, true);
+            } else {
+                callback(null, true); // Allow all for now, can restrict later
+            }
+        },
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: [
@@ -54,15 +73,51 @@ app.use(
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  // Simple request logger + CORS
-  app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    if (req.method === 'OPTIONS') {
-      res.sendStatus(204);
-      return;
-    }
+// Session middleware - MUST be before routes
+const isProduction = process.env.NODE_ENV === "production";
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:8000";
+const isFrontendHttps = frontendUrl.startsWith("https://");
+const useSecureCookies =
+    process.env.USE_SECURE_COOKIES === "true" ||
+    isProduction ||
+    isFrontendHttps;
+
+console.log("=== SESSION CONFIGURATION ===");
+console.log("Environment:", process.env.NODE_ENV || "development");
+console.log("Frontend URL:", frontendUrl);
+console.log("Frontend is HTTPS:", isFrontendHttps);
+console.log("Secure cookies:", useSecureCookies);
+console.log("Session secret:", process.env.SESSION_SECRET ? "SET" : "NOT SET");
+
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET || "your-secret-key-change-this",
+        resave: false,
+        saveUninitialized: true,
+        cookie: {
+            secure: useSecureCookies, // Auto-detect based on frontend URL
+            httpOnly: true,
+            sameSite: useSecureCookies ? "none" : "lax", // Use 'none' for cross-site HTTPS
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            path: "/",
+            domain: undefined, // Don't set domain to work with both localhost and ngrok
+        },
+        proxy: true,
+        rolling: true, // Extend session on each request
+    }),
+);
+
+// Debug middleware - log session info for every request
+app.use((req: any, res, next) => {
+    console.log(`\n[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    console.log("Session ID:", req.sessionID);
+    console.log("Cookie header:", req.headers.cookie);
+    console.log("Has Twitter token:", !!req.session?.twitterAccessToken);
+    next();
+});
+
+// Setup routes
+setRoutes(app);
 
     const start = Date.now();
     res.on('finish', () => {

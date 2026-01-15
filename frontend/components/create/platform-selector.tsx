@@ -3,9 +3,10 @@
 import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { BlueSky, Facebook, Instagram, X } from "../brand-icons"
 import { Linkedin } from "lucide-react"
+import { API_ENDPOINTS, API_FETCH_OPTIONS } from "@/lib/api-config"
 
 interface Platform {
   id: string
@@ -90,6 +91,42 @@ interface PlatformSelectorProps {
 }
 
 export function PlatformSelector({ selectedPlatforms, onPlatformToggle }: PlatformSelectorProps) {
+  const [platforms, setPlatforms] = useState<Platform[]>(initialPlatforms)
+
+  useEffect(() => {
+    checkTwitterConnection()
+
+    // Add event listener to refresh when window gains focus
+    const handleFocus = () => {
+      checkTwitterConnection()
+    }
+
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [])
+
+  const checkTwitterConnection = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.twitter.status, {
+        ...API_FETCH_OPTIONS
+      })
+      const data = await response.json()
+
+      if (data.connected) {
+        setPlatforms(prev =>
+          prev.map(p =>
+            p.id === 'twitter' ? { ...p, connected: true } : p
+          )
+        )
+      }
+    } catch (error) {
+      console.error('Error checking Twitter connection:', error)
+    }
+  }
+
   return (
     <div className="space-y-3">
       <Label className="text-sm font-medium">Publish to</Label>
@@ -123,5 +160,5 @@ export function PlatformSelector({ selectedPlatforms, onPlatformToggle }: Platfo
   )
 }
 
-export { platforms }
+export { initialPlatforms as platforms }
 export type { Platform }
