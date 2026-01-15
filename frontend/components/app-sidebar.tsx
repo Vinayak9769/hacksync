@@ -18,6 +18,8 @@ import {
   Search,
   Palette,
   MessageSquare,
+  Video,
+  Target,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -37,9 +39,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const mainNavItems = [
-  { title: "Dashboard", href: "/", icon: Home },
+  { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Create", href: "/create", icon: PenSquare },
   { title: "Canvas Studio", href: "/canvas", icon: Palette },
+  { title: "Veo Studio", href: "/veo", icon: Video },
   { title: "Calendar", href: "/calendar", icon: Calendar },
   { title: "Media Library", href: "/media", icon: ImageIcon },
   { title: "NestGPT", href: "/ai", icon: Sparkles },
@@ -52,6 +55,7 @@ const engageNavItems = [
 
 const analyzeNavItems = [
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
+  { title: "Competitor Analysis", href: "/competitor-analysis", icon: Target },
   { title: "Ads Manager", href: "/ads", icon: Megaphone },
 ]
 
