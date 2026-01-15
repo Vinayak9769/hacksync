@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PlatformSelector, platforms } from "@/components/create/platform-selector"
 import { CaptionEditor } from "@/components/create/caption-editor"
 import { MediaUploader, type MediaFile } from "@/components/create/media-uploader"
+import { MediaUrlInput } from "@/components/create/media-url-input"
 import { AIToolsPanel } from "@/components/create/ai-tools-panel"
 import { SchedulePicker } from "@/components/create/schedule-picker"
 import { PostPreview } from "@/components/create/post-preview"
 import { Send, Save, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import socialMediaAPI from "@/lib/social-media-api"
 
 export default function CreatePage() {
   const { toast } = useToast()
@@ -47,17 +49,99 @@ export default function CreatePage() {
     [selectedPlatforms],
   )
 
+  const handleUrlAdd = useCallback(
+    (url: string) => {
+      const newFile: MediaFile = {
+        id: Math.random().toString(36).substr(2, 9),
+        type: "image",
+        url: url,
+        name: url.split('/').pop() || 'image',
+      }
+      setMediaFiles((prev) => [...prev, newFile])
+    },
+    [],
+  )
+
   const handlePublish = async () => {
     setIsPublishing(true)
-    await new Promise((r) => setTimeout(r, 2000))
-    setIsPublishing(false)
-    toast({
-      title: publishType === "now" ? "Post published!" : "Post scheduled!",
-      description:
-        publishType === "now"
-          ? "Your post has been published to all selected platforms."
-          : `Your post will be published on ${scheduledDate?.toLocaleDateString()} at ${scheduledTime}.`,
-    })
+    
+    try {
+      if (publishType === "now") {
+        // Get media URLs
+        const mediaUrls: Record<string, string> = {}
+        if (mediaFiles.length > 0 && mediaFiles[0].url) {
+          selectedPlatforms.forEach(platform => {
+            mediaUrls[platform] = mediaFiles[0].url!
+          })
+        }
+
+        // Post to each platform
+        const results = []
+        for (const platform of selectedPlatforms) {
+          try {
+            console.log(`📤 Posting to ${platform}...`, {
+              caption: captions[platform] || '',
+              mediaUrl: mediaUrls[platform] || 'none'
+            })
+
+            const result = await socialMediaAPI.createPost({
+              platform,
+              content: {
+                caption: captions[platform] || '',
+                mediaUrl: mediaUrls[platform]
+              }
+            })
+            
+            console.log(`✅ Successfully posted to ${platform}:`, result)
+            results.push({ platform, success: true, result })
+          } catch (error: any) {
+            console.error(`❌ Failed to post to ${platform}:`, error)
+            results.push({ platform, success: false, error: error.message })
+          }
+        }
+
+        // Show results
+        const successCount = results.filter(r => r.success).length
+        const failCount = results.length - successCount
+        const successPlatforms = results.filter(r => r.success).map(r => r.platform).join(', ')
+        const failedPlatforms = results.filter(r => !r.success).map(r => r.platform).join(', ')
+
+        if (successCount > 0 && failCount === 0) {
+          toast({
+            title: "Posts published! 🎉",
+            description: `Successfully posted to ${successPlatforms}`,
+          })
+        } else if (successCount > 0) {
+          toast({
+            title: "Partial success",
+            description: `Posted to ${successPlatforms}. Failed: ${failedPlatforms}`,
+            variant: "default"
+          })
+        } else {
+          toast({
+            title: "Publishing failed",
+            description: `Failed to post to ${failedPlatforms}. ${results[0]?.error || 'Check console for details.'}`,
+            variant: "destructive"
+          })
+        }
+      } else {
+        // Schedule for later (mock for now)
+        await new Promise((r) => setTimeout(r, 1000))
+        toast({
+          title: "Post scheduled! 📅",
+          description: `Your post will be published on ${scheduledDate?.toLocaleDateString()} at ${scheduledTime}.`,
+        })
+      }
+    } catch (error: any) {
+      console.error('Error publishing post:', error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to publish post. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsPublishing(false)
+    }
   }
 
   const handleSaveDraft = async () => {
@@ -103,6 +187,8 @@ export default function CreatePage() {
               <PlatformSelector selectedPlatforms={selectedPlatforms} onPlatformToggle={handlePlatformToggle} />
 
               <MediaUploader files={mediaFiles} onFilesChange={setMediaFiles} />
+              
+              <MediaUrlInput onUrlAdd={handleUrlAdd} />
 
               <div className="space-y-4">
                 {selectedPlatforms.map((platformId) => {

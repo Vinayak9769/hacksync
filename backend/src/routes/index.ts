@@ -1,11 +1,18 @@
 import { Express, Router } from 'express';
 import conversationController from '../controllers/conversationController';
 import conversationalAIController from '../controllers/conversationalAIController';
+import socialMediaController from '../controllers/socialMediaController';
 
 const router = Router();
 
 // Health check
 router.get('/health', conversationalAIController.healthCheck);
+
+// Social Media Integration endpoints
+router.post('/social/post', socialMediaController.createPost);
+router.get('/social/facebook/validate', socialMediaController.validateFacebookToken);
+router.get('/social/facebook/page-info', socialMediaController.getFacebookPageInfo);
+router.get('/social/health', socialMediaController.healthCheck);
 
 // NEW: Conversational AI endpoints (Deepgram + Gemini)
 router.post('/webhook/conversational', conversationalAIController.handleIncomingCall);
@@ -26,15 +33,23 @@ export const setRoutes = (app: Express): void => {
     // Root endpoint
     app.get('/', (req, res) => {
         res.json({
-            message: 'Twilio Conversational AI Sales Agent',
-            mode: 'Real-time AI Conversation',
+            message: 'SocialNest API - Conversational AI & Social Media Platform',
+            features: {
+                conversational_ai: 'Real-time AI Conversation',
+                social_media: 'Multi-platform posting (Facebook, Instagram, Twitter, LinkedIn)'
+            },
             tech_stack: {
                 speech_to_text: 'Deepgram',
                 ai_model: 'Google Gemini',
-                voice_platform: 'Twilio Media Streams'
+                voice_platform: 'Twilio Media Streams',
+                social_platforms: 'Facebook Graph API (+ more coming)'
             },
             endpoints: {
                 health: 'GET /api/health',
+                social_health: 'GET /api/social/health',
+                create_post: 'POST /api/social/post',
+                validate_facebook: 'GET /api/social/facebook/validate',
+                facebook_page_info: 'GET /api/social/facebook/page-info',
                 makeCall: 'POST /api/make-call { "to": "+1234567890" }',
                 conversationalWebhook: 'POST /api/webhook/conversational (for Twilio)',
                 mediaStream: 'WS /media-stream (WebSocket for audio)'

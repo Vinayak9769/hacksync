@@ -31,9 +31,9 @@ const socialPlatforms = [
   {
     name: "Facebook",
     icon: Facebook(),
-    connected: false,
-    followers: null,
-    status: "disconnected",
+    connected: true,
+    followers: "3.8K",
+    status: "active",
   },
   {
     name: "Bluesky",
