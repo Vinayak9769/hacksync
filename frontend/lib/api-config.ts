@@ -8,18 +8,14 @@ const getFrontendUrl = () => {
   if (typeof window !== "undefined") {
     return window.location.origin;
   }
-  return "https://b0x456pd-8000.inc1.devtunnels.ms";
+  return process.env.NEXT_PUBLIC_FRONTEND_URL || "";
 };
 
-const FRONTEND_URL = getFrontendUrl();
+const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || "";
 
 // Use proxy for API calls to avoid CORS/cookie issues
 const USE_PROXY = true;
 const PROXY_URL = "/api/proxy";
-
-console.log("Backend URL:", BACKEND_URL);
-console.log("Frontend URL:", FRONTEND_URL);
-console.log("Using Proxy:", USE_PROXY);
 
 // Helper function to get API URL
 const getApiUrl = (path: string) => {
@@ -39,6 +35,10 @@ export const API_ENDPOINTS = {
     post: getApiUrl("/api/twitter/post"),
     disconnect: getApiUrl("/api/twitter/disconnect"),
   },
+  veo: {
+    tune: getApiUrl("/api/veo/tune"),
+    generate: getApiUrl("/api/veo/generate"),
+  },
   health: getApiUrl("/api/health"),
 };
 
@@ -50,4 +50,4 @@ export const API_FETCH_OPTIONS: RequestInit = {
   },
 };
 
-export { BACKEND_URL as API_URL, FRONTEND_URL };
+export { BACKEND_URL as API_URL, FRONTEND_URL, getFrontendUrl };
