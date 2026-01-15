@@ -1,5 +1,7 @@
 "use client"
+import { API_ENDPOINTS, API_FETCH_OPTIONS } from '@/lib/api-config'
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,9 +11,68 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Bell, Globe, Lock, Palette, User, CreditCard, Link, Check } from "lucide-react"
+import { Bell, Globe, Lock, Palette, User, CreditCard, Link, Check, Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SettingsPage() {
+  const { toast } = useToast()
+  const [twitterStatus, setTwitterStatus] = useState<{ connected: boolean; username?: string }>({ connected: false })
+  const [isCheckingTwitter, setIsCheckingTwitter] = useState(true)
+  const [isConnectingTwitter, setIsConnectingTwitter] = useState(false)
+  const [isDisconnectingTwitter, setIsDisconnectingTwitter] = useState(false)
+
+  useEffect(() => {
+    checkTwitterConnection()
+  }, [])
+
+  const checkTwitterConnection = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.twitter.status, {
+        ...API_FETCH_OPTIONS
+      })
+      const data = await response.json()
+      setTwitterStatus(data)
+    } catch (error) {
+      console.error('Error checking Twitter connection:', error)
+    } finally {
+      setIsCheckingTwitter(false)
+    }
+  }
+
+  const handleTwitterConnect = () => {
+    // Redirect directly to backend auth endpoint
+    // This ensures the session cookie is set properly before Twitter redirects back
+    window.location.href = API_ENDPOINTS.twitter.auth
+  }
+
+  const handleTwitterDisconnect = async () => {
+    setIsDisconnectingTwitter(true)
+    try {
+      const response = await fetch(API_ENDPOINTS.twitter.disconnect, {
+        method: 'POST',
+        ...API_FETCH_OPTIONS
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        setTwitterStatus({ connected: false })
+        toast({
+          title: "Disconnected",
+          description: "Twitter account has been disconnected"
+        })
+      }
+    } catch (error) {
+      console.error('Error disconnecting Twitter:', error)
+      toast({
+        title: "Error",
+        description: "Failed to disconnect Twitter",
+        variant: "destructive"
+      })
+    } finally {
+      setIsDisconnectingTwitter(false)
+    }
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -90,36 +151,80 @@ export default function SettingsPage() {
               <CardDescription>Manage your social media connections</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
+              {/* Twitter/X - Real Connection */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
+                    𝕏
+                  </span>
+                  <div>
+                    <span className="font-medium">Twitter/X</span>
+                    {twitterStatus.connected && twitterStatus.username && (
+                      <p className="text-xs text-muted-foreground">@{twitterStatus.username}</p>
+                    )}
+                  </div>
+                </div>
+                {isCheckingTwitter ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : twitterStatus.connected ? (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-success/20 text-success border-0">
+                      <Check className="h-3 w-3 mr-1" />
+                      Connected
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleTwitterDisconnect}
+                      disabled={isDisconnectingTwitter}
+                    >
+                      {isDisconnectingTwitter ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Disconnecting...
+                        </>
+                      ) : (
+                        "Disconnect"
+                      )}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTwitterConnect}
+                    disabled={isConnectingTwitter}
+                  >
+                    {isConnectingTwitter ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <Link className="h-4 w-4 mr-2" />
+                        Connect
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+
+              {/* Other platforms - Coming Soon */}
               {[
-                { name: "Instagram", icon: "📷", connected: true },
-                { name: "Twitter/X", icon: "𝕏", connected: true },
-                { name: "LinkedIn", icon: "in", connected: true },
+                { name: "Instagram", icon: "📷", connected: false },
+                { name: "LinkedIn", icon: "in", connected: false },
                 { name: "Facebook", icon: "f", connected: false },
                 { name: "Bluesky", icon: "🦋", connected: false },
               ].map((account) => (
-                <div key={account.name} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                <div key={account.name} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 opacity-50">
                   <div className="flex items-center gap-3">
                     <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
                       {account.icon}
                     </span>
                     <span className="font-medium">{account.name}</span>
                   </div>
-                  {account.connected ? (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-success/20 text-success border-0">
-                        <Check className="h-3 w-3 mr-1" />
-                        Connected
-                      </Badge>
-                      <Button variant="ghost" size="sm">
-                        Disconnect
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button variant="outline" size="sm">
-                      <Link className="h-4 w-4 mr-2" />
-                      Connect
-                    </Button>
-                  )}
+                  <Badge variant="secondary">Coming Soon</Badge>
                 </div>
               ))}
             </CardContent>

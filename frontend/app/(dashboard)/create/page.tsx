@@ -1,14 +1,16 @@
 "use client"
+import { API_ENDPOINTS, API_FETCH_OPTIONS } from '@/lib/api-config'
 
 import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlatformSelector, platforms } from "@/components/create/platform-selector"
 import { CaptionEditor } from "@/components/create/caption-editor"
 import { MediaUploader, type MediaFile } from "@/components/create/media-uploader"
-import { RedditInput, type RedditPostData } from "@/components/create/reddit-input"
 import { MediaUrlInput } from "@/components/create/media-url-input"
 import { AIToolsPanel } from "@/components/create/ai-tools-panel"
+
 import { SchedulePicker } from "@/components/create/schedule-picker"
 import { PostPreview } from "@/components/create/post-preview"
 import { Send, Save, Loader2 } from "lucide-react"
@@ -25,12 +27,7 @@ export default function CreatePage() {
   const [scheduledTime, setScheduledTime] = useState<string>("12:00 PM")
   const [isPublishing, setIsPublishing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [redditData, setRedditData] = useState<RedditPostData>({
-    title: "",
-    text: "",
-    url: "",
-    type: "text"
-  })
+  const [activeTab, setActiveTab] = useState<string>("")
 
   const handlePlatformToggle = useCallback((platformId: string) => {
     setSelectedPlatforms((prev) =>
@@ -42,19 +39,7 @@ export default function CreatePage() {
     setCaptions((prev) => ({ ...prev, [platformId]: value }))
   }, [])
 
-  const handleAICaptionUpdate = useCallback(
-    (newCaption: string) => {
-      // Apply to all selected platforms
-      setCaptions((prev) => {
-        const updated = { ...prev }
-        selectedPlatforms.forEach((p) => {
-          updated[p] = newCaption
-        })
-        return updated
-      })
-    },
-    [selectedPlatforms],
-  )
+
 
   const handleUrlAdd = useCallback(
     (url: string) => {
@@ -70,31 +55,18 @@ export default function CreatePage() {
   )
 
   const handlePublish = async () => {
-    setIsPublishing(true)
-    
-    try {
-      // Validate Reddit post if Reddit is selected
-      if (selectedPlatforms.includes('reddit')) {
-        if (!redditData.title.trim()) {
-          toast({
-            title: "Validation Error",
-            description: "Reddit post requires a title",
-            variant: "destructive"
-          })
-          setIsPublishing(false)
-          return
-        }
-        if (redditData.type === 'link' && !redditData.url?.trim()) {
-          toast({
-            title: "Validation Error",
-            description: "Link posts require a URL",
-            variant: "destructive"
-          })
-          setIsPublishing(false)
-          return
-        }
-      }
+    if (!selectedPlatforms.includes('twitter')) {
+      toast({
+        title: "Twitter not selected",
+        description: "Please select Twitter to publish",
+        variant: "destructive"
+      })
+      return
+    }
 
+    setIsPublishing(true)
+
+    try {
       if (publishType === "now") {
         // Get media URLs
         const mediaUrls: Record<string, string> = {}
@@ -113,20 +85,14 @@ export default function CreatePage() {
               mediaUrl: mediaUrls[platform] || 'none'
             })
 
-            let result
-            if (platform === 'reddit') {
-              // Handle Reddit post separately
-              result = await socialMediaAPI.postToReddit(redditData)
-            } else {
-              result = await socialMediaAPI.createPost({
-                platform,
-                content: {
-                  caption: captions[platform] || '',
-                  mediaUrl: mediaUrls[platform]
-                }
-              })
-            }
-            
+            const result = await socialMediaAPI.createPost({
+              platform,
+              content: {
+                caption: captions[platform] || '',
+                mediaUrl: mediaUrls[platform]
+              }
+            })
+
             console.log(`✅ Successfully posted to ${platform}:`, result)
             results.push({ platform, success: true, result })
           } catch (error: any) {
@@ -172,6 +138,69 @@ export default function CreatePage() {
       toast({
         title: "Error",
         description: error.message || "Failed to publish post. Please try again.",
+      })
+    }
+
+    try {
+      // Check if user is connected to Twitter
+      const statusResponse = await fetch(API_ENDPOINTS.twitter.status, {
+        ...API_FETCH_OPTIONS
+      })
+      const statusData = await statusResponse.json()
+
+      if (!statusData.connected) {
+        toast({
+          title: "Not connected to Twitter",
+          description: "Please connect your Twitter account first from Settings",
+          variant: "destructive"
+        })
+        setIsPublishing(false)
+        return
+      }
+
+      const formData = new FormData()
+
+      // Add caption text
+      const twitterCaption = captions['twitter'] || ''
+      formData.append('text', twitterCaption)
+
+      // Add media files if any
+      if (mediaFiles.length > 0) {
+        for (const mediaFile of mediaFiles) {
+          if (mediaFile.file) {
+            formData.append('media', mediaFile.file)
+          }
+        }
+      }
+
+      // Call backend API
+      const response = await fetch(API_ENDPOINTS.twitter.post, {
+        method: 'POST',
+        body: formData,
+        ...API_FETCH_OPTIONS
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast({
+          title: "Posted to Twitter!",
+          description: "Your tweet has been published successfully.",
+        })
+        // Clear the form
+        setCaptions((prev) => ({ ...prev, twitter: '' }))
+      } else {
+        toast({
+          title: "Failed to post",
+          description: result.error || "Something went wrong",
+          variant: "destructive"
+        })
+      }
+    } catch (error: any) {
+      console.error('Error publishing:', error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to connect to server",
         variant: "destructive"
       })
     } finally {
@@ -188,9 +217,6 @@ export default function CreatePage() {
       description: "Your post has been saved as a draft.",
     })
   }
-
-  // Get primary caption for AI tools (first selected platform)
-  const primaryCaption = captions[selectedPlatforms[0]] || ""
 
   return (
     <div className="p-6 space-y-6">
@@ -222,36 +248,57 @@ export default function CreatePage() {
               <PlatformSelector selectedPlatforms={selectedPlatforms} onPlatformToggle={handlePlatformToggle} />
 
               <MediaUploader files={mediaFiles} onFilesChange={setMediaFiles} />
-              
+
               <MediaUrlInput onUrlAdd={handleUrlAdd} />
 
-              {selectedPlatforms.includes("reddit") && (
-                <RedditInput value={redditData} onChange={setRedditData} />
+              {selectedPlatforms.length > 0 ? (
+                <Tabs
+                  value={activeTab || selectedPlatforms[0]}
+                  onValueChange={setActiveTab}
+                  className="w-full"
+                >
+                  <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${selectedPlatforms.length}, minmax(0, 1fr))` }}>
+                    {selectedPlatforms.map((platformId) => {
+                      const platform = platforms.find((p) => p.id === platformId)
+                      if (!platform) return null
+                      return (
+                        <TabsTrigger key={platformId} value={platformId} className="flex items-center gap-2">
+                          <span className="text-lg">{platform.icon}</span>
+                          <span>{platform.name}</span>
+                        </TabsTrigger>
+                      )
+                    })}
+                  </TabsList>
+                  {selectedPlatforms.map((platformId) => {
+                    const platform = platforms.find((p) => p.id === platformId)
+                    if (!platform) return null
+                    return (
+                      <TabsContent key={platformId} value={platformId} className="mt-4">
+                        <CaptionEditor
+                          platformId={platformId}
+                          platformName={platform.name}
+                          platformIcon={platform.icon}
+                          charLimit={platform.charLimit}
+                          value={captions[platformId] || ""}
+                          onChange={(value) => handleCaptionChange(platformId, value)}
+                        />
+                      </TabsContent>
+                    )
+                  })}
+                </Tabs>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Select at least one platform to start creating your post
+                </div>
               )}
-
-               <div className="space-y-4">
-                {selectedPlatforms.filter(p => p !== "reddit").map((platformId) => {
-                  const platform = platforms.find((p) => p.id === platformId)
-                  if (!platform) return null
-                  return (
-                    <CaptionEditor
-                      key={platformId}
-                      platformId={platformId}
-                      platformName={platform.name}
-                      platformIcon={platform.icon}
-                      charLimit={platform.charLimit}
-                      value={captions[platformId] || ""}
-                      onChange={(value) => handleCaptionChange(platformId, value)}
-                    />
-                  )
-                })}
-              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column - Tools & Preview */}
-        <div className="space-y-6">
+          <PostPreview selectedPlatforms={selectedPlatforms} captions={captions} media={mediaFiles} />
+        {/* Right Column - Preview & Schedule */}
+      </div>
+
           <SchedulePicker
             publishType={publishType}
             onPublishTypeChange={setPublishType}
@@ -261,16 +308,6 @@ export default function CreatePage() {
             onTimeChange={setScheduledTime}
           />
 
-          <AIToolsPanel caption={primaryCaption} onCaptionUpdate={handleAICaptionUpdate} />
-
-          <PostPreview 
-            selectedPlatforms={selectedPlatforms} 
-            captions={captions} 
-            media={mediaFiles}
-            redditData={redditData}
-          />
-        </div>
-      </div>
     </div>
   )
 }

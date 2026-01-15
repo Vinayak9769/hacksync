@@ -40,8 +40,8 @@ export function PostPreview({ selectedPlatforms, captions, media, redditData }: 
   }
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader className="pb-3">
+    <Card className="bg-card border-border max-h-max">
+      <CardHeader className="">
         <CardTitle className="text-base">Preview</CardTitle>
       </CardHeader>
       <CardContent>
