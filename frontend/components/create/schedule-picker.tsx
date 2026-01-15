@@ -69,54 +69,54 @@ export function SchedulePicker({
         </RadioGroup>
 
         {publishType === "schedule" && (
-          <div className="space-y-3 pt-2">
-            <div className="flex gap-4">
-            <div className="space-y-2 w-1/2">
-              <Label className="text-sm">Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal bg-secondary/50",
-                      !scheduledDate && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {scheduledDate ? format(scheduledDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={scheduledDate}
-                    onSelect={onDateChange}
-                    disabled={(date) => date < new Date()}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+          <div className="space-y-3 pt-2 flex gap-4">
+            <div className="flex gap-2 flex-1">
+              <div className="space-y-2 flex-1">
+                <Label className="text-sm">Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-secondary/50",
+                        !scheduledDate && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {scheduledDate ? format(scheduledDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={scheduledDate}
+                      onSelect={onDateChange}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2 flex-1">
+                <Label className="text-sm">Time</Label>
+                <Select value={scheduledTime} onValueChange={onTimeChange}>
+                  <SelectTrigger className="bg-secondary/50">
+                    <Clock className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Select time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeSlots.map((time) => (
+                      <SelectItem key={time} value={time}>
+                        {time}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm">Time</Label>
-              <Select value={scheduledTime} onValueChange={onTimeChange}>
-                <SelectTrigger className="bg-secondary/50">
-                  <Clock className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Select time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeSlots.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            </div>
-
-            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 flex-1 max-w-md">
               <div className="flex items-center gap-2 text-sm">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="font-medium text-primary">AI Recommendation</span>

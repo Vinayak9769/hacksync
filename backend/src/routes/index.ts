@@ -38,6 +38,8 @@ router.get("/twitter/auth", twitterController.initiateAuth);
 router.get("/twitter/callback", twitterController.handleCallback);
 router.get("/twitter/status", twitterController.checkConnection);
 router.post("/twitter/disconnect", twitterController.disconnect);
+router.get("/twitter/debug-session", twitterController.debugSession);
+router.get("/twitter/set-test-session", twitterController.setTestSession);
 router.post(
     "/twitter/post",
     upload.array("media", 4),
@@ -109,22 +111,7 @@ router.post('/canvas/import', canvasController.importCanvas);
 router.delete('/canvas/:id', canvasController.deleteCanvas);
 
 export const setRoutes = (app: Express): void => {
-    // Session middleware
-    app.use(
-        session({
-            secret: process.env.SESSION_SECRET || "your-secret-key-change-this",
-            resave: false,
-            saveUninitialized: true, // Changed to true to ensure session is created
-            cookie: {
-                secure: false, // Set to false to work with both HTTP and HTTPS during development
-                httpOnly: true,
-                sameSite: "lax", // Allow cookie to be sent on redirects from Twitter
-                maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            },
-            proxy: true, // Trust the reverse proxy (ngrok)
-        }),
-    );
-
+    // Session middleware is now configured in app.ts before routes
     app.use("/api", router);
 
     // Root endpoint

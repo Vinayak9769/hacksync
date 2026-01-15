@@ -22,15 +22,47 @@ export default function SettingsPage() {
   const [isDisconnectingTwitter, setIsDisconnectingTwitter] = useState(false)
 
   useEffect(() => {
-    checkTwitterConnection()
+    // Check if user just connected Twitter
+    const justConnected = localStorage.getItem('twitterJustConnected')
+    if (justConnected) {
+      localStorage.removeItem('twitterJustConnected')
+      // Wait a bit for session to be fully established
+      setTimeout(() => {
+        checkTwitterConnection()
+      }, 500)
+    } else {
+      checkTwitterConnection()
+    }
+
+    // Refresh status when window gains focus (user returns from Twitter auth)
+    const handleFocus = () => {
+      checkTwitterConnection()
+    }
+
+    // Also check when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkTwitterConnection()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   const checkTwitterConnection = async () => {
+    setIsCheckingTwitter(true)
     try {
       const response = await fetch(API_ENDPOINTS.twitter.status, {
         ...API_FETCH_OPTIONS
       })
       const data = await response.json()
+      console.log('Twitter status:', data)
       setTwitterStatus(data)
     } catch (error) {
       console.error('Error checking Twitter connection:', error)
@@ -164,50 +196,61 @@ export default function SettingsPage() {
                     )}
                   </div>
                 </div>
-                {isCheckingTwitter ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : twitterStatus.connected ? (
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-success/20 text-success border-0">
-                      <Check className="h-3 w-3 mr-1" />
-                      Connected
-                    </Badge>
+                <div className="flex items-center gap-2">
+                  {isCheckingTwitter ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : twitterStatus.connected ? (
+                    <>
+                      <Badge variant="secondary" className="bg-success/20 text-success border-0">
+                        <Check className="h-3 w-3 mr-1" />
+                        Connected
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleTwitterDisconnect}
+                        disabled={isDisconnectingTwitter}
+                      >
+                        {isDisconnectingTwitter ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Disconnecting...
+                          </>
+                        ) : (
+                          "Disconnect"
+                        )}
+                      </Button>
+                    </>
+                  ) : (
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      onClick={handleTwitterDisconnect}
-                      disabled={isDisconnectingTwitter}
+                      onClick={handleTwitterConnect}
+                      disabled={isConnectingTwitter}
                     >
-                      {isDisconnectingTwitter ? (
+                      {isConnectingTwitter ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Disconnecting...
+                          Connecting...
                         </>
                       ) : (
-                        "Disconnect"
+                        <>
+                          <Link className="h-4 w-4 mr-2" />
+                          Connect
+                        </>
                       )}
                     </Button>
-                  </div>
-                ) : (
+                  )}
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={handleTwitterConnect}
-                    disabled={isConnectingTwitter}
+                    onClick={checkTwitterConnection}
+                    disabled={isCheckingTwitter}
+                    title="Refresh connection status"
                   >
-                    {isConnectingTwitter ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Connecting...
-                      </>
-                    ) : (
-                      <>
-                        <Link className="h-4 w-4 mr-2" />
-                        Connect
-                      </>
-                    )}
+                    🔄
                   </Button>
-                )}
+                </div>
               </div>
 
               {/* Other platforms - Coming Soon */}
