@@ -1,7 +1,6 @@
 // API Configuration
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:3000/api";
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
 
 // Detect the current frontend URL (dev tunnel, localhost, etc.)
 const getFrontendUrl = () => {
@@ -19,11 +18,11 @@ const PROXY_URL = "/api/proxy";
 
 // Helper function to get API URL (BACKEND_URL already includes /api)
 const getApiUrl = (path: string) => {
-  if (USE_PROXY) {
-    // Use local proxy endpoint
-    return PROXY_URL + path;
-  }
-  return BACKEND_URL + path;
+    if (USE_PROXY) {
+        // Use local proxy endpoint
+        return PROXY_URL + path;
+    }
+    return BACKEND_URL + path;
 };
 
 // API Endpoints (paths are relative to /api which is already in BACKEND_URL)
@@ -46,6 +45,13 @@ export const API_ENDPOINTS = {
             validate: getApiUrl("/social/facebook/validate"),
             pageInfo: getApiUrl("/social/facebook/page-info"),
         },
+    },
+    socialListening: {
+        keywords: getApiUrl("/social-listening/keywords"),
+        mentions: getApiUrl("/social-listening/mentions"),
+        trends: getApiUrl("/social-listening/trends"),
+        alerts: getApiUrl("/social-listening/alerts"),
+        competitors: getApiUrl("/social-listening/competitors"),
     },
     veo: {
         tune: getApiUrl("/veo/tune"),

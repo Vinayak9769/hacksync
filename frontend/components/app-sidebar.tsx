@@ -19,7 +19,8 @@ import {
   Palette,
   MessageSquare,
   Video,
-  Target,
+  Eye,
+  EyeIcon,
   FileText,
   AlertTriangle,
 } from "lucide-react"
@@ -43,27 +44,27 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 const mainNavItems = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Create", href: "/create", icon: PenSquare },
-  { title: "Canvas Studio", href: "/canvas", icon: Palette },
-  { title: "Veo Studio", href: "/veo", icon: Video },
   { title: "Calendar", href: "/calendar", icon: Calendar },
   { title: "Media Library", href: "/media", icon: ImageIcon },
-  { title: "NestGPT", href: "/ai", icon: Sparkles },
+]
+
+const aiStudioItems = [
+  { title: "NestGPT Agent", href: "/ai", icon: Sparkles },
+  { title: "Canvas Studio", href: "/canvas", icon: Palette },
+  { title: "Veo Video", href: "/veo", icon: Video },
 ]
 
 const engageNavItems = [
   { title: "Inbox", href: "/inbox", icon: Inbox },
   { title: "Listening", href: "/listening", icon: Radio },
-]
-
-const analyzeNavItems = [
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
-  { title: "Competitor Analysis", href: "/competitor-analysis", icon: Target },
   { title: "Ads Manager", href: "/ads", icon: Megaphone },
   { title: "Anti-Campaign", href: "/anti-campaign", icon: AlertTriangle },
 ]
 
 const manageNavItems = [
   { title: "CRM", href: "/crm", icon: MessageSquare },
+  { title: "Competitor Analysis", href: "/competitor-analysis", icon: EyeIcon },
   { title: "Team", href: "/team", icon: Users },
   { title: "Whiteboard", href: "/whiteboard", icon: Layout },
   { title: "Saved Plans", href: "/plans", icon: FileText },
@@ -111,10 +112,10 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Engage</SidebarGroupLabel>
+          <SidebarGroupLabel>AI Studio</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {engageNavItems.map((item) => (
+              {aiStudioItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={pathname === item.href}>
                     <Link href={item.href}>
@@ -129,10 +130,10 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Analyze</SidebarGroupLabel>
+          <SidebarGroupLabel>Engage & Analyze</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {analyzeNavItems.map((item) => (
+              {engageNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={pathname === item.href}>
                     <Link href={item.href}>

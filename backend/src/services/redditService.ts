@@ -1,5 +1,5 @@
-import Snoowrap from 'snoowrap';
-import { createRedditClient } from '../config/reddit';
+import Snoowrap from "snoowrap";
+import { createRedditClient } from "../config/reddit";
 
 interface PostData {
     title: string;
@@ -9,14 +9,14 @@ interface PostData {
 
 // Convert Reddit timestamps to ISO safely to avoid Invalid Date errors
 const toIsoDate = (value?: number | string): string => {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
         const parsed = Number(value);
         if (Number.isFinite(parsed)) {
             value = parsed;
         }
     }
 
-    if (typeof value === 'number' && Number.isFinite(value)) {
+    if (typeof value === "number" && Number.isFinite(value)) {
         const ms = value > 1e12 ? value : value * 1000;
         const date = new Date(ms);
         if (!Number.isNaN(date.getTime())) {
@@ -74,40 +74,45 @@ class RedditService {
      */
     public testAuthentication(): Promise<any> {
         if (!this.client) {
-            throw new Error('Reddit client not initialized. Please check your credentials.');
+            throw new Error(
+                "Reddit client not initialized. Please check your credentials.",
+            );
         }
 
         try {
             // Try to get the authenticated user's info
-            return this.client.getMe().then((me: any) => {
-                return {
-                    success: true,
-                    authenticated: true,
-                    username: me.name,
-                    linkKarma: me.link_karma,
-                    commentKarma: me.comment_karma,
-                    accountCreated: toIsoDate(me.created_utc)
-                };
-            }).catch((error: any) => {
-                console.error('❌ Authentication test failed:', {
-                    message: error.message,
-                    statusCode: error.statusCode,
-                    response: error.response?.body || error.response
+            return this.client
+                .getMe()
+                .then((me: any) => {
+                    return {
+                        success: true,
+                        authenticated: true,
+                        username: me.name,
+                        linkKarma: me.link_karma,
+                        commentKarma: me.comment_karma,
+                        accountCreated: toIsoDate(me.created_utc),
+                    };
+                })
+                .catch((error: any) => {
+                    console.error("❌ Authentication test failed:", {
+                        message: error.message,
+                        statusCode: error.statusCode,
+                        response: error.response?.body || error.response,
+                    });
+                    return {
+                        success: false,
+                        authenticated: false,
+                        error: error.message,
+                        statusCode: error.statusCode,
+                        details: error.response?.body || null,
+                    };
                 });
-                return {
-                    success: false,
-                    authenticated: false,
-                    error: error.message,
-                    statusCode: error.statusCode,
-                    details: error.response?.body || null
-                };
-            });
         } catch (error: any) {
-            console.error('❌ Authentication error:', error);
+            console.error("❌ Authentication error:", error);
             return Promise.resolve({
                 success: false,
                 authenticated: false,
-                error: error.message
+                error: error.message,
             });
         }
     }
@@ -115,90 +120,121 @@ class RedditService {
     /**
      * Submit a text post to a subreddit
      */
-    public submitTextPost(subredditName: string, postData: PostData): Promise<any> {
+    public submitTextPost(
+        subredditName: string,
+        postData: PostData,
+    ): Promise<any> {
         if (!this.client) {
-            throw new Error('Reddit client not initialized. Please check your credentials.');
+            throw new Error(
+                "Reddit client not initialized. Please check your credentials.",
+            );
         }
 
         try {
             if (!postData.title) {
-                throw new Error('Post title is required');
+                throw new Error("Post title is required");
             }
 
-            console.log(`📤 Submitting text post to r/${subredditName}:`, postData.title);
+            console.log(
+                `📤 Submitting text post to r/${subredditName}:`,
+                postData.title,
+            );
 
-            return this.client.submitSelfpost({
-                subredditName: subredditName,
-                title: postData.title,
-                text: postData.text || ''
-            }).then((submission: any) => {
-                console.log(`✅ Post submitted successfully: ${submission.id}`);
-                return {
-                    success: true,
-                    postId: submission.id,
-                    postUrl: `https://reddit.com${submission.permalink}`,
-                    data: {
-                        id: submission.id,
-                        title: submission.title,
-                        url: submission.url,
-                        permalink: submission.permalink,
-                        author: submission.author?.name || 'unknown',
-                        created: toIsoDate(submission.created_utc)
-                    }
-                };
-            }).catch((error: any) => {
-                console.error('❌ Reddit API Error:', {
-                    message: error.message,
-                    statusCode: error.statusCode,
-                    response: error.response?.body || error.response,
-                    fullError: error
+            return this.client
+                .submitSelfpost({
+                    subredditName: subredditName,
+                    title: postData.title,
+                    text: postData.text || "",
+                })
+                .then((submission: any) => {
+                    console.log(
+                        `✅ Post submitted successfully: ${submission.id}`,
+                    );
+                    return {
+                        success: true,
+                        postId: submission.id,
+                        postUrl: `https://reddit.com${submission.permalink}`,
+                        data: {
+                            id: submission.id,
+                            title: submission.title,
+                            url: submission.url,
+                            permalink: submission.permalink,
+                            author: submission.author?.name || "unknown",
+                            created: toIsoDate(submission.created_utc),
+                        },
+                    };
+                })
+                .catch((error: any) => {
+                    console.error("❌ Reddit API Error:", {
+                        message: error.message,
+                        statusCode: error.statusCode,
+                        response: error.response?.body || error.response,
+                        fullError: error,
+                    });
+                    const errorMsg =
+                        error.response?.body?.message ||
+                        error.response?.body ||
+                        error.message ||
+                        "Unknown error";
+                    throw new Error(
+                        `Failed to submit post: ${error.statusCode || "Error"} - ${typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg)}`,
+                    );
                 });
-                const errorMsg = error.response?.body?.message || error.response?.body || error.message || 'Unknown error';
-                throw new Error(`Failed to submit post: ${error.statusCode || 'Error'} - ${typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg)}`);
-            });
         } catch (error: any) {
-            console.error('Error submitting post to Reddit:', error);
-            throw new Error(`Failed to submit post: ${error.message || 'Unknown error'}`);
+            console.error("Error submitting post to Reddit:", error);
+            throw new Error(
+                `Failed to submit post: ${error.message || "Unknown error"}`,
+            );
         }
     }
 
     /**
      * Submit a link post to a subreddit
      */
-    public submitLinkPost(subredditName: string, postData: PostData): Promise<any> {
+    public submitLinkPost(
+        subredditName: string,
+        postData: PostData,
+    ): Promise<any> {
         if (!this.client) {
-            throw new Error('Reddit client not initialized. Please check your credentials.');
+            throw new Error(
+                "Reddit client not initialized. Please check your credentials.",
+            );
         }
 
         try {
             if (!postData.title || !postData.url) {
-                throw new Error('Post title and URL are required for link posts');
+                throw new Error(
+                    "Post title and URL are required for link posts",
+                );
             }
 
-            return this.client.submitLink({
-                subredditName: subredditName,
-                title: postData.title,
-                url: postData.url
-            }).then((submission: any) => {
-                return {
-                    success: true,
-                    postId: submission.id,
-                    postUrl: `https://reddit.com${submission.permalink}`,
-                    data: {
-                        id: submission.id,
-                        title: submission.title,
-                        url: submission.url,
-                        permalink: submission.permalink,
-                        author: submission.author?.name || 'unknown',
-                        created: toIsoDate(submission.created_utc)
-                    }
-                };
-            }).catch((error: any) => {
-                console.error('Error submitting link to Reddit:', error);
-                throw new Error(`Failed to submit link: ${error.message}`);
-            });
+            return this.client
+                .submitLink({
+                    subredditName: subredditName,
+                    title: postData.title,
+                    url: postData.url,
+                })
+                .then((submission: any) => {
+                    return {
+                        success: true,
+                        postId: submission.id,
+                        postUrl: `https://reddit.com${submission.permalink}`,
+                        data: {
+                            id: submission.id,
+                            title: submission.title,
+                            url: submission.url,
+                            permalink: submission.permalink,
+                            author: submission.author?.name || "unknown",
+                            created: toIsoDate(submission.created_utc),
+                        },
+                    };
+                })
+                .catch((error: any) => {
+                    console.error("Error submitting link to Reddit:", error);
+                    throw new Error(`Failed to submit link: ${error.message}`);
+                });
         } catch (error: any) {
-            console.error('Error submitting link to Reddit:', error);
+            console.error("Error submitting link to Reddit:", error);
             throw new Error(`Failed to submit link: ${error.message}`);
         }
     }
@@ -207,29 +243,34 @@ class RedditService {
      * Get posts from a subreddit (hot posts by default)
      */
     public async getSubredditPosts(
-        subredditName: string, 
-        options: { limit?: number; sort?: 'hot' | 'new' | 'top' | 'rising' } = {}
+        subredditName: string,
+        options: {
+            limit?: number;
+            sort?: "hot" | "new" | "top" | "rising";
+        } = {},
     ): Promise<any> {
         if (!this.client) {
-            throw new Error('Reddit client not initialized. Please check your credentials.');
+            throw new Error(
+                "Reddit client not initialized. Please check your credentials.",
+            );
         }
 
         try {
             const subreddit = this.client.getSubreddit(subredditName);
-            const { limit = 25, sort = 'hot' } = options;
+            const { limit = 25, sort = "hot" } = options;
 
             let posts;
             switch (sort) {
-                case 'new':
+                case "new":
                     posts = await subreddit.getNew({ limit });
                     break;
-                case 'top':
-                    posts = await subreddit.getTop({ limit, time: 'day' });
+                case "top":
+                    posts = await subreddit.getTop({ limit, time: "day" });
                     break;
-                case 'rising':
+                case "rising":
                     posts = await subreddit.getRising({ limit });
                     break;
-                case 'hot':
+                case "hot":
                 default:
                     posts = await subreddit.getHot({ limit });
                     break;
@@ -246,9 +287,9 @@ class RedditService {
                 url: post.url,
                 permalink: `https://reddit.com${post.permalink}`,
                 created: toIsoDate(post.created_utc),
-                selftext: post.selftext || '',
+                selftext: post.selftext || "",
                 isVideo: post.is_video,
-                thumbnail: post.thumbnail
+                thumbnail: post.thumbnail,
             }));
 
             return {
@@ -256,11 +297,80 @@ class RedditService {
                 subreddit: subredditName,
                 count: formattedPosts.length,
                 sort,
-                posts: formattedPosts
+                posts: formattedPosts,
             };
         } catch (error: any) {
-            console.error('Error fetching posts from Reddit:', error);
+            console.error("Error fetching posts from Reddit:", error);
             throw new Error(`Failed to fetch posts: ${error.message}`);
+        }
+    }
+
+    /**
+     * Search Reddit posts by keyword
+     */
+    public async searchPosts(
+        query: string,
+        options: {
+            limit?: number;
+            sort?: "relevance" | "hot" | "new" | "top" | "comments";
+            time?: "hour" | "day" | "week" | "month" | "year" | "all";
+            subreddit?: string;
+        } = {},
+    ): Promise<any> {
+        if (!this.client) {
+            throw new Error(
+                "Reddit client not initialized. Please check your credentials.",
+            );
+        }
+
+        try {
+            const {
+                limit = 25,
+                sort = "relevance",
+                time = "week",
+                subreddit,
+            } = options;
+
+            let searchOptions: any = {
+                query,
+                limit,
+                sort,
+                time,
+            };
+
+            if (subreddit) {
+                searchOptions.subreddit = subreddit;
+            }
+
+            const results = await this.client.search(searchOptions);
+
+            const formattedPosts = results.map((post: any) => ({
+                id: post.id,
+                title: post.title,
+                author: post.author.name,
+                subreddit: post.subreddit.display_name,
+                score: post.score,
+                upvoteRatio: post.upvote_ratio,
+                numComments: post.num_comments,
+                url: post.url,
+                permalink: `https://reddit.com${post.permalink}`,
+                created: toIsoDate(post.created_utc),
+                selftext: post.selftext || "",
+                isVideo: post.is_video,
+                thumbnail: post.thumbnail,
+            }));
+
+            return {
+                success: true,
+                query,
+                count: formattedPosts.length,
+                sort,
+                time,
+                posts: formattedPosts,
+            };
+        } catch (error: any) {
+            console.error("Error searching Reddit posts:", error);
+            throw new Error(`Failed to search posts: ${error.message}`);
         }
     }
 
@@ -269,33 +379,47 @@ class RedditService {
      */
     public async getSubredditEngagement(
         subredditName: string,
-        options: { limit?: number; days?: number; sort?: 'hot' | 'new' | 'top' | 'rising' } = {}
+        options: {
+            limit?: number;
+            days?: number;
+            sort?: "hot" | "new" | "top" | "rising";
+        } = {},
     ): Promise<any> {
         if (!this.client) {
-            throw new Error('Reddit client not initialized. Please check your credentials.');
+            throw new Error(
+                "Reddit client not initialized. Please check your credentials.",
+            );
         }
 
-        const { limit = 75, days = 14, sort = 'new' } = options;
-        const postsResult = await this.getSubredditPosts(subredditName, { limit, sort });
+        const { limit = 75, days = 14, sort = "new" } = options;
+        const postsResult = await this.getSubredditPosts(subredditName, {
+            limit,
+            sort,
+        });
         const posts = Array.isArray(postsResult.posts) ? postsResult.posts : [];
 
         const computeTimeline = (cutoff?: number) => {
-            const bucketMap = new Map<string, {
-                date: string;
-                label: string;
-                posts: Array<{
-                    id: string;
-                    title: string;
-                    author: string;
-                    createdAt: string;
-                    permalink: string;
-                    score: number;
-                    numComments: number;
-                }>;
-            }>();
+            const bucketMap = new Map<
+                string,
+                {
+                    date: string;
+                    label: string;
+                    posts: Array<{
+                        id: string;
+                        title: string;
+                        author: string;
+                        createdAt: string;
+                        permalink: string;
+                        score: number;
+                        numComments: number;
+                    }>;
+                }
+            >();
 
             posts.forEach((post: any) => {
-                const timestamp = post.created ? new Date(post.created).getTime() : Date.now();
+                const timestamp = post.created
+                    ? new Date(post.created).getTime()
+                    : Date.now();
                 if (Number.isNaN(timestamp)) {
                     return;
                 }
@@ -304,10 +428,10 @@ class RedditService {
                 }
 
                 const date = new Date(timestamp);
-                const dateIso = date.toISOString().split('T')[0];
-                const label = date.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
+                const dateIso = date.toISOString().split("T")[0];
+                const label = date.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
                 });
 
                 if (!bucketMap.has(dateIso)) {
@@ -329,17 +453,20 @@ class RedditService {
                 });
             });
 
-            return Array.from(bucketMap.values()).sort((a, b) =>
-                a.date.localeCompare(b.date)
-            ).map(bucket => ({
-                date: bucket.date,
-                label: bucket.label,
-                postCount: bucket.posts.length,
-                posts: bucket.posts,
-            }));
+            return Array.from(bucketMap.values())
+                .sort((a, b) => a.date.localeCompare(b.date))
+                .map((bucket) => ({
+                    date: bucket.date,
+                    label: bucket.label,
+                    postCount: bucket.posts.length,
+                    posts: bucket.posts,
+                }));
         };
 
-        const cutoff = days && days > 0 ? Date.now() - days * 24 * 60 * 60 * 1000 : undefined;
+        const cutoff =
+            days && days > 0
+                ? Date.now() - days * 24 * 60 * 60 * 1000
+                : undefined;
         let timeline = computeTimeline(cutoff);
 
         // If the subreddit has been quiet recently, fall back to the raw dataset
@@ -350,7 +477,10 @@ class RedditService {
         return {
             success: true,
             subreddit: subredditName,
-            totalPosts: timeline.reduce((sum, bucket) => sum + bucket.postCount, 0),
+            totalPosts: timeline.reduce(
+                (sum, bucket) => sum + bucket.postCount,
+                0,
+            ),
             metadata: {
                 requestedDays: days,
                 effectiveDays: timeline.length ? timeline.length : 0,
@@ -462,9 +592,14 @@ class RedditService {
     /**
      * Get comments from a specific post
      */
-    getPostComments(postId: string, options: { limit?: number } = {}): Promise<any> {
+    getPostComments(
+        postId: string,
+        options: { limit?: number } = {},
+    ): Promise<any> {
         if (!this.client) {
-            throw new Error('Reddit client not initialized. Please check your credentials.');
+            throw new Error(
+                "Reddit client not initialized. Please check your credentials.",
+            );
         }
 
         try {
@@ -472,32 +607,40 @@ class RedditService {
             const { limit = 50 } = options;
 
             // Expand comment replies
-            return submission.expandReplies({ limit, depth: 2 }).then((expandedSubmission: any) => {
-                const comments = expandedSubmission.comments;
+            return submission
+                .expandReplies({ limit, depth: 2 })
+                .then((expandedSubmission: any) => {
+                    const comments = expandedSubmission.comments;
 
-                const formattedComments = comments.map((comment: any) => ({
-                    id: comment.id,
-                    author: comment.author?.name || '[deleted]',
-                    body: comment.body,
-                    score: comment.score,
-                    created: toIsoDate(comment.created_utc),
-                    permalink: `https://reddit.com${comment.permalink}`,
-                    parentId: comment.parent_id,
-                    depth: comment.depth
-                }));
+                    const formattedComments = comments.map((comment: any) => ({
+                        id: comment.id,
+                        author: comment.author?.name || "[deleted]",
+                        body: comment.body,
+                        score: comment.score,
+                        created: toIsoDate(comment.created_utc),
+                        permalink: `https://reddit.com${comment.permalink}`,
+                        parentId: comment.parent_id,
+                        depth: comment.depth,
+                    }));
 
-                return {
-                    success: true,
-                    postId,
-                    count: formattedComments.length,
-                    comments: formattedComments
-                };
-            }).catch((error: any) => {
-                console.error('Error fetching comments from Reddit:', error);
-                throw new Error(`Failed to fetch comments: ${error.message}`);
-            });
+                    return {
+                        success: true,
+                        postId,
+                        count: formattedComments.length,
+                        comments: formattedComments,
+                    };
+                })
+                .catch((error: any) => {
+                    console.error(
+                        "Error fetching comments from Reddit:",
+                        error,
+                    );
+                    throw new Error(
+                        `Failed to fetch comments: ${error.message}`,
+                    );
+                });
         } catch (error: any) {
-            console.error('Error fetching comments from Reddit:', error);
+            console.error("Error fetching comments from Reddit:", error);
             throw new Error(`Failed to fetch comments: ${error.message}`);
         }
     }
