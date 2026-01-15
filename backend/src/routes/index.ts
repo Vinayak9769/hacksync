@@ -6,6 +6,7 @@ import socialMediaController from "../controllers/socialMediaController";
 import twitterController from "../controllers/twitterController";
 import session from "express-session";
 import multer from "multer";
+import canvasController from "../controllers/canvasController";
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -77,6 +78,21 @@ router.post(
     conversationController.handlePitchResponse,
 );
 router.post("/webhook/pitch/demo", conversationController.handleDemoRequest);
+
+
+// Canvas endpoints - Structured visual canvas system for brand posters
+router.post('/canvas/create', canvasController.createCanvas);
+router.get('/canvas/list', canvasController.listCanvases);
+router.get('/canvas/:id', canvasController.getCanvas);
+router.put('/canvas/:canvasId/layer/:layerId', canvasController.updateLayer);
+router.post('/canvas/:canvasId/add-layer', canvasController.addLayer);
+router.delete('/canvas/:canvasId/layer/:layerId', canvasController.deleteLayer);
+router.post('/canvas/:canvasId/layer/:layerId/generate', canvasController.generateLayerImage);
+router.post('/canvas/regenerate-layer', canvasController.regenerateLayer);
+router.post('/canvas/generate-text', canvasController.generateText);
+router.get('/canvas/:id/export', canvasController.exportCanvas);
+router.post('/canvas/import', canvasController.importCanvas);
+router.delete('/canvas/:id', canvasController.deleteCanvas);
 
 export const setRoutes = (app: Express): void => {
     // Session middleware
