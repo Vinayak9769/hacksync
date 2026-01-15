@@ -13,6 +13,7 @@ interface MediaFile {
   type: "image" | "video"
   url: string
   name: string
+  file?: File
 }
 
 interface MediaUploaderProps {
@@ -46,6 +47,7 @@ export function MediaUploader({ files, onFilesChange }: MediaUploaderProps) {
           type: file.type.startsWith("image/") ? "image" : "video",
           url: URL.createObjectURL(file),
           name: file.name,
+          file: file,
         }))
 
       onFilesChange([...files, ...mediaFiles])
@@ -63,6 +65,7 @@ export function MediaUploader({ files, onFilesChange }: MediaUploaderProps) {
         type: file.type.startsWith("image/") ? "image" : "video",
         url: URL.createObjectURL(file),
         name: file.name,
+        file: file,
       }))
 
       onFilesChange([...files, ...mediaFiles])
