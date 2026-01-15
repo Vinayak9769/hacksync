@@ -8,6 +8,8 @@ import { WebSocketServer } from "ws";
 import session from "express-session";
 import { setRoutes } from "./routes/index";
 import { handleMediaStream } from "./services/mediaStreamHandler";
+import path from "path";
+
 
 dotenv.config();
 
@@ -84,6 +86,7 @@ async function startServer() {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
 
+  app.use("/media", express.static(path.resolve(process.cwd(), "public")));
   // Simple request logger + safety-net CORS headers for credentialed requests
   app.use((req, res, next) => {
     const existingOriginHeader = res.getHeader('Access-Control-Allow-Origin');

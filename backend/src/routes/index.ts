@@ -7,6 +7,8 @@ import twitterController from "../controllers/twitterController";
 import session from "express-session";
 import multer from "multer";
 import canvasController from "../controllers/canvasController";
+import veoController from "../controllers/veoController";
+
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -109,7 +111,9 @@ router.post('/canvas/generate-text', canvasController.generateText);
 router.get('/canvas/:id/export', canvasController.exportCanvas);
 router.post('/canvas/import', canvasController.importCanvas);
 router.delete('/canvas/:id', canvasController.deleteCanvas);
-
+// Veo 3 video generation endpoints
+router.post('/veo/tune', veoController.tunePrompt);
+router.post('/veo/generate', veoController.generateVideo);
 export const setRoutes = (app: Express): void => {
     // Session middleware is now configured in app.ts before routes
     app.use("/api", router);
