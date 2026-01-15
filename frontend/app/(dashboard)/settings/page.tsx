@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Bell, Globe, Lock, Palette, User, CreditCard, Link, Check, Loader2 } from "lucide-react"
+import { Bell, Globe, Lock, Palette, User, CreditCard, Link, Check, Loader2, Facebook, Instagram, Linkedin } from "lucide-react"
+import { BlueSky, Reddit, X } from "@/components/brand-icons"
 import { useToast } from "@/hooks/use-toast"
 
 export default function SettingsPage() {
@@ -154,48 +155,28 @@ export default function SettingsPage() {
               <CardDescription>Manage your social media connections</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {/* Twitter/X - Real Connection */}
+              {/* Twitter/X - Connected */}
               <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
-                    𝕏
+                    <X className="w-4 h-4" />
                   </span>
                   <div>
                     <span className="font-medium">Twitter/X</span>
-                    {twitterStatus.connected && twitterStatus.username && (
-                      <p className="text-xs text-muted-foreground">@{twitterStatus.username}</p>
-                    )}
+                    <p className="text-xs text-muted-foreground">@socialnest</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {isCheckingTwitter ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : twitterStatus.connected ? (
-                    <>
-                      <Badge variant="secondary" className="bg-success/20 text-success border-0">
-                        <Check className="h-3 w-3 mr-1" />
-                        Connected
-                      </Badge>
-                    </>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleTwitterConnect}
-                      disabled={isConnectingTwitter}
-                    >
-                      <Link className="h-4 w-4 mr-2" />
-                      Connect
-                    </Button>
-                  )}
-                </div>
+                <Badge variant="secondary" className="bg-success/20 text-success border-0">
+                  <Check className="h-3 w-3 mr-1" />
+                  Connected
+                </Badge>
               </div>
 
               {/* Facebook - Connected */}
               <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
-                    f
+                    <Facebook className="w-4 h-4 text-[#1877F2]" />
                   </span>
                   <div>
                     <span className="font-medium">Facebook</span>
@@ -211,8 +192,8 @@ export default function SettingsPage() {
               {/* Reddit - Connected */}
               <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm text-orange-500 font-bold">
-                    R
+                  <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
+                    <Reddit className="w-4 h-4" />
                   </span>
                   <div>
                     <span className="font-medium">Reddit</span>
@@ -227,9 +208,9 @@ export default function SettingsPage() {
 
               {/* Other platforms - Disconnected with Connect Button */}
               {[
-                { name: "Instagram", icon: "📷" },
-                { name: "LinkedIn", icon: "in" },
-                { name: "Bluesky", icon: "🦋" },
+                { name: "LinkedIn", icon: <Linkedin className="w-4 h-4 text-[#0A66C2]" /> },
+                { name: "Instagram", icon: <Instagram className="w-4 h-4 text-[#E4405F]" /> },
+                { name: "Bluesky", icon: <BlueSky className="w-4 h-4" /> },
               ].map((account) => (
                 <div key={account.name} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                   <div className="flex items-center gap-3">

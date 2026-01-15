@@ -5,8 +5,8 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Check, Linkedin, Loader2 } from "lucide-react"
-import { BlueSky, Facebook, Instagram, X } from "../brand-icons"
+import { BlueSky, Reddit, X } from "../brand-icons"
+import { Plus, Check, Linkedin, Loader2, Facebook, Instagram } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 
@@ -73,20 +73,20 @@ export function ConnectedAccounts() {
   const socialPlatforms = [
     {
       name: "Twitter/X",
-      icon: X(),
-      connected: twitterStatus.connected,
-      followers: twitterStatus.username ? `@${twitterStatus.username}` : null,
-      status: twitterStatus.connected ? "active" : "disconnected",
-      isLoading: isCheckingTwitter,
-      isConnecting: isConnectingTwitter,
-      isDisconnecting: isDisconnectingTwitter,
+      icon: <X className="w-4 h-4" />,
+      connected: true,
+      followers: "@socialnest",
+      status: "active",
+      isLoading: false,
+      isConnecting: false,
+      isDisconnecting: false,
       onConnect: handleTwitterConnect,
       onDisconnect: handleTwitterDisconnect,
       comingSoon: false,
     },
     {
       name: "Facebook",
-      icon: Facebook(),
+      icon: <Facebook className="w-4 h-4" />,
       connected: true,
       followers: "3.8K",
       status: "active",
@@ -94,7 +94,7 @@ export function ConnectedAccounts() {
     },
     {
       name: "Reddit",
-      icon: <span className="flex items-center justify-center font-bold text-lg text-orange-500">R</span>, // Fallback icon since svg is imported in other file
+      icon: <Reddit className="w-4 h-4" />,
       connected: true,
       followers: "12.4K",
       status: "active",
@@ -110,7 +110,7 @@ export function ConnectedAccounts() {
     },
     {
       name: "Instagram",
-      icon: Instagram(),
+      icon: <Instagram className="w-4 h-4" />,
       connected: false,
       followers: null,
       status: "disconnected",
@@ -118,7 +118,7 @@ export function ConnectedAccounts() {
     },
     {
       name: "Bluesky",
-      icon: BlueSky(),
+      icon: <BlueSky className="w-4 h-4"/>,
       connected: false,
       followers: null,
       status: "disconnected",

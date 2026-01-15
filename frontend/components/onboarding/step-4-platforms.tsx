@@ -3,14 +3,16 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useState } from "react"
-import { Facebook, Instagram, Linkedin, X } from "lucide-react"
-import { BlueSky, Reddit } from "../brand-icons"
+import { Facebook, Instagram, Linkedin } from "lucide-react"
+import { BlueSky, Reddit, X } from "../brand-icons"
 
 const platforms = [
   { id: "twitter", name: "Twitter/X", icon: X },
   { id: "facebook", name: "Facebook", icon: Facebook }, 
+  { id: "reddit", name: "Reddit", icon: Reddit },
   { id: "linkedin", name: "LinkedIn", icon: Linkedin },
   { id: "instagram", name: "Instagram", icon: Instagram },
+  { id: "bluesky", name: "Bluesky", icon: BlueSky },
 ]
 
 export default function OnboardingStep4({ formData, onContinue, onBack }: any) {
