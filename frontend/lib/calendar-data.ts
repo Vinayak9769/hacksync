@@ -12,9 +12,9 @@ export interface ScheduledPost {
 export const samplePosts: ScheduledPost[] = [
   {
     id: "hacksync-2026-01-16",
-    content: "Win HackSync — Ettara Coffee House strategy huddle for the loyalty relaunch.",
-    platforms: ["instagram"],
-    scheduledFor: new Date(2026, 0, 16, 11, 0),
+    content: "Win HackSync",
+    platforms: [],
+    scheduledFor: new Date(2026, 0, 16, 14, 30),
     status: "scheduled",
     campaign: "HackSync",
   },

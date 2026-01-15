@@ -47,44 +47,9 @@ export function ScheduledPosts() {
           <Link href="/calendar">View All</Link>
         </Button>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {scheduledPosts.map((post) => (
-            <div key={post.id} className="p-3 rounded-lg bg-secondary/50 space-y-2">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm line-clamp-2 flex-1">{post.content}</p>
-                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                  {post.platforms.map((platform) => (
-                    <span
-                      key={platform}
-                      className="flex h-5 w-5 items-center justify-center rounded bg-background text-xs"
-                    >
-                      {platformIcons[platform]}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={post.status === "scheduled" ? "default" : "secondary"}
-                    className={post.status === "scheduled" ? "bg-primary/20 text-primary border-0" : ""}
-                  >
-                    {post.status}
-                  </Badge>
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {post.scheduledFor}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
+      <p className="px-6 ">
+        NO SCHEDULED POSTS
+      </p>
     </Card>
   )
 }

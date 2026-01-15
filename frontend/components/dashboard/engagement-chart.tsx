@@ -4,13 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
 const data = [
-  { name: "Mon", engagement: 2400 },
-  { name: "Tue", engagement: 1398 },
-  { name: "Wed", engagement: 9800 },
-  { name: "Thu", engagement: 3908 },
-  { name: "Fri", engagement: 4800 },
-  { name: "Sat", engagement: 3800 },
-  { name: "Sun", engagement: 4300 },
+  { name: "Mon", engagement: 0 },
+  { name: "Tue", engagement: 0 },
+  { name: "Wed", engagement: 0 },
+  { name: "Thu", engagement: 75 },
 ]
 
 export function EngagementChart() {

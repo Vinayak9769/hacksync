@@ -22,23 +22,23 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-3">
             <StatsCard
               title="Total Followers"
-              value="25.8K"
+              value="6"
               change="+2.5% from last week"
               changeType="positive"
               icon={Users}
             />
             <StatsCard
               title="Total Impressions"
-              value="142.3K"
-              change="+18.2% from last week"
+              value="75"
+              change="+7500% from last week"
               changeType="positive"
               icon={Eye}
             />
             <StatsCard
               title="Engagement Rate"
-              value="4.6%"
-              change="-0.3% from last week"
-              changeType="negative"
+              value="0.5%"
+              change="50% from last week"
+              changeType="positive"
               icon={Heart}
             />
           </div>
