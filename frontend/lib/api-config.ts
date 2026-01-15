@@ -5,10 +5,10 @@ const BACKEND_URL =
 
 // Detect the current frontend URL (dev tunnel, localhost, etc.)
 const getFrontendUrl = () => {
-  if (typeof window !== "undefined") {
-    return window.location.origin;
-  }
-  return process.env.NEXT_PUBLIC_FRONTEND_URL || "";
+    if (typeof window !== "undefined") {
+        return window.location.origin;
+    }
+    return process.env.NEXT_PUBLIC_FRONTEND_URL || "";
 };
 
 const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || "";
@@ -28,26 +28,49 @@ const getApiUrl = (path: string) => {
 
 // API Endpoints (paths are relative to /api which is already in BACKEND_URL)
 export const API_ENDPOINTS = {
-  twitter: {
-    status: getApiUrl("/twitter/status"),
-    // Auth must use direct backend URL for OAuth redirect
-    auth: BACKEND_URL + "/twitter/auth",
-    post: getApiUrl("/twitter/post"),
-    disconnect: getApiUrl("/twitter/disconnect"),
-  },
-  veo: {
-    tune: getApiUrl("/veo/tune"),
-    generate: getApiUrl("/veo/generate"),
-  },
-  health: getApiUrl("/health"),
+    twitter: {
+        // All Twitter endpoints use frontend API routes for proper session handling
+        status: "/api/twitter/status",
+        auth: "/api/twitter/auth",
+        post: "/api/twitter/post",
+        disconnect: "/api/twitter/disconnect",
+    },
+    social: {
+        post: getApiUrl("/social/post"),
+        health: getApiUrl("/social/health"),
+        facebook: {
+            validate: getApiUrl("/social/facebook/validate"),
+            pageInfo: getApiUrl("/social/facebook/page-info"),
+        },
+    },
+    veo: {
+        tune: getApiUrl("/veo/tune"),
+        generate: getApiUrl("/veo/generate"),
+    },
+    health: getApiUrl("/health"),
 };
 
-// Default fetch options
+// Default fetch options for API calls
 export const API_FETCH_OPTIONS: RequestInit = {
-  credentials: "include",
-  headers: {
-    "Content-Type": "application/json",
-  },
+    credentials: "include", // Important for session cookies
+    headers: {
+        "Content-Type": "application/json",
+        // Add ngrok header to avoid warning page
+        ...(BACKEND_URL.includes("ngrok") && {
+            "ngrok-skip-browser-warning": "true",
+        }),
+    },
+};
+
+// Fetch options for form data (file uploads)
+export const API_FETCH_OPTIONS_FORM: RequestInit = {
+    credentials: "include",
+    headers: {
+        // Don't set Content-Type for FormData - browser will set it with boundary
+        ...(BACKEND_URL.includes("ngrok") && {
+            "ngrok-skip-browser-warning": "true",
+        }),
+    },
 };
 
 export { BACKEND_URL as API_URL, FRONTEND_URL, getFrontendUrl };

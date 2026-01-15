@@ -10,7 +10,6 @@ import { setRoutes } from "./routes/index";
 import { handleMediaStream } from "./services/mediaStreamHandler";
 import path from "path";
 
-
 dotenv.config();
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
@@ -83,39 +82,67 @@ async function startServer() {
         }),
     );
 
+    // Session configuration for OAuth flows
+    app.use(
+        session({
+            secret:
+                process.env.SESSION_SECRET ||
+                "your-secret-key-change-in-production",
+            resave: false,
+            saveUninitialized: false,
+            cookie: {
+                secure:
+                    process.env.NODE_ENV === "production" &&
+                    !process.env.NGROK_URL, // Allow non-HTTPS for ngrok
+                httpOnly: true,
+                maxAge: 24 * 60 * 60 * 1000, // 24 hours
+                sameSite: process.env.NGROK_URL ? "none" : "lax", // Allow cross-site for ngrok
+            },
+            name: "socialnest.sid", // Custom session name
+        }),
+    );
+
     // Middleware
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
 
-  app.use("/media", express.static(path.resolve(process.cwd(), "public")));
-  // Simple request logger + safety-net CORS headers for credentialed requests
-  app.use((req, res, next) => {
-    const existingOriginHeader = res.getHeader('Access-Control-Allow-Origin');
-    if (!existingOriginHeader) {
-      const configuredOrigin = process.env.ALLOWED_ORIGIN || req.headers.origin || '*';
-      res.setHeader('Access-Control-Allow-Origin', configuredOrigin);
-      if (configuredOrigin !== '*') {
-        res.setHeader('Vary', 'Origin');
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-      }
-    }
+    app.use("/media", express.static(path.resolve(process.cwd(), "public")));
+    // Simple request logger + safety-net CORS headers for credentialed requests
+    app.use((req, res, next) => {
+        const existingOriginHeader = res.getHeader(
+            "Access-Control-Allow-Origin",
+        );
+        if (!existingOriginHeader) {
+            const configuredOrigin =
+                process.env.ALLOWED_ORIGIN || req.headers.origin || "*";
+            res.setHeader("Access-Control-Allow-Origin", configuredOrigin);
+            if (configuredOrigin !== "*") {
+                res.setHeader("Vary", "Origin");
+                res.setHeader("Access-Control-Allow-Credentials", "true");
+            }
+        }
 
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader(
-      'Access-Control-Allow-Headers',
-      'Content-Type, Authorization, ngrok-skip-browser-warning'
-    );
+        res.setHeader(
+            "Access-Control-Allow-Methods",
+            "GET,POST,PUT,DELETE,OPTIONS",
+        );
+        res.setHeader(
+            "Access-Control-Allow-Headers",
+            "Content-Type, Authorization, ngrok-skip-browser-warning",
+        );
 
-    if (req.method === 'OPTIONS') {
-      res.sendStatus(204);
-      return;
-    }
+        if (req.method === "OPTIONS") {
+            res.sendStatus(204);
+            return;
+        }
 
-    const start = Date.now();
-    res.on('finish', () => {
-      const duration = Date.now() - start;
-      console.log(`${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`);
-    });
+        const start = Date.now();
+        res.on("finish", () => {
+            const duration = Date.now() - start;
+            console.log(
+                `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`,
+            );
+        });
 
         next();
     });

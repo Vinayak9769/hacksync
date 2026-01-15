@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogFooter,
   DialogDescription
 } from '@/components/ui/dialog'
@@ -19,10 +19,10 @@ import { PropertiesPanel } from '@/components/canvas/properties-panel'
 import { CanvasState, CanvasLayer, CreateCanvasRequest } from '@/lib/canvas-types'
 import canvasAPI from '@/lib/canvas-api'
 import { useToast } from '@/hooks/use-toast'
-import { 
-  Plus, 
-  Download, 
-  Upload, 
+import {
+  Plus,
+  Download,
+  Upload,
   Loader2,
   Save,
   Palette,
@@ -70,7 +70,7 @@ export default function CanvasPage() {
     try {
       const result = await canvasAPI.listCanvases()
       setCanvases(result.canvases)
-      
+
       if (result.canvases.length > 0 && !currentCanvas) {
         setCurrentCanvas(result.canvases[0])
       }
@@ -90,7 +90,7 @@ export default function CanvasPage() {
       setCanvases([...canvases, result.canvas])
       setCurrentCanvas(result.canvas)
       setShowCreateDialog(false)
-      
+
       toast({
         title: 'Success',
         description: 'Canvas created successfully'
@@ -113,7 +113,7 @@ export default function CanvasPage() {
     try {
       const result = await canvasAPI.regenerateLayer(currentCanvas.id, layerId)
       setCurrentCanvas(result.canvas)
-      
+
       toast({
         title: 'Success',
         description: 'Layer regenerated successfully',
@@ -167,14 +167,14 @@ export default function CanvasPage() {
     try {
       // If using AI, generate content via Gemini first
       let textContent = addLayerForm.text
-      
+
       if (addLayerForm.useAI && addLayerForm.aiPrompt && addLayerForm.layerType === 'text') {
         try {
           // Call backend to generate text using Gemini
           const aiResponse = await fetch('http://localhost:3000/api/canvas/generate-text', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               prompt: addLayerForm.aiPrompt,
               context: {
                 canvasName: currentCanvas.name,
@@ -182,14 +182,13 @@ export default function CanvasPage() {
               }
             }),
           })
-          
+
           if (aiResponse.ok) {
             const aiData = await aiResponse.json()
             textContent = aiData.text
           }
         } catch (aiError) {
-          console.error('AI generation failed:', aiError)
-          // Continue with manual text if AI fails
+          // AI generation failed - continue with manual text
         }
       }
 
@@ -219,7 +218,7 @@ export default function CanvasPage() {
       setCurrentCanvas(result.canvas)
       setSelectedLayerId(result.layer.id)
       setShowAddLayerDialog(false)
-      
+
       // Reset form
       setAddLayerForm({
         layerType: 'text',
@@ -372,7 +371,7 @@ export default function CanvasPage() {
               Provide a prompt to generate the primary image for your brand poster
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Canvas Name</Label>
@@ -425,9 +424,9 @@ export default function CanvasPage() {
                 <Input
                   type="color"
                   value={createForm.brandColors?.[0] || '#3b82f6'}
-                  onChange={(e) => setCreateForm({ 
-                    ...createForm, 
-                    brandColors: [e.target.value, createForm.brandColors?.[1] || '#ffffff'] 
+                  onChange={(e) => setCreateForm({
+                    ...createForm,
+                    brandColors: [e.target.value, createForm.brandColors?.[1] || '#ffffff']
                   })}
                 />
               </div>
@@ -438,8 +437,8 @@ export default function CanvasPage() {
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleCreateCanvas} 
+            <Button
+              onClick={handleCreateCanvas}
               disabled={isLoading || !createForm.imagePrompt.trim()}
             >
               {isLoading ? (
@@ -464,7 +463,7 @@ export default function CanvasPage() {
               Add a new text or shape layer to your canvas
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Layer Type</Label>

@@ -10,7 +10,6 @@ import { CaptionEditor } from "@/components/create/caption-editor"
 import { MediaUploader, type MediaFile } from "@/components/create/media-uploader"
 import { MediaUrlInput } from "@/components/create/media-url-input"
 import { RedditInput, type RedditPostData } from "@/components/create/reddit-input"
-import { AIToolsPanel } from "@/components/create/ai-tools-panel"
 
 import { SchedulePicker } from "@/components/create/schedule-picker"
 import { PostPreview } from "@/components/create/post-preview"
@@ -54,7 +53,7 @@ export default function CreatePage() {
         setSelectedPlatforms(prev => [...prev, 'twitter'])
       }
     } catch (error) {
-      console.error('Error checking Twitter connection:', error)
+      // Error checking Twitter connection
     }
   }
 
@@ -104,23 +103,26 @@ export default function CreatePage() {
         const results = []
         for (const platform of selectedPlatforms) {
           try {
-            console.log(`📤 Posting to ${platform}...`, {
-              caption: captions[platform] || '',
-              mediaUrl: mediaUrls[platform] || 'none'
-            })
 
-            const result = await socialMediaAPI.createPost({
-              platform,
-              content: {
-                caption: captions[platform] || '',
-                mediaUrl: mediaUrls[platform]
-              }
-            })
+            let result
+            if (platform === 'twitter') {
+              // Use direct Twitter API endpoint for Twitter posts
+              result = await socialMediaAPI.postToTwitter(
+                captions[platform] || '',
+                mediaUrls[platform] ? [mediaUrls[platform]] : undefined
+              )
+            } else {
+              result = await socialMediaAPI.createPost({
+                platform,
+                content: {
+                  caption: captions[platform] || '',
+                  mediaUrl: mediaUrls[platform]
+                }
+              })
+            }
 
-            console.log(`✅ Successfully posted to ${platform}:`, result)
             results.push({ platform, success: true, result })
           } catch (error: any) {
-            console.error(`❌ Failed to post to ${platform}:`, error)
             results.push({ platform, success: false, error: error.message })
           }
         }
@@ -161,7 +163,6 @@ export default function CreatePage() {
         })
       }
     } catch (error: any) {
-      console.error('Error publishing post:', error)
       toast({
         title: "Error",
         description: error.message || "Failed to publish post. Please try again.",

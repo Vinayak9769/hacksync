@@ -62,10 +62,10 @@ export default function SettingsPage() {
         ...API_FETCH_OPTIONS
       })
       const data = await response.json()
-      console.log('Twitter status:', data)
+
       setTwitterStatus(data)
     } catch (error) {
-      console.error('Error checking Twitter connection:', error)
+
     } finally {
       setIsCheckingTwitter(false)
     }
@@ -94,7 +94,7 @@ export default function SettingsPage() {
         })
       }
     } catch (error) {
-      console.error('Error disconnecting Twitter:', error)
+
       toast({
         title: "Error",
         description: "Failed to disconnect Twitter",

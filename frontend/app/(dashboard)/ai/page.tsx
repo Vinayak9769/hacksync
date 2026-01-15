@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -19,13 +19,13 @@ import { PlatformOutput, type PlatformContent } from "@/components/ai/platform-o
 import { AICapabilities } from "@/components/ai/ai-capabilities"
 import { MarketingPlanViewer } from "@/components/ai/marketing-plan-viewer"
 import { AnalyticsInsightsViewer } from "@/components/ai/analytics-insights-viewer"
-import { 
-  Send, 
-  Sparkles, 
-  Loader2, 
-  Brain, 
-  Image as ImageIcon, 
-  Calendar, 
+import {
+  Send,
+  Sparkles,
+  Loader2,
+  Brain,
+  Image as ImageIcon,
+  Calendar,
   FileText,
   BarChart3,
   CheckCircle2,
@@ -112,7 +112,7 @@ export default function AIPage() {
     setIsGenerating(true)
     setCurrentThoughts([])
     setShowThoughts(true)
-    
+
     try {
       // Determine backend API base. Prefer NEXT_PUBLIC_API_BASE, otherwise assume backend on localhost:3000 in dev.
       const apiBase = (typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : '')) ) || '';
@@ -121,7 +121,7 @@ export default function AIPage() {
       // Send message field for conversational chat (NestGPT will handle intake collection via progressive Q&A)
       const resp = await fetch(url, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ sessionId, message: messageText })
@@ -133,7 +133,6 @@ export default function AIPage() {
         const text = await resp.text()
         data = JSON.parse(text)
       } catch (parseError) {
-        console.error('JSON parse error:', parseError)
         const assistantMessage: Message = {
           id: Math.random().toString(36).substr(2, 9),
           role: 'assistant',
@@ -143,7 +142,7 @@ export default function AIPage() {
         setMessages((prev) => [...prev, assistantMessage])
         return
       }
-      
+
       if (!resp.ok) {
         const assistantMessage: Message = {
           id: Math.random().toString(36).substr(2, 9),
@@ -206,8 +205,8 @@ export default function AIPage() {
         setCurrentThoughts(data.thoughts || [])
 
         // Generate a default reply if empty
-        const replyContent = data.reply && data.reply.trim() !== '' 
-          ? data.reply 
+        const replyContent = data.reply && data.reply.trim() !== ''
+          ? data.reply
           : "I'm processing your request. Let me create something for you in the Canvas Studio! 🎨";
 
         const assistantMessage: Message = {
@@ -249,14 +248,14 @@ export default function AIPage() {
   const handleReset = async () => {
     if (sessionId) {
       try {
-        const apiBase = typeof window !== 'undefined' 
+        const apiBase = typeof window !== 'undefined'
           ? (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : ''))
           : ''
         await fetch(`${apiBase}/nestgpt/session/${sessionId}`, {
           method: 'DELETE',
         })
       } catch (e) {
-        console.error('Failed to reset session:', e)
+        // Failed to reset session
       }
     }
     setSessionId(null)
@@ -304,7 +303,7 @@ export default function AIPage() {
             <span className="text-sm text-muted-foreground">{phaseInfo[phase].progress}%</span>
           </div>
           <Progress value={phaseInfo[phase].progress} className="h-2" />
-          
+
           {/* Phase indicators */}
           <div className="flex justify-between mt-3 px-1">
             {Object.entries(phaseInfo).map(([key, info]) => {
@@ -312,8 +311,8 @@ export default function AIPage() {
               const isPast = phaseInfo[phase].progress > info.progress
               const Icon = info.icon
               return (
-                <div 
-                  key={key} 
+                <div
+                  key={key}
                   className={`flex flex-col items-center gap-1 ${
                     isActive ? 'opacity-100' : isPast ? 'opacity-60' : 'opacity-30'
                   }`}
@@ -335,8 +334,8 @@ export default function AIPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Campaign Builder Chat</CardTitle>
                 {currentThoughts.length > 0 && (
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => setShowThoughts(!showThoughts)}
                     className="gap-1"
@@ -361,10 +360,10 @@ export default function AIPage() {
                         ))}
                       </div>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-5 w-5 flex-shrink-0" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 flex-shrink-0"
                       onClick={() => setShowThoughts(false)}
                     >
                       <X className="h-3 w-3" />
@@ -523,10 +522,10 @@ export default function AIPage() {
               <CardTitle className="text-sm">Generated Assets</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full justify-start" 
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start"
                 disabled={!canvasData}
                 onClick={() => setShowCanvas(true)}
               >
@@ -534,9 +533,9 @@ export default function AIPage() {
                 Campaign Images
                 {canvasData && <Badge className="ml-auto" variant="secondary">1</Badge>}
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="w-full justify-start"
                 disabled={!marketingPlan}
                 onClick={() => setShowPlan(true)}
@@ -545,9 +544,9 @@ export default function AIPage() {
                 Marketing Plan
                 {marketingPlan && <CheckCircle2 className="h-3 w-3 ml-auto text-green-500" />}
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="w-full justify-start"
                 disabled={!calendarData}
                 onClick={() => setShowCalendar(true)}
@@ -556,9 +555,9 @@ export default function AIPage() {
                 Content Calendar
                 {calendarData && <CheckCircle2 className="h-3 w-3 ml-auto text-green-500" />}
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="w-full justify-start"
                 disabled={!analyticsData}
                 onClick={() => setShowAnalytics(true)}
@@ -588,15 +587,15 @@ export default function AIPage() {
               <div className="space-y-4 p-1">
                 <div className="aspect-square max-w-md mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
                   {canvasData.layers?.[0]?.imageData?.imageUrl ? (
-                    <img 
-                      src={canvasData.layers[0].imageData.imageUrl} 
-                      alt="Campaign Image" 
+                    <img
+                      src={canvasData.layers[0].imageData.imageUrl}
+                      alt="Campaign Image"
                       className="w-full h-full object-cover"
                     />
                   ) : canvasData.imageUrl ? (
-                    <img 
-                      src={canvasData.imageUrl} 
-                      alt="Campaign Image" 
+                    <img
+                      src={canvasData.imageUrl}
+                      alt="Campaign Image"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -646,8 +645,8 @@ export default function AIPage() {
           </DialogHeader>
           <div className="flex-1 overflow-auto">
             {marketingPlan ? (
-              <MarketingPlanViewer 
-                plan={marketingPlan} 
+              <MarketingPlanViewer
+                plan={marketingPlan}
                 brandName={collectedInfo.brandName}
                 campaignName={collectedInfo.campaignGoal ? `${collectedInfo.campaignGoal} Campaign` : undefined}
               />
@@ -708,7 +707,7 @@ export default function AIPage() {
           </DialogHeader>
           <div className="flex-1 overflow-auto">
             {analyticsData ? (
-              <AnalyticsInsightsViewer 
+              <AnalyticsInsightsViewer
                 data={analyticsData}
                 brandName={collectedInfo.brandName}
               />

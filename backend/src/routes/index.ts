@@ -4,7 +4,7 @@ import conversationController from "../controllers/conversationController";
 import conversationalAIController from "../controllers/conversationalAIController";
 import redditController from "../controllers/redditController";
 import socialMediaController from "../controllers/socialMediaController";
-import twitterController from "../controllers/twitterController";
+
 import canvasController from "../controllers/canvasController";
 import veoController from "../controllers/veoController";
 import strategistController from "../controllers/strategistController";
@@ -33,19 +33,6 @@ const router = Router();
 
 // Health check
 router.get("/health", conversationalAIController.healthCheck);
-
-// Twitter OAuth endpoints
-router.get("/twitter/auth", twitterController.initiateAuth);
-router.get("/twitter/callback", twitterController.handleCallback);
-router.get("/twitter/status", twitterController.checkConnection);
-router.post("/twitter/disconnect", twitterController.disconnect);
-router.get("/twitter/debug-session", twitterController.debugSession);
-router.get("/twitter/set-test-session", twitterController.setTestSession);
-router.post(
-    "/twitter/post",
-    upload.array("media", 4),
-    twitterController.postTweet,
-);
 
 // Social Media Integration endpoints
 router.post("/social/post", socialMediaController.createPost);
@@ -82,13 +69,13 @@ router.get(
 
 // BRANDPULSE strategist endpoints
 // router.get('/strategist/metrics', strategistController.getMetrics);
-router.post('/strategist/generate', strategistController.generateStrategy);
-router.post('/strategist/chat', chatController.chat);
+router.post("/strategist/generate", strategistController.generateStrategy);
+router.post("/strategist/chat", chatController.chat);
 
 // Dedicated NestGPT Agent chat (separate from Twilio sales flows)
-router.post('/nestgpt/chat', nestgptController.chat);
-router.get('/nestgpt/session/:sessionId', nestgptController.getSession);
-router.delete('/nestgpt/session/:sessionId', nestgptController.resetSession);
+router.post("/nestgpt/chat", nestgptController.chat);
+router.get("/nestgpt/session/:sessionId", nestgptController.getSession);
+router.delete("/nestgpt/session/:sessionId", nestgptController.resetSession);
 
 // Legacy: Twilio webhook endpoints for voice calls (TwiML-based)
 router.post("/webhook/voice", conversationController.handleIncomingCall);
@@ -102,23 +89,25 @@ router.post(
 );
 router.post("/webhook/pitch/demo", conversationController.handleDemoRequest);
 
-
 // Canvas endpoints - Structured visual canvas system for brand posters
-router.post('/canvas/create', canvasController.createCanvas);
-router.get('/canvas/list', canvasController.listCanvases);
-router.get('/canvas/:id', canvasController.getCanvas);
-router.put('/canvas/:canvasId/layer/:layerId', canvasController.updateLayer);
-router.post('/canvas/:canvasId/add-layer', canvasController.addLayer);
-router.delete('/canvas/:canvasId/layer/:layerId', canvasController.deleteLayer);
-router.post('/canvas/:canvasId/layer/:layerId/generate', canvasController.generateLayerImage);
-router.post('/canvas/regenerate-layer', canvasController.regenerateLayer);
-router.post('/canvas/generate-text', canvasController.generateText);
-router.get('/canvas/:id/export', canvasController.exportCanvas);
-router.post('/canvas/import', canvasController.importCanvas);
-router.delete('/canvas/:id', canvasController.deleteCanvas);
+router.post("/canvas/create", canvasController.createCanvas);
+router.get("/canvas/list", canvasController.listCanvases);
+router.get("/canvas/:id", canvasController.getCanvas);
+router.put("/canvas/:canvasId/layer/:layerId", canvasController.updateLayer);
+router.post("/canvas/:canvasId/add-layer", canvasController.addLayer);
+router.delete("/canvas/:canvasId/layer/:layerId", canvasController.deleteLayer);
+router.post(
+    "/canvas/:canvasId/layer/:layerId/generate",
+    canvasController.generateLayerImage,
+);
+router.post("/canvas/regenerate-layer", canvasController.regenerateLayer);
+router.post("/canvas/generate-text", canvasController.generateText);
+router.get("/canvas/:id/export", canvasController.exportCanvas);
+router.post("/canvas/import", canvasController.importCanvas);
+router.delete("/canvas/:id", canvasController.deleteCanvas);
 // Veo 3 video generation endpoints
-router.post('/veo/tune', veoController.tunePrompt);
-router.post('/veo/generate', veoController.generateVideo);
+router.post("/veo/tune", veoController.tunePrompt);
+router.post("/veo/generate", veoController.generateVideo);
 export const setRoutes = (app: Express): void => {
     // Session middleware is now configured in app.ts before routes
     app.use("/api", router);
@@ -131,7 +120,7 @@ export const setRoutes = (app: Express): void => {
             features: {
                 conversational_ai: "Real-time AI Conversation",
                 social_media:
-                    "Multi-platform posting (Facebook, Instagram, Twitter, LinkedIn)",
+                    "Multi-platform posting (Facebook, Instagram, LinkedIn)",
             },
             tech_stack: {
                 speech_to_text: "Deepgram",

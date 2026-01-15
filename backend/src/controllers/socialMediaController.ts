@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import facebookService from "../services/facebookService";
-import twitterService from "../services/twitterService";
 import { Session } from "express-session";
 
 interface PostRequest {
@@ -14,11 +13,7 @@ interface PostRequest {
 }
 
 interface RequestWithSession extends Request {
-    session: Session & {
-        twitterAccessToken?: string;
-        twitterRefreshToken?: string;
-        twitterUsername?: string;
-    };
+    session: Session;
 }
 
 class SocialMediaController {
@@ -55,13 +50,10 @@ class SocialMediaController {
                     result = await this.handleFacebookPost(content, pageId);
                     break;
 
-                case "twitter":
-                    result = await this.handleTwitterPost(req, content);
-                    break;
-
                 // Add more platforms here in the future
                 case "instagram":
                 case "linkedin":
+                case "twitter":
                     res.status(501).json({
                         success: false,
                         error: `${platform} integration coming soon`,
@@ -116,41 +108,6 @@ class SocialMediaController {
         }
 
         throw new Error("Either mediaUrl or message/caption is required");
-    }
-
-    /**
-     * Handle Twitter-specific posting logic
-     */
-    private async handleTwitterPost(
-        req: RequestWithSession,
-        content: { caption?: string; mediaUrl?: string; message?: string },
-    ) {
-        const accessToken = req.session.twitterAccessToken;
-
-        if (!accessToken) {
-            throw new Error(
-                "Not authenticated with Twitter. Please connect your Twitter account first.",
-            );
-        }
-
-        const text = content.caption || content.message || "";
-
-        if (!text || text.trim().length === 0) {
-            throw new Error("Tweet text is required");
-        }
-
-        if (text.length > 280) {
-            throw new Error("Tweet exceeds 280 character limit");
-        }
-
-        // Post the tweet (without media for now via this endpoint)
-        const result = await twitterService.postTweet(accessToken, text, []);
-
-        if (!result.success) {
-            throw new Error(result.error || "Failed to post tweet");
-        }
-
-        return result;
     }
 
     /**
@@ -214,8 +171,6 @@ class SocialMediaController {
             process.env.FACEBOOK_ACCESS_TOKEN && process.env.FACEBOOK_PAGE_ID
         );
 
-        const twitterConnected = !!req.session.twitterAccessToken;
-
         res.status(200).json({
             success: true,
             integrations: {
@@ -228,8 +183,8 @@ class SocialMediaController {
                     status: "coming soon",
                 },
                 twitter: {
-                    configured: twitterConnected,
-                    status: twitterConnected ? "ready" : "not configured",
+                    configured: false,
+                    status: "coming soon",
                 },
                 linkedin: {
                     configured: false,
