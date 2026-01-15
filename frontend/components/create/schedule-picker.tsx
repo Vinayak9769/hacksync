@@ -49,29 +49,29 @@ export function SchedulePicker({
 }: SchedulePickerProps) {
   return (
     <Card className="bg-card border-border">
-      <CardHeader className="">
+      <CardHeader >
         <CardTitle className="text-base">Schedule</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <RadioGroup className="flex" value={publishType} onValueChange={(v) => onPublishTypeChange(v as "now" | "schedule")}>
+      <CardContent className="space-y-8">
+        <RadioGroup className="flex gap-6" value={publishType} onValueChange={(v) => onPublishTypeChange(v as "now" | "schedule")}>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="now" id="now" />
-            <Label htmlFor="now" className="cursor-pointer">
+            <Label htmlFor="now" className="cursor-pointer text-[0.8rem]">
               Publish immediately
             </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="schedule" id="schedule" />
-            <Label htmlFor="schedule" className="cursor-pointer">
+            <Label htmlFor="schedule" className="cursor-pointer text-[0.8rem]">
               Schedule for later
             </Label>
           </div>
         </RadioGroup>
 
         {publishType === "schedule" && (
-          <div className="space-y-3 pt-2 flex gap-4">
-            <div className="flex gap-2 flex-1">
-              <div className="space-y-2 flex-1">
+          <div className=" grid gap-4">
+            <div className="flex gap-3 flex-1 items-end">
+              <div className="space-y-1.5 flex-1">
                 <Label className="text-sm">Date</Label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -98,7 +98,7 @@ export function SchedulePicker({
                 </Popover>
               </div>
 
-              <div className="space-y-2 flex-1">
+              <div className="space-y-1.5 flex-1">
                 <Label className="text-sm">Time</Label>
                 <Select value={scheduledTime} onValueChange={onTimeChange}>
                   <SelectTrigger className="bg-secondary/50">
@@ -116,12 +116,12 @@ export function SchedulePicker({
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 flex-1 max-w-md">
-              <div className="flex items-center gap-2 text-sm">
+            <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20 flex-1">
+              <div className="flex items-center gap-1.5 text-sm">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="font-medium text-primary">AI Recommendation</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
                 Based on your audience, Wednesday at 12:00 PM has the highest engagement rate.
               </p>
             </div>

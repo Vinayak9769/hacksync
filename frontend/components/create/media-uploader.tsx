@@ -5,7 +5,8 @@ import type React from "react"
 import { useState, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Video, X, Upload } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Video, X, Upload, Link2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface MediaFile {
@@ -23,6 +24,7 @@ interface MediaUploaderProps {
 
 export function MediaUploader({ files, onFilesChange }: MediaUploaderProps) {
   const [isDragging, setIsDragging] = useState(false)
+  const [imageUrl, setImageUrl] = useState("")
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -80,6 +82,20 @@ export function MediaUploader({ files, onFilesChange }: MediaUploaderProps) {
     [files, onFilesChange],
   )
 
+  const handleAddImageUrl = useCallback(() => {
+    if (!imageUrl.trim()) return
+
+    const newFile: MediaFile = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: "image",
+      url: imageUrl,
+      name: "Image from URL",
+    }
+
+    onFilesChange([...files, newFile])
+    setImageUrl("")
+  }, [imageUrl, files, onFilesChange])
+
   return (
     <div className="space-y-3">
       <div
@@ -108,6 +124,37 @@ export function MediaUploader({ files, onFilesChange }: MediaUploaderProps) {
             <p className="text-xs text-muted-foreground">Supports images and videos up to 100MB</p>
           </div>
         </label>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">Or use an image URL</p>
+        <div className="flex gap-2">
+          <Input
+            type="url"
+            placeholder="https://example.com/image.jpg"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                handleAddImageUrl()
+              }
+            }}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="default"
+            onClick={handleAddImageUrl}
+            disabled={!imageUrl.trim()}
+          >
+            <Link2 className="h-4 w-4 mr-2" />
+            Add
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          💡 Tip: For Facebook posting, use publicly accessible image URLs (e.g., from Unsplash, Imgur, or your own CDN)
+        </p>
       </div>
 
       {files.length > 0 && (

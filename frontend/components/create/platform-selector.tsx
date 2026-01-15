@@ -19,11 +19,12 @@ interface Platform {
 const redditSvg = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    x="0px"
-    y="0px"
+    x="-20px"
+    y="-20px"
     width="23"
     height="23"
     viewBox="0 0 48 48"
+    style={{ transform: "translate(-4px, -3px)" }}
   >
     <path
       fill="#FFF"

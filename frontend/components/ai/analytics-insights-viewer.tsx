@@ -60,44 +60,115 @@ export function AnalyticsInsightsViewer({ data, brandName }: AnalyticsInsightsVi
   const [isExporting, setIsExporting] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  const decodeEscapedUnicode = (value: string) => {
+    return value
+      .replace(/\\u\{([0-9a-fA-F]+)\}/g, (_, code) => String.fromCodePoint(parseInt(code, 16)))
+      .replace(/\\u([0-9a-fA-F]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)))
+      .replace(/\\x([0-9a-fA-F]{2})/g, (_, code) => String.fromCharCode(parseInt(code, 16)))
+  }
+
   const handleExportPDF = async () => {
     if (!contentRef.current) return
     
     setIsExporting(true)
     
     try {
-      const html2canvas = (await import('html2canvas')).default
       const { jsPDF } = await import('jspdf')
       
-      const element = contentRef.current
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      })
-      
-      const imgData = canvas.toDataURL('image/png')
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       })
       
-      const imgWidth = 210
+      // PDF settings
+      const pageWidth = 210
       const pageHeight = 297
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      let heightLeft = imgHeight
-      let position = 0
+      const margin = 20
+      const maxWidth = pageWidth - (margin * 2)
+      let y = margin
       
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
+      // Helper to check page break
+      const checkPageBreak = (neededHeight: number) => {
+        if (y + neededHeight > pageHeight - margin) {
+          pdf.addPage()
+          y = margin
+        }
+      }
       
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight
-        pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-        heightLeft -= pageHeight
+      // Title
+      pdf.setFontSize(20)
+      pdf.setFont('helvetica', 'bold')
+  pdf.text(decodeEscapedUnicode(`Analytics Insights${brandName ? ` - ${brandName}` : ''}`), margin, y)
+      y += 10
+      
+      // Date
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(128, 128, 128)
+      pdf.text(`Generated: ${new Date().toLocaleDateString()}`, margin, y)
+      y += 15
+      pdf.setTextColor(0, 0, 0)
+      
+      // Summary section
+      if (data.summary) {
+        checkPageBreak(30)
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Summary', margin, y)
+        y += 8
+        
+        pdf.setFontSize(11)
+        pdf.setFont('helvetica', 'normal')
+        const summaryItems = [
+          `Total Engagement: ${data.summary.totalEngagement?.toLocaleString() || 'N/A'}`,
+          `Total Reach: ${data.summary.totalReach?.toLocaleString() || 'N/A'}`,
+          `Engagement Rate: ${data.summary.avgEngagementRate || 'N/A'}`,
+          `Follower Growth: ${data.summary.followerGrowth || 'N/A'}`
+        ]
+        for (const item of summaryItems) {
+          pdf.text(decodeEscapedUnicode(`• ${item}`), margin + 5, y)
+          y += 6
+        }
+        y += 5
+      }
+      
+      // Platform breakdown
+      if (data.platformBreakdown && Object.keys(data.platformBreakdown).length > 0) {
+        const platforms = Object.entries(data.platformBreakdown)
+        checkPageBreak(20 + platforms.length * 6)
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Platform Performance', margin, y)
+        y += 8
+        
+        pdf.setFontSize(11)
+        pdf.setFont('helvetica', 'normal')
+        for (const [platformName, platformData] of platforms) {
+          const line = `${platformName}: ${platformData.followers?.toLocaleString() || 0} followers, ${platformData.avgLikes || 0} avg likes`
+          pdf.text(decodeEscapedUnicode(`• ${line}`), margin + 5, y)
+          y += 6
+        }
+        y += 5
+      }
+      
+      // Recommendations
+      if (data.recommendations && data.recommendations.length > 0) {
+        checkPageBreak(20 + data.recommendations.length * 10)
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Recommendations', margin, y)
+        y += 8
+        
+        pdf.setFontSize(11)
+        pdf.setFont('helvetica', 'normal')
+        for (let i = 0; i < data.recommendations.length; i++) {
+          const rec = data.recommendations[i]
+          const splitText = pdf.splitTextToSize(decodeEscapedUnicode(`${i + 1}. ${rec}`), maxWidth - 10)
+          checkPageBreak(splitText.length * 5)
+          pdf.text(splitText, margin + 5, y)
+          y += splitText.length * 5 + 2
+        }
       }
       
       const fileName = `${brandName || 'analytics'}-insights-${new Date().toISOString().split('T')[0]}.pdf`

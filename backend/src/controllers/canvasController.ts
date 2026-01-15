@@ -38,6 +38,56 @@ class CanvasController {
   }
 
   /**
+   * Create a new canvas with uploaded image
+   * POST /api/canvas/create-with-image
+   */
+  async createCanvasWithImage(req: Request, res: Response): Promise<void> {
+    try {
+      const name = req.body.name;
+      const aspectRatio = req.body.aspectRatio;
+      const brandName = req.body.brandName;
+      const brandColors = req.body.brandColors ? JSON.parse(req.body.brandColors) : undefined;
+      
+      if (!name) {
+        res.status(400).json({ error: 'Canvas name is required' });
+        return;
+      }
+
+      const file = req.file;
+      if (!file) {
+        res.status(400).json({ error: 'Image file is required' });
+        return;
+      }
+
+      if (!file.mimetype.startsWith('image/')) {
+        res.status(400).json({ error: 'File must be an image' });
+        return;
+      }
+
+      const canvas = await canvasService.createCanvasWithImage(
+        name,
+        file.buffer,
+        file.mimetype,
+        aspectRatio,
+        brandName,
+        brandColors
+      );
+      
+      res.json({
+        success: true,
+        message: 'Canvas created successfully with uploaded image',
+        canvas
+      });
+    } catch (error) {
+      console.error('Error creating canvas with image:', error);
+      res.status(500).json({ 
+        error: 'Failed to create canvas with image', 
+        details: (error as Error).message 
+      });
+    }
+  }
+
+  /**
    * Get canvas by ID
    * GET /api/canvas/:id
    */
@@ -351,6 +401,59 @@ class CanvasController {
       console.error('Error generating text:', error);
       res.status(500).json({
         error: 'Failed to generate text',
+        details: (error as Error).message
+      });
+    }
+  }
+
+  /**
+   * Generate AI element (icon or sticker)
+   * POST /api/canvas/:canvasId/generate-element
+   */
+  async generateElement(req: Request, res: Response): Promise<void> {
+    try {
+      const { canvasId } = req.params;
+      const { elementType, prompt, x, y, width, height } = req.body;
+
+      if (!elementType || !prompt) {
+        res.status(400).json({ error: 'Element type and prompt are required' });
+        return;
+      }
+
+      if (elementType !== 'icon' && elementType !== 'sticker') {
+        res.status(400).json({ error: 'Element type must be "icon" or "sticker"' });
+        return;
+      }
+
+      const bounds = {
+        x: x || 100,
+        y: y || 100,
+        width: width || 200,
+        height: height || 200,
+      };
+
+      const canvas = await canvasService.generateElement(
+        canvasId,
+        elementType,
+        prompt,
+        bounds
+      );
+
+      const layer = canvas.layers.find(l => 
+        l.type === elementType && 
+        l.imageData?.userPrompt === prompt
+      );
+
+      res.json({
+        success: true,
+        message: 'Element generated successfully',
+        layer,
+        canvas
+      });
+    } catch (error) {
+      console.error('Error generating element:', error);
+      res.status(500).json({
+        error: 'Failed to generate element',
         details: (error as Error).message
       });
     }
