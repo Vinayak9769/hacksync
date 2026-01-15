@@ -16,7 +16,7 @@ class TwitterService {
         this.clientSecret = process.env.TWITTER_CLIENT_SECRET!;
         this.callbackUrl =
             process.env.TWITTER_CALLBACK_URL ||
-            "http://localhost:3000/api/twitter/callback";
+            "https://b0x456pd-3000.inc1.devtunnels.ms/api/twitter/callback";
     }
 
     // Generate OAuth 2.0 authorization URL

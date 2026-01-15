@@ -11,9 +11,12 @@ export default function TwitterConnectedPage() {
   const username = searchParams.get("username")
 
   useEffect(() => {
-    // Redirect to dashboard after 2 seconds
+    // Signal successful Twitter connection
+    localStorage.setItem('twitterJustConnected', 'true')
+
+    // Redirect to settings page after 2 seconds
     const timer = setTimeout(() => {
-      router.push("/")
+      router.push("/settings")
     }, 2000)
 
     return () => clearTimeout(timer)
@@ -39,7 +42,7 @@ export default function TwitterConnectedPage() {
           </div>
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground pt-4">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Redirecting to dashboard...</span>
+            <span>Redirecting to settings...</span>
           </div>
         </CardContent>
       </Card>

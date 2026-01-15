@@ -237,8 +237,88 @@ class RedditService {
     }
 
     /**
+     * Aggregate subreddit posts into day-level engagement buckets
+     */
+    public async getSubredditEngagement(
+        subredditName: string,
+        options: { limit?: number; days?: number; sort?: 'hot' | 'new' | 'top' | 'rising' } = {}
+    ): Promise<any> {
+        if (!this.client) {
+            throw new Error('Reddit client not initialized. Please check your credentials.');
+        }
+
+        const { limit = 75, days = 14, sort = 'new' } = options;
+        const postsResult = await this.getSubredditPosts(subredditName, { limit, sort });
+        const posts = Array.isArray(postsResult.posts) ? postsResult.posts : [];
+
+        const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+        const bucketMap = new Map<string, {
+            date: string;
+            label: string;
+            posts: Array<{
+                id: string;
+                title: string;
+                author: string;
+                createdAt: string;
+                permalink: string;
+                score: number;
+                numComments: number;
+            }>;
+        }>();
+
+        posts.forEach((post: any) => {
+            const timestamp = post.created ? new Date(post.created).getTime() : Date.now();
+            if (Number.isNaN(timestamp) || timestamp < cutoff) {
+                return;
+            }
+
+            const dateIso = new Date(timestamp).toISOString().split('T')[0];
+            const label = new Date(timestamp).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+            });
+
+            if (!bucketMap.has(dateIso)) {
+                bucketMap.set(dateIso, {
+                    date: dateIso,
+                    label,
+                    posts: [],
+                });
+            }
+
+            bucketMap.get(dateIso)!.posts.push({
+                id: post.id,
+                title: post.title,
+                author: post.author,
+                createdAt: post.created,
+                permalink: post.permalink,
+                score: post.score,
+                numComments: post.numComments,
+            });
+        });
+
+        const timeline = Array.from(bucketMap.values()).sort((a, b) =>
+            a.date.localeCompare(b.date)
+        ).map(bucket => ({
+            date: bucket.date,
+            label: bucket.label,
+            postCount: bucket.posts.length,
+            posts: bucket.posts,
+        }));
+
+        return {
+            success: true,
+            subreddit: subredditName,
+            totalPosts: timeline.reduce((sum, bucket) => sum + bucket.postCount, 0),
+            metadata: { limit, days, sort },
+            timeline,
+        };
+    }
+
+    /**
      * Get comments from a specific post
-     */getPostComments(postId: string, options: { limit?: number } = {}): Promise<any> {
+     */
+    getPostComments(postId: string, options: { limit?: number } = {}): Promise<any> {
         if (!this.client) {
             throw new Error('Reddit client not initialized. Please check your credentials.');
         }
