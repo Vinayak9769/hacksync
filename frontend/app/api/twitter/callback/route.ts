@@ -35,23 +35,27 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(errorUrl.toString());
         }
 
-        // Get session from cookie
-        const sessionId = request.cookies.get("session-id")?.value;
-        if (!sessionId) {
-            const baseUrl =
-                process.env.NEXT_PUBLIC_FRONTEND_URL || request.nextUrl.origin;
-            const errorUrl = new URL("/twitter-error", baseUrl);
-            errorUrl.searchParams.set("error", "no_session");
-            errorUrl.searchParams.set(
-                "message",
-                "Session not found. Please try connecting again.",
-            );
-            return NextResponse.redirect(errorUrl.toString());
+        // Try to get session from cookie first
+        let sessionId = request.cookies.get("session-id")?.value;
+        let oauthState: any = null;
+
+        // If we have a session ID from cookie, try to get the OAuth state
+        if (sessionId) {
+            oauthState = sessionStore.getOAuthState(sessionId);
         }
 
-        // Get OAuth state from session
-        const oauthState = sessionStore.getOAuthState(sessionId);
+        // If no OAuth state found via cookie, try to find session by state parameter
+        // This handles cases where cookies aren't sent due to cross-origin redirects (ngrok, etc.)
         if (!oauthState) {
+            const session = sessionStore.findSessionByOAuthState(state);
+            if (session) {
+                sessionId = session.id;
+                oauthState = session.oauthState;
+            }
+        }
+
+        // If still no session found, return error
+        if (!sessionId || !oauthState) {
             const baseUrl =
                 process.env.NEXT_PUBLIC_FRONTEND_URL || request.nextUrl.origin;
             const errorUrl = new URL("/twitter-error", baseUrl);
@@ -63,7 +67,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(errorUrl.toString());
         }
 
-        // Validate state parameter
+        // Validate state parameter (should match if we found by state, but double-check)
         if (oauthState.state !== state) {
             const baseUrl =
                 process.env.NEXT_PUBLIC_FRONTEND_URL || request.nextUrl.origin;
@@ -96,16 +100,38 @@ export async function GET(request: NextRequest) {
             oauthState.codeVerifier,
         );
 
-        // Get user info
-        const userInfo = await twitterService.getUserInfo(tokens.accessToken);
-
-        // Store tokens and user info in session
+        // Store tokens in session
         sessionStore.setTwitterTokens(sessionId, tokens);
-        sessionStore.setTwitterUser(sessionId, {
-            id: userInfo.id,
-            username: userInfo.username,
-            name: userInfo.name,
-        });
+
+        // Try to get user info, but don't fail if rate limited
+        let userInfo: any = null;
+        let username = "connected";
+
+        try {
+            userInfo = await twitterService.getUserInfo(tokens.accessToken);
+            username = userInfo.username;
+
+            // Store user info in session
+            sessionStore.setTwitterUser(sessionId, {
+                id: userInfo.id,
+                username: userInfo.username,
+                name: userInfo.name,
+            });
+        } catch (userInfoError: any) {
+            // If rate limited (429) or forbidden (403), still consider auth successful
+            // User info can be fetched later when rate limit resets
+            if (userInfoError.code === 429 || userInfoError.code === 403) {
+                // Store placeholder user info
+                sessionStore.setTwitterUser(sessionId, {
+                    id: "pending",
+                    username: "Twitter User",
+                    name: "Twitter User",
+                });
+            } else {
+                // For other errors, rethrow
+                throw userInfoError;
+            }
+        }
 
         // Clear OAuth state as it's no longer needed
         sessionStore.clearOAuthState(sessionId);
@@ -115,9 +141,19 @@ export async function GET(request: NextRequest) {
             process.env.NEXT_PUBLIC_FRONTEND_URL || request.nextUrl.origin;
         const successUrl = new URL("/twitter-connected", baseUrl);
         successUrl.searchParams.set("success", "true");
-        successUrl.searchParams.set("username", userInfo.username);
+        successUrl.searchParams.set("username", username);
 
-        return NextResponse.redirect(successUrl.toString());
+        // Set the session cookie in the response to ensure it's available for future requests
+        const response = NextResponse.redirect(successUrl.toString());
+        response.cookies.set("session-id", sessionId, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: 60 * 60 * 24, // 24 hours
+            path: "/",
+        });
+
+        return response;
     } catch (error: any) {
         // Redirect to error page with generic message
         const baseUrl =

@@ -121,7 +121,7 @@ class SessionStore {
         return this.store.delete(id);
     }
 
-    // Twitter OAuth specific methods (updated versions are at the bottom of class)
+    // Twitter OAuth specific methods
     getTwitterTokens(sessionId: string): Session["twitterTokens"] | undefined {
         const session = this.store.get(sessionId);
         if (session && Date.now() - session.updatedAt < this.ttlMs) {
@@ -151,34 +151,14 @@ class SessionStore {
         session.oauthState = state;
         session.updatedAt = Date.now();
         this.store.set(sessionId, session);
-
-        // Verify storage immediately
-        const verification = this.store.get(sessionId);
-        const storeId = this.store === getGlobalStore() ? "SAME" : "DIFFERENT";
-
-        console.log(
-            `[SessionStore] Set OAuth state for session ${sessionId}:`,
-            {
-                provider: state?.provider,
-                hasState: !!state?.state,
-                hasCodeVerifier: !!state?.codeVerifier,
-                createdAt: state?.createdAt,
-                totalSessions: this.store.size,
-                sessionExists: !!this.store.get(sessionId),
-                verificationPassed: !!verification,
-                storeReference: storeId,
-                globalStoreSize: getGlobalStore().size,
-            },
-        );
     }
 
     getOAuthState(sessionId: string): Session["oauthState"] | undefined {
-        // Refresh store reference and compare
+        // Refresh store reference
         const freshStore = getGlobalStore();
         const storeChanged = this.store !== freshStore;
 
         if (storeChanged) {
-            console.log(`[SessionStore] Store reference changed! Updating...`);
             this.store = freshStore;
         }
 
@@ -191,27 +171,25 @@ class SessionStore {
         }
 
         const validSession = isExpired ? null : session;
-
-        console.log(
-            `[SessionStore] Getting OAuth state for session ${sessionId}:`,
-            {
-                sessionExists: !!session,
-                sessionExpired: isExpired,
-                validSession: !!validSession,
-                hasOAuthState: !!validSession?.oauthState,
-                oauthProvider: validSession?.oauthState?.provider,
-                oauthAge: validSession?.oauthState?.createdAt
-                    ? Date.now() - validSession.oauthState.createdAt
-                    : "N/A",
-                totalSessions: this.store.size,
-                sessionAge: session ? Date.now() - session.updatedAt : "N/A",
-                storeChanged,
-                globalStoreSize: freshStore.size,
-                storeReference:
-                    this.store === freshStore ? "SAME" : "DIFFERENT",
-            },
-        );
         return validSession?.oauthState;
+    }
+
+    // Find session by OAuth state parameter (for callback when cookies aren't available)
+    findSessionByOAuthState(state: string): Session | undefined {
+        // Refresh store reference
+        this.store = getGlobalStore();
+
+        const now = Date.now();
+        for (const [id, session] of this.store.entries()) {
+            // Check if session is valid (not expired)
+            if (now - session.updatedAt < this.ttlMs) {
+                // Check if OAuth state matches
+                if (session.oauthState?.state === state) {
+                    return session;
+                }
+            }
+        }
+        return undefined;
     }
 
     clearOAuthState(sessionId: string) {
@@ -220,9 +198,6 @@ class SessionStore {
             delete session.oauthState;
             session.updatedAt = Date.now();
             this.store.set(sessionId, session);
-            console.log(
-                `[SessionStore] Cleared OAuth state for session ${sessionId}`,
-            );
         }
     }
 
@@ -236,33 +211,14 @@ class SessionStore {
         }
     }
 
-    // Get all active sessions (for debugging)
+    // Get all active sessions
     getAllSessions(): Session[] {
         return Array.from(this.store.values()).filter(
             (session) => Date.now() - session.updatedAt < this.ttlMs,
         );
     }
 
-    // Debug methods
-    debugSessions(): any {
-        const sessions = this.getAllSessions();
-        return {
-            totalSessions: sessions.length,
-            sessions: sessions.map((s) => ({
-                id: s.id,
-                hasOAuthState: !!s.oauthState,
-                oauthProvider: s.oauthState?.provider,
-                oauthCreatedAt: s.oauthState?.createdAt,
-                hasTwitterTokens: !!s.twitterTokens,
-                hasTwitterUser: !!s.twitterUser,
-                createdAt: s.createdAt,
-                updatedAt: s.updatedAt,
-                age: Date.now() - s.updatedAt,
-            })),
-        };
-    }
-
-    // Force create session (for debugging)
+    // Force create session
     getOrCreateForced(id: string): Session {
         let session = this.store.get(id);
         if (!session) {
@@ -275,13 +231,6 @@ class SessionStore {
                 updatedAt: Date.now(),
             };
             this.store.set(id, session);
-            console.log(
-                `[SessionStore] Created new session: ${id} (total: ${this.store.size})`,
-            );
-        } else {
-            console.log(
-                `[SessionStore] Found existing session: ${id} (age: ${Date.now() - session.updatedAt}ms)`,
-            );
         }
         return session;
     }
@@ -295,9 +244,6 @@ class SessionStore {
         session.twitterTokens = tokens;
         session.updatedAt = Date.now();
         this.store.set(sessionId, session);
-        console.log(
-            `[SessionStore] Set Twitter tokens for session ${sessionId}`,
-        );
     }
 
     setTwitterUser(sessionId: string, user: Session["twitterUser"]) {
@@ -308,10 +254,6 @@ class SessionStore {
         session.twitterUser = user;
         session.updatedAt = Date.now();
         this.store.set(sessionId, session);
-        console.log(
-            `[SessionStore] Set Twitter user for session ${sessionId}:`,
-            user?.username,
-        );
     }
 
     // Store verification method
