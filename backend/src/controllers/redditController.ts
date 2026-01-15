@@ -170,6 +170,62 @@ class RedditController {
     }
 
     /**
+     * GET /api/reddit/inbox
+     * Get inbox messages from Reddit
+     * Query params: limit (number), filter (string)
+     */
+    public async getInbox(req: Request, res: Response): Promise<void> {
+        try {
+            const { limit, filter } = req.query;
+
+            const options: any = {};
+            if (limit) {
+                options.limit = parseInt(limit as string, 10);
+            }
+            if (filter) {
+                options.filter = String(filter);
+            }
+
+            const result = await redditService.getInbox(options);
+            res.json(result);
+        } catch (error: any) {
+            console.error('Error in getInbox:', error);
+            res.status(500).json({
+                success: false,
+                error: error.message || 'Failed to fetch inbox'
+            });
+        }
+    }
+
+    /**
+     * POST /api/reddit/inbox/reply
+     * Reply to a Reddit inbox item
+     * Body: { thingId: string, text: string }
+     */
+    public async replyToInbox(req: Request, res: Response): Promise<void> {
+        try {
+            const { thingId, text } = req.body || {};
+
+            if (!thingId || !text) {
+                res.status(400).json({
+                    success: false,
+                    error: 'thingId and text are required'
+                });
+                return;
+            }
+
+            const result = await redditService.replyToInboxItem(thingId, text);
+            res.json(result);
+        } catch (error: any) {
+            console.error('Error in replyToInbox:', error);
+            res.status(500).json({
+                success: false,
+                error: error.message || 'Failed to send reply'
+            });
+        }
+    }
+
+    /**
      * GET /api/reddit/subreddits/:subreddit/engagement
      * Aggregate subreddit posts into engagement timeline
      */

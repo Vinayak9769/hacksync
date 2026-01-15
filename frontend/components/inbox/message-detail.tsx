@@ -13,14 +13,16 @@ import { platformIcons, teamMembers } from "@/lib/inbox-data"
 import { Send, CheckCircle, UserPlus, MoreHorizontal, ExternalLink, Loader2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/hooks/use-toast"
+import { replyToRedditInbox } from "@/lib/inbox-api"
 
 interface MessageDetailProps {
   message: InboxMessage
   onStatusChange: (id: string, status: InboxMessage["status"]) => void
   onAssign: (id: string, assignee: string) => void
+  onReply: (id: string, text: string) => void
 }
 
-export function MessageDetail({ message, onStatusChange, onAssign }: MessageDetailProps) {
+export function MessageDetail({ message, onStatusChange, onAssign, onReply }: MessageDetailProps) {
   const { toast } = useToast()
   const [reply, setReply] = useState("")
   const [isSending, setIsSending] = useState(false)
@@ -28,14 +30,32 @@ export function MessageDetail({ message, onStatusChange, onAssign }: MessageDeta
   const handleSendReply = async () => {
     if (!reply.trim()) return
     setIsSending(true)
-    await new Promise((r) => setTimeout(r, 1500))
-    setIsSending(false)
-    setReply("")
-    onStatusChange(message.id, "replied")
-    toast({
-      title: "Reply sent",
-      description: "Your reply has been sent successfully.",
-    })
+    try {
+      if (message.platform !== "reddit") {
+        throw new Error("Reply is only available for Reddit inbox right now.")
+      }
+
+      if (!message.sourceId) {
+        throw new Error("Missing Reddit message identifier.")
+      }
+
+      await replyToRedditInbox(message.sourceId, reply.trim())
+      const sentText = reply.trim()
+      setReply("")
+      onReply(message.id, sentText)
+      toast({
+        title: "Reply sent",
+        description: "Your reply has been sent successfully.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Reply failed",
+        description: error?.message || "Unable to send reply.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSending(false)
+    }
   }
 
   const handleMarkResolved = () => {
@@ -133,6 +153,17 @@ export function MessageDetail({ message, onStatusChange, onAssign }: MessageDeta
             <p className="text-sm">{message.content}</p>
           </div>
         </div>
+
+        {(message.replies || []).map((item) => (
+          <div key={item.id} className="flex justify-end gap-3">
+            <div className="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
+              <p className="text-sm">{item.text}</p>
+              <p className="text-[10px] opacity-80 mt-1">
+                {format(item.timestamp, "PPP 'at' p")}
+              </p>
+            </div>
+          </div>
+        ))}
 
         {/* Assign to team member */}
         <div className="flex items-center gap-2 pt-4 border-t border-border">

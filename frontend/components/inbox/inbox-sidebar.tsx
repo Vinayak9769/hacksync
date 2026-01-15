@@ -14,6 +14,7 @@ interface InboxSidebarProps {
     dms: number
     mentions: number
     comments: number
+    resolved: number
   }
 }
 
@@ -24,7 +25,7 @@ export function InboxSidebar({ activeFilter, onFilterChange, counts }: InboxSide
     { id: "dm", label: "Direct Messages", icon: MessageCircle, count: counts.dms },
     { id: "mention", label: "Mentions", icon: AtSign, count: counts.mentions },
     { id: "comment", label: "Comments", icon: MessageCircle, count: counts.comments },
-    { id: "resolved", label: "Resolved", icon: CheckCircle, count: 0 },
+    { id: "resolved", label: "Resolved", icon: CheckCircle, count: counts.resolved },
   ]
 
   return (

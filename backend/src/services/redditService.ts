@@ -34,6 +34,34 @@ class RedditService {
         this.client = createRedditClient();
     }
 
+    private inferInboxType(item: any): 'dm' | 'mention' | 'comment' {
+        const rawType = String(item?.type || item?.subject || '').toLowerCase();
+
+        if (
+            rawType.includes('comment') ||
+            rawType.includes('post') ||
+            rawType.includes('submission') ||
+            item?.was_comment ||
+            item?.was_post ||
+            item?.context ||
+            item?.link_title
+        ) {
+            return 'comment';
+        }
+
+        if (rawType.includes('mention') || rawType.includes('username')) {
+            return 'mention';
+        }
+
+        return 'dm';
+    }
+
+    private buildPermalink(item: any): string | undefined {
+        const path = item?.context || item?.permalink || '';
+        if (!path) return undefined;
+        return path.startsWith('http') ? path : `https://reddit.com${path}`;
+    }
+
     /**
      * Check if Reddit client is available
      */
@@ -331,6 +359,104 @@ class RedditService {
             },
             timeline,
         };
+    }
+
+    /**
+     * Get inbox messages from Reddit
+     */
+    public async getInbox(options: { limit?: number; filter?: string } = {}): Promise<any> {
+        if (!this.client) {
+            throw new Error('Reddit client not initialized. Please check your credentials.');
+        }
+
+        const { limit = 50, filter = 'inbox' } = options;
+        const allowedFilters = new Set([
+            'inbox',
+            'unread',
+            'messages',
+            'comments',
+            'post_replies',
+            'username_mentions',
+            'sent',
+        ]);
+        const normalizedFilter = allowedFilters.has(filter) ? filter : 'inbox';
+
+        try {
+            const inbox = await (this.client as any).getInbox({ limit, filter: normalizedFilter });
+            const messages = inbox.map((item: any) => ({
+                id: item?.name || item?.id,
+                sourceId: item?.name || item?.id,
+                type: this.inferInboxType(item),
+                platform: 'reddit',
+                sender: {
+                    name: item?.author?.name || 'unknown',
+                    username: item?.author?.name || 'unknown',
+                },
+                content: item?.body || item?.subject || '',
+                timestamp: toIsoDate(item?.created_utc),
+                status: item?.new ? 'unread' : 'read',
+                postContent: item?.link_title || item?.context || undefined,
+                subreddit: item?.subreddit?.display_name || item?.subreddit_name_prefixed || undefined,
+                permalink: this.buildPermalink(item),
+            }));
+
+            return {
+                success: true,
+                count: messages.length,
+                messages,
+            };
+        } catch (error: any) {
+            console.error('Error fetching Reddit inbox:', error);
+            throw new Error(`Failed to fetch inbox: ${error.message}`);
+        }
+    }
+
+    /**
+     * Reply to an inbox item (DM, comment, mention)
+     */
+    public async replyToInboxItem(thingId: string, text: string): Promise<any> {
+        if (!this.client) {
+            throw new Error('Reddit client not initialized. Please check your credentials.');
+        }
+
+        if (!thingId || !text) {
+            throw new Error('thingId and text are required');
+        }
+
+        const normalized = thingId.trim();
+        const prefix = normalized.includes('_') ? normalized.split('_')[0] : '';
+
+        try {
+            let replyResult: any;
+
+            if (prefix === 't4') {
+                replyResult = await (this.client as any).getMessage(normalized).reply(text);
+            } else if (prefix === 't1') {
+                replyResult = await (this.client as any).getComment(normalized).reply(text);
+            } else if (prefix === 't3') {
+                replyResult = await (this.client as any).getSubmission(normalized).reply(text);
+            } else {
+                try {
+                    replyResult = await (this.client as any).getMessage(normalized).reply(text);
+                } catch (inner) {
+                    try {
+                        replyResult = await (this.client as any).getComment(normalized).reply(text);
+                    } catch {
+                        replyResult = await (this.client as any).getSubmission(normalized).reply(text);
+                    }
+                }
+            }
+
+            return {
+                success: true,
+                thingId: normalized,
+                replyId: replyResult?.id,
+                replyFullname: replyResult?.name,
+            };
+        } catch (error: any) {
+            console.error('Error replying to Reddit inbox item:', error);
+            throw new Error(`Failed to send reply: ${error.message}`);
+        }
     }
 
     /**
