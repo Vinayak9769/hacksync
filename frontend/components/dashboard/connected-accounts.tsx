@@ -3,40 +3,41 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Check } from "lucide-react"
+import { Plus, Check, Linkedin } from "lucide-react"
+import { BlueSky, Facebook, Instagram, X } from "../brand-icons"
 
 const socialPlatforms = [
   {
     name: "Instagram",
-    icon: "📷",
+    icon: Instagram(),
     connected: true,
     followers: "12.5K",
     status: "active",
   },
   {
     name: "Twitter/X",
-    icon: "𝕏",
+    icon: X(),
     connected: true,
     followers: "8.2K",
     status: "active",
   },
   {
     name: "LinkedIn",
-    icon: "in",
+    icon: <Linkedin/>,
     connected: true,
     followers: "5.1K",
     status: "active",
   },
   {
     name: "Facebook",
-    icon: "f",
+    icon: Facebook(),
     connected: false,
     followers: null,
     status: "disconnected",
   },
   {
     name: "Bluesky",
-    icon: "🦋",
+    icon: BlueSky(),
     connected: false,
     followers: null,
     status: "disconnected",
@@ -45,20 +46,16 @@ const socialPlatforms = [
 
 export function ConnectedAccounts() {
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-card ">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Connected Accounts</CardTitle>
-        <Button variant="ghost" size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          Add
-        </Button>
+        <CardTitle className="text-base">Social Accounts</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-3 -mt-2">
           {socialPlatforms.map((platform) => (
             <div key={platform.name} className="flex items-center justify-between p-2 rounded-lg bg-secondary/50">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-background text-sm font-medium">
+                <div className="flex h-8 w-8 p-1.5 items-center justify-center rounded-md bg-background text-sm font-medium">
                   {platform.icon}
                 </div>
                 <div>
@@ -81,6 +78,9 @@ export function ConnectedAccounts() {
             </div>
           ))}
         </div>
+        <Button variant="outline" size="sm" className="mt-6 bg-white border-border rounded-sm">
+          Connect more account
+        </Button>
       </CardContent>
     </Card>
   )

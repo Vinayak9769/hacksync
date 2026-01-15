@@ -11,7 +11,7 @@ const actions = [
     description: "Write and schedule new content",
     icon: PenSquare,
     href: "/create",
-    variant: "default" as const,
+    variant: "secondary" as const,
   },
   {
     title: "View Calendar",
@@ -38,28 +38,24 @@ const actions = [
 
 export function QuickActions() {
   return (
-    <Card className="bg-card border-border">
-      <CardHeader>
-        <CardTitle className="text-base">Quick Actions</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-3">
+
+        <div className="flex justify-around mb-8">
           {actions.map((action) => (
             <Button
               key={action.title}
               variant={action.variant}
-              className="h-auto flex-col items-start gap-1 p-4"
+              className="h-auto grid items-start gap-1 p-4 w-[240px]"
               asChild
             >
               <Link href={action.href}>
-                <action.icon className="h-5 w-5" />
-                <span className="font-medium">{action.title}</span>
+                <div className="flex items-center justify-center text-center gap-2">
+                  <action.icon className="h-5 w-5" />
+                  <span className="font-medium">{action.title}</span>
+                </div>
                 <span className="text-xs opacity-70 font-normal">{action.description}</span>
               </Link>
             </Button>
           ))}
         </div>
-      </CardContent>
-    </Card>
   )
 }

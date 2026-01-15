@@ -20,7 +20,7 @@ export function EngagementChart() {
         <CardTitle className="text-base">Weekly Engagement</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[200px]">
+        <div className="h-[200px] -ml-8">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data}>
               <defs>

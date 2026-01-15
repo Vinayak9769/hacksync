@@ -14,43 +14,40 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">Here's what's happening with your social presence today.</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Total Followers"
-          value="25.8K"
-          change="+2.5% from last week"
-          changeType="positive"
-          icon={Users}
-        />
-        <StatsCard
-          title="Total Impressions"
-          value="142.3K"
-          change="+18.2% from last week"
-          changeType="positive"
-          icon={Eye}
-        />
-        <StatsCard
-          title="Engagement Rate"
-          value="4.6%"
-          change="-0.3% from last week"
-          changeType="negative"
-          icon={Heart}
-        />
-        <StatsCard title="Messages" value="23" change="5 unread" changeType="neutral" icon={MessageSquare} />
-      </div>
-
+  <QuickActions />
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           <EngagementChart />
-          <ScheduledPosts />
+          <div className="grid gap-4 md:grid-cols-3 ">
+            <StatsCard
+              title="Total Followers"
+              value="25.8K"
+              change="+2.5% from last week"
+              changeType="positive"
+              icon={Users}
+            />
+            <StatsCard
+              title="Total Impressions"
+              value="142.3K"
+              change="+18.2% from last week"
+              changeType="positive"
+              icon={Eye}
+            />
+            <StatsCard
+              title="Engagement Rate"
+              value="4.6%"
+              change="-0.3% from last week"
+              changeType="negative"
+              icon={Heart}
+            />
+          </div>
+            <ScheduledPosts />
         </div>
 
         {/* Right Column */}
         <div className="space-y-6">
-          <QuickActions />
           <ConnectedAccounts />
           <TrendingMentions />
         </div>

@@ -132,7 +132,6 @@ export default function WhiteboardPage() {
     const handleMouseMove = (e: React.MouseEvent) => {
         if (draggedNote) {
             const boardRect = e.currentTarget as HTMLDivElement;
-            console.log(dragOffset);
             const newX = e.clientX - boardRect.offsetLeft - dragOffset.x;
             const newY = e.clientY - boardRect.offsetTop - 19;
             setNotes(
@@ -204,7 +203,7 @@ export default function WhiteboardPage() {
                                         )}
                                     >
                                         <div className="flex items-start justify-between gap-2 mb-2">
-                                            <Move className="h-4 w-4 text-muted-foreground/50" />
+                                            <Move className="h-4 w-4 text-foreground/30" />
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button
