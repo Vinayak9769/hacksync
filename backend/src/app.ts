@@ -1,42 +1,85 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { setRoutes } from './routes/index';
-import { handleMediaStream } from './services/mediaStreamHandler';
+import dotenv from 'dotenv';
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+dotenv.config();
 
-// Middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const MONGO_URI = process.env.MONGODB_URI || '';
 
-// Setup routes
-setRoutes(app);
+async function startServer() {
+  // Connect to MongoDB (optional)
+  if (MONGO_URI) {
+    try {
+      await mongoose.connect(MONGO_URI, {
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        family: 4,
+      });
+      console.log('Connected to MongoDB');
+    } catch (err: any) {
+      console.error('MongoDB connection error (will continue without persistence):', err.message || err);
+    }
+  } else {
+    console.warn('MONGO_URI not set — persistence disabled. Set MONGO_URI to enable campaign persistence.');
+  }
 
-// Create HTTP server
-const server = createServer(app);
+  const app = express();
 
-// Create WebSocket server for Twilio Media Streams
-const wss = new WebSocketServer({ 
-    server,
-    path: '/media-stream'
-});
+  // Middleware
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: true }));
 
-wss.on('connection', (ws) => {
+  // Simple request logger + CORS
+  app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+
+    const start = Date.now();
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      console.log(`${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`);
+    });
+
+    next();
+  });
+
+  // Register routes
+  setRoutes(app);
+
+  // Create HTTP server & WS server
+  const server = createServer(app);
+  const wss = new WebSocketServer({ server, path: '/media-stream' });
+
+  wss.on('connection', (ws) => {
     console.log('New WebSocket connection for media stream');
-    handleMediaStream(ws);
-});
+    // Optional: If you have a media stream handler file, call it; otherwise ignore.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { handleMediaStream } = require('./services/mediaStreamHandler');
+      if (handleMediaStream) handleMediaStream(ws);
+    } catch {
+      // no media stream handler found — that's fine
+    }
+  });
 
-// Start server
-server.listen(PORT, () => {
-    console.log(`🚀 Twilio Conversational AI Sales Agent server is running on port ${PORT}`);
-    console.log(`📞 Voice Webhook URL: http://localhost:${PORT}/api/webhook/conversational`);
-    console.log(`🌊 Media Stream WebSocket: ws://localhost:${PORT}/media-stream`);
-    console.log(`💚 Health check: http://localhost:${PORT}/api/health`);
-    console.log(`\n⚡ Features:`);
-    console.log(`   - Real-time speech-to-text (Deepgram)`);
-    console.log(`   - AI conversation (Google Gemini)`);
-    console.log(`   - Twilio Media Streams`);
+  server.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`Health: http://localhost:${PORT}/api/health`);
+  });
+}
+
+startServer().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });

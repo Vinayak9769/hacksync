@@ -1,6 +1,9 @@
 import { Express, Router } from 'express';
 import conversationController from '../controllers/conversationController';
 import conversationalAIController from '../controllers/conversationalAIController';
+import strategistController from '../controllers/strategistController';
+import chatController from '../controllers/chatController';
+import nestgptController from '../controllers/nestgptController';
 
 const router = Router();
 
@@ -10,6 +13,13 @@ router.get('/health', conversationalAIController.healthCheck);
 // NEW: Conversational AI endpoints (Deepgram + Gemini)
 router.post('/webhook/conversational', conversationalAIController.handleIncomingCall);
 router.post('/make-call', conversationalAIController.makeCall);
+
+// BRANDPULSE strategist endpoints
+// router.get('/strategist/metrics', strategistController.getMetrics);
+router.post('/strategist/generate', strategistController.generateStrategy);
+router.post('/strategist/chat', chatController.chat);
+// Dedicated NestGPT strategist chat (separate from Twilio sales flows)
+router.post('/nestgpt/chat', nestgptController.chat);
 
 // Legacy: Twilio webhook endpoints for voice calls (TwiML-based)
 router.post('/webhook/voice', conversationController.handleIncomingCall);
