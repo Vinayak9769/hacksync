@@ -165,6 +165,46 @@ class RedditController {
             });
         }
     }
+
+    /**
+     * GET /api/reddit/subreddits/:subreddit/engagement
+     * Aggregate subreddit posts into engagement timeline
+     */
+    public async getSubredditEngagement(req: Request, res: Response): Promise<void> {
+        try {
+            const { subreddit } = req.params;
+            const { limit, days, sort } = req.query;
+
+            if (!subreddit) {
+                res.status(400).json({
+                    success: false,
+                    error: 'Subreddit name is required'
+                });
+                return;
+            }
+
+            const options: any = {};
+            if (limit) {
+                options.limit = parseInt(limit as string, 10);
+            }
+            if (days) {
+                options.days = parseInt(days as string, 10);
+            }
+            if (sort) {
+                options.sort = sort as 'hot' | 'new' | 'top' | 'rising';
+            }
+
+            const result = await redditService.getSubredditEngagement(subreddit, options);
+            res.json(result);
+            
+        } catch (error: any) {
+            console.error('Error in getSubredditEngagement:', error);
+            res.status(500).json({
+                success: false,
+                error: error.message || 'Failed to build engagement timeline'
+            });
+        }
+    }
 }
 
 export default new RedditController();

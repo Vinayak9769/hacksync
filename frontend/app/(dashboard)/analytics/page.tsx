@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -18,8 +19,34 @@ import {
   Cell,
 } from "recharts"
 import { Users, Eye, Heart, MessageSquare, TrendingUp, TrendingDown, Download } from "lucide-react"
+import { API_FETCH_OPTIONS, API_URL } from "@/lib/api-config"
 
-const engagementData = [
+type EngagementPoint = {
+  name: string
+  instagram: number
+  twitter: number
+  linkedin: number
+  reddit?: number
+}
+
+type RedditTimelineBucket = {
+  date: string
+  label: string
+  postCount: number
+  posts: Array<{
+    id: string
+    title: string
+    author: string
+    createdAt: string
+    permalink: string
+    score: number
+    numComments: number
+  }>
+}
+
+const REDDIT_COLOR = "oklch(0.68 0.12 25)"
+
+const DEFAULT_ENGAGEMENT_DATA: EngagementPoint[] = [
   { name: "Jan 1", instagram: 4000, twitter: 2400, linkedin: 1200 },
   { name: "Jan 3", instagram: 3000, twitter: 1398, linkedin: 2210 },
   { name: "Jan 5", instagram: 2000, twitter: 9800, linkedin: 2290 },
@@ -29,6 +56,35 @@ const engagementData = [
   { name: "Jan 13", instagram: 3490, twitter: 4300, linkedin: 2100 },
   { name: "Jan 15", instagram: 4000, twitter: 5200, linkedin: 2800 },
 ]
+
+const mergeEngagementWithReddit = (
+  baseline: EngagementPoint[],
+  timeline: RedditTimelineBucket[],
+): EngagementPoint[] => {
+  const baselineNames = new Set(baseline.map((point) => point.name))
+  const redditCountByLabel = new Map<string, number>()
+
+  timeline.forEach((bucket) => {
+    redditCountByLabel.set(bucket.label, bucket.postCount)
+  })
+
+  const mergedBaseline = baseline.map((point) => ({
+    ...point,
+    reddit: redditCountByLabel.get(point.name) ?? 0,
+  }))
+
+  const additionalPoints = timeline
+    .filter((bucket) => !baselineNames.has(bucket.label))
+    .map((bucket) => ({
+      name: bucket.label,
+      instagram: 0,
+      twitter: 0,
+      linkedin: 0,
+      reddit: bucket.postCount,
+    }))
+
+  return [...mergedBaseline, ...additionalPoints]
+}
 
 const audienceData = [
   { name: "18-24", value: 25 },
@@ -90,6 +146,75 @@ const platformIcons: Record<string, string> = {
 }
 
 export default function AnalyticsPage() {
+  const [chartData, setChartData] = useState<EngagementPoint[]>(() =>
+    mergeEngagementWithReddit(DEFAULT_ENGAGEMENT_DATA, [])
+  )
+  const [redditTimeline, setRedditTimeline] = useState<RedditTimelineBucket[]>([])
+  const [redditStatus, setRedditStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
+  const [redditError, setRedditError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isActive = true
+
+    const fetchRedditEngagement = async () => {
+      setRedditStatus("loading")
+      setRedditError(null)
+
+      try {
+        const response = await fetch(
+          `${API_URL}/api/reddit/subreddits/Ettara/engagement?days=14&limit=80&sort=new`,
+          {
+            ...API_FETCH_OPTIONS,
+            cache: "no-store",
+            headers: {
+              ...((API_FETCH_OPTIONS.headers as Record<string, string>) || {}),
+              Accept: "application/json",
+            },
+          },
+        )
+        const payload = await response.json()
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "Failed to fetch Reddit engagement data")
+        }
+
+        if (!isActive) return
+
+        const timeline: RedditTimelineBucket[] = Array.isArray(payload?.timeline) ? payload.timeline : []
+
+        setRedditTimeline(timeline)
+        setChartData(mergeEngagementWithReddit(DEFAULT_ENGAGEMENT_DATA, timeline))
+        setRedditStatus("success")
+      } catch (error: any) {
+        if (!isActive) return
+        setRedditStatus("error")
+        setRedditError(error?.message || "Unable to load Reddit engagement")
+        setChartData(mergeEngagementWithReddit(DEFAULT_ENGAGEMENT_DATA, []))
+      }
+    }
+
+    fetchRedditEngagement()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
+
+  const redditSummary = useMemo(() => {
+    if (!redditTimeline.length) {
+      return { totalPosts: 0, rangeLabel: null as string | null }
+    }
+
+    const totalPosts = redditTimeline.reduce((sum, bucket) => sum + bucket.postCount, 0)
+    const firstLabel = redditTimeline[0]?.label
+    const lastLabel = redditTimeline[redditTimeline.length - 1]?.label
+
+    return {
+      totalPosts,
+      rangeLabel: firstLabel && lastLabel ? `${firstLabel} - ${lastLabel}` : firstLabel || null,
+    }
+  }, [redditTimeline])
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -191,7 +316,7 @@ export default function AnalyticsPage() {
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={engagementData}>
+                  <AreaChart data={chartData}>
                     <defs>
                       <linearGradient id="instagramGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="oklch(0.7 0.18 165)" stopOpacity={0.3} />
@@ -204,6 +329,10 @@ export default function AnalyticsPage() {
                       <linearGradient id="linkedinGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="oklch(0.75 0.15 50)" stopOpacity={0.3} />
                         <stop offset="95%" stopColor="oklch(0.75 0.15 50)" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="redditGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={REDDIT_COLOR} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={REDDIT_COLOR} stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="name" stroke="oklch(0.65 0 0)" fontSize={12} tickLine={false} axisLine={false} />
@@ -243,6 +372,13 @@ export default function AnalyticsPage() {
                       strokeWidth={2}
                       fill="url(#linkedinGradient)"
                     />
+                    <Area
+                      type="monotone"
+                      dataKey="reddit"
+                      stroke={REDDIT_COLOR}
+                      strokeWidth={2}
+                      fill="url(#redditGradient)"
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -259,6 +395,19 @@ export default function AnalyticsPage() {
                   <div className="h-3 w-3 rounded-full" style={{ backgroundColor: "oklch(0.75 0.15 50)" }} />
                   <span className="text-sm text-muted-foreground">LinkedIn</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: REDDIT_COLOR }} />
+                  <span className="text-sm text-muted-foreground">Reddit (r/Ettara)</span>
+                </div>
+              </div>
+              <div className="text-center text-xs text-muted-foreground mt-2">
+                {redditStatus === "loading" && "Syncing Reddit engagement from r/Ettara..."}
+                {redditStatus === "error" &&
+                  `Unable to load Reddit engagement${redditError ? ` - ${redditError}` : ""}`}
+                {redditStatus === "success" &&
+                  (redditSummary.totalPosts > 0
+                    ? `r/Ettara published ${redditSummary.totalPosts} posts${redditSummary.rangeLabel ? ` between ${redditSummary.rangeLabel}` : ""}.`
+                    : "No recent Reddit activity detected for r/Ettara.")}
               </div>
             </CardContent>
           </Card>
@@ -378,7 +527,7 @@ export default function AnalyticsPage() {
               <CardContent>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={engagementData}>
+                    <AreaChart data={chartData}>
                       <defs>
                         <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="oklch(0.7 0.18 165)" stopOpacity={0.3} />
