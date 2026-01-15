@@ -29,6 +29,8 @@ import {
   Link,
   Copy,
   Tag,
+  Play,
+  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -37,12 +39,23 @@ interface MediaItem {
   type: "image" | "video"
   name: string
   url: string
+  thumbnail?: string
   size: string
   uploadedAt: string
   tags: string[]
 }
 
 const mediaItems: MediaItem[] = [
+  {
+    id: "0",
+    type: "video",
+    name: "sample_0.mp4",
+    url: "/sample_0.mp4",
+    thumbnail: "/demo-video-thumbnail.jpg",
+    size: "12.5 MB",
+    uploadedAt: "Jan 15, 2026",
+    tags: ["featured", "promo", "etarra"],
+  },
   {
     id: "1",
     type: "image",
@@ -66,6 +79,7 @@ const mediaItems: MediaItem[] = [
     type: "video",
     name: "demo-video.mp4",
     url: "/demo-video-thumbnail.jpg",
+    thumbnail: "/demo-video-thumbnail.jpg",
     size: "45 MB",
     uploadedAt: "Jan 13, 2026",
     tags: ["demo", "product"],
@@ -103,6 +117,7 @@ export default function MediaLibraryPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedItems, setSelectedItems] = useState<string[]>([])
+  const [previewItem, setPreviewItem] = useState<MediaItem | null>(null)
 
   const filteredItems = mediaItems.filter(
     (item) =>
@@ -112,6 +127,11 @@ export default function MediaLibraryPage() {
 
   const toggleSelection = (id: string) => {
     setSelectedItems((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]))
+  }
+
+  const openPreview = (item: MediaItem, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setPreviewItem(item)
   }
 
   return (
@@ -200,10 +220,19 @@ export default function MediaLibraryPage() {
               onClick={() => toggleSelection(item.id)}
             >
               <div className="aspect-square relative bg-secondary">
-                <img src={item.url || "/placeholder.svg"} alt={item.name} className="w-full h-full object-cover" />
+                <img 
+                  src={item.type === "video" ? (item.thumbnail || "/placeholder.svg") : (item.url || "/placeholder.svg")} 
+                  alt={item.name} 
+                  className="w-full h-full object-cover" 
+                />
                 {item.type === "video" && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                    <Video className="h-8 w-8 text-white" />
+                  <div 
+                    className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/50 transition-colors"
+                    onClick={(e) => openPreview(item, e)}
+                  >
+                    <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center hover:scale-110 transition-transform">
+                      <Play className="h-6 w-6 text-black ml-1" />
+                    </div>
                   </div>
                 )}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -214,6 +243,12 @@ export default function MediaLibraryPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {item.type === "video" && (
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setPreviewItem(item); }}>
+                          <Play className="h-4 w-4 mr-2" />
+                          Play video
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem>
                         <Copy className="h-4 w-4 mr-2" />
                         Copy link
@@ -263,11 +298,31 @@ export default function MediaLibraryPage() {
                   )}
                   onClick={() => toggleSelection(item.id)}
                 >
-                  <div className="h-16 w-16 rounded bg-secondary overflow-hidden shrink-0">
-                    <img src={item.url || "/placeholder.svg"} alt={item.name} className="w-full h-full object-cover" />
+                  <div className="h-16 w-16 rounded bg-secondary overflow-hidden shrink-0 relative">
+                    <img 
+                      src={item.type === "video" ? (item.thumbnail || "/placeholder.svg") : (item.url || "/placeholder.svg")} 
+                      alt={item.name} 
+                      className="w-full h-full object-cover" 
+                    />
+                    {item.type === "video" && (
+                      <div 
+                        className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/50"
+                        onClick={(e) => openPreview(item, e)}
+                      >
+                        <Play className="h-6 w-6 text-white" />
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{item.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium truncate">{item.name}</p>
+                      {item.type === "video" && (
+                        <Badge variant="outline" className="text-xs">
+                          <Video className="h-3 w-3 mr-1" />
+                          Video
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       {item.size} • {item.uploadedAt}
                     </p>
@@ -281,6 +336,17 @@ export default function MediaLibraryPage() {
                       </div>
                     )}
                   </div>
+                  {item.type === "video" && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={(e) => openPreview(item, e)}
+                      className="shrink-0"
+                    >
+                      <Play className="h-4 w-4 mr-1" />
+                      Play
+                    </Button>
+                  )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="icon">
@@ -288,6 +354,12 @@ export default function MediaLibraryPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {item.type === "video" && (
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setPreviewItem(item); }}>
+                          <Play className="h-4 w-4 mr-2" />
+                          Play video
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem>
                         <Copy className="h-4 w-4 mr-2" />
                         Copy link
@@ -308,6 +380,67 @@ export default function MediaLibraryPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Video Preview Dialog */}
+      <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
+        <DialogContent className="max-w-4xl w-full p-0 overflow-hidden bg-black">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{previewItem?.name || "Media Preview"}</DialogTitle>
+            <DialogDescription>Preview of {previewItem?.name}</DialogDescription>
+          </DialogHeader>
+          <div className="relative">
+            {/* Close button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full"
+              onClick={() => setPreviewItem(null)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            
+            {/* Video player */}
+            {previewItem?.type === "video" && (
+              <video
+                src={previewItem.url}
+                controls
+                autoPlay
+                className="w-full max-h-[80vh] object-contain"
+              >
+                Your browser does not support the video tag.
+              </video>
+            )}
+            
+            {/* Image preview */}
+            {previewItem?.type === "image" && (
+              <img
+                src={previewItem.url}
+                alt={previewItem.name}
+                className="w-full max-h-[80vh] object-contain"
+              />
+            )}
+          </div>
+          
+          {/* Video info bar */}
+          <div className="bg-background p-4 border-t">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold">{previewItem?.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {previewItem?.size} • {previewItem?.uploadedAt}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {previewItem?.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

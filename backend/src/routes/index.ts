@@ -66,6 +66,9 @@ router.post(
 );
 router.post("/make-call", conversationalAIController.makeCall);
 
+// Sales pitch call endpoint (Etarra Coffee Shop)
+router.post("/sales-call", conversationController.makeCall);
+
 // Reddit API endpoints
 router.get("/reddit/health", redditController.healthCheck);
 router.get("/reddit/test-auth", redditController.testAuth);

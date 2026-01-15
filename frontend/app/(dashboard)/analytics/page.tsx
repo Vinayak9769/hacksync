@@ -228,7 +228,7 @@ export default function AnalyticsPage() {
 
       try {
         const response = await fetch(
-          `${API_URL}/api/reddit/subreddits/Ettara/engagement?days=14&limit=80&sort=new`,
+          `${API_URL}/reddit/subreddits/Ettara/engagement?days=14&limit=80&sort=new`,
           {
             ...API_FETCH_OPTIONS,
             cache: "no-store",

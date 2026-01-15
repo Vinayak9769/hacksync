@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Sparkles, PhoneCall, MessageSquare, Filter, TrendingUp, Target, Users, Clock } from "lucide-react"
+import { Sparkles, PhoneCall, MessageSquare, Filter, TrendingUp, Target, Users, Clock, Loader2, Phone, PhoneOff, CheckCircle2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,28 +16,54 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
+import { Progress } from "@/components/ui/progress"
 
 const customers = [
   {
     id: "crm-2001",
     name: "Vinayak Mohanty",
     stage: "active" as const,
-    email: "vinayak97696@gamil.com",
-    phone: "93248 89443",
+    email: "vinayak97696@gmail.com",
+    phone: "+919324889443",
+    company: "Coffee Enthusiast",
+  },
+  {
+    id: "crm-2002",
+    name: "Priya Sharma",
+    stage: "warm" as const,
+    email: "priya.sharma@example.com",
+    phone: "+919876543210",
+    company: "Freelancer",
+  },
+  {
+    id: "crm-2003",
+    name: "Rahul Kapoor",
+    stage: "risk" as const,
+    email: "rahul.k@example.com",
+    phone: "+919988776655",
+    company: "Tech Startup",
   },
 ]
 
 type Customer = (typeof customers)[number]
 
-type StageToken = Customer["stage"]
+type StageToken = "active" | "warm" | "risk"
 
 const outreachTemplates: Record<StageToken, string> = {
   active:
-    "Hi ${name}, thanks for collaborating with SocialNest. Here's a quick idea on how we can deepen your growth loops this week...",
+    "Hi vinayak, this is Etarra Coffee Shop from Bandra! We'd love to invite you to try our signature cold brews and artisanal pastries. Visit us for a complimentary tasting!",
   warm:
-    "Hi ${name}, loved our last chat. I drafted a short plan on how SocialNest can deliver revenue lift for ${company}...",
+    "Hi vinayak, we noticed you've been exploring coffee shops in Mumbai. Etarra offers the best single-origin pour overs in Bandra - would love to have you visit!",
   risk:
-    "Hi ${name}, I noticed a few friction points in your workspace. Can I share a quick fix and align on next steps?",
+    "Hi vinayak, we miss you at Etarra! Come back for our new seasonal menu and enjoy 20% off your next order. We're at Bandra West, near Linking Road!",
+}
+
+interface CallStatus {
+  isActive: boolean
+  callSid?: string
+  status: 'idle' | 'initiating' | 'ringing' | 'in-progress' | 'completed' | 'failed'
+  customerName?: string
+  duration?: number
 }
 
 export default function CRMPage() {
@@ -45,6 +71,11 @@ export default function CRMPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [draftMessage, setDraftMessage] = useState("")
+  const [callStatus, setCallStatus] = useState<CallStatus>({
+    isActive: false,
+    status: 'idle'
+  })
+  const [showCallDialog, setShowCallDialog] = useState(false)
 
   const summary = useMemo(
     () => ({
@@ -58,20 +89,93 @@ export default function CRMPage() {
 
   const handleGlobalAiDial = () => {
     toast({
-      title: "AI call reach-out queued",
-      description: "NestGPT is prioritizing top warm leads for voice outreach.",
+      title: "☕ AI Outreach Started",
+      description: "Etarra AI is calling top leads to invite them to our Bandra café.",
     })
   }
 
-  const handleRowAiDial = (customer: Customer) => {
-    toast({
-      title: `AI calling ${customer.name}`,
-      description: `${customer.company} will hear a personalized pitch in the next call sprint.`,
+  // Make actual AI call via backend Twilio + Deepgram pipeline
+  const handleRowAiDial = async (customer: Customer) => {
+    setCallStatus({
+      isActive: true,
+      status: 'initiating',
+      customerName: customer.name
     })
+    setShowCallDialog(true)
+
+    try {
+      const apiBase = typeof window !== 'undefined' 
+        ? (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : ''))
+        : ''
+      
+      const response = await fetch(`${apiBase}/make-call`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          to: customer.phone 
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setCallStatus({
+          isActive: true,
+          status: 'ringing',
+          callSid: data.callSid,
+          customerName: customer.name
+        })
+
+        toast({
+          title: `📞 Calling ${customer.name}`,
+          description: `Etarra AI is reaching out with a personalized coffee experience pitch!`,
+        })
+
+        // Simulate call progression (in real app, use webhooks for status updates)
+        setTimeout(() => {
+          setCallStatus(prev => ({ ...prev, status: 'in-progress' }))
+        }, 3000)
+
+      } else {
+        throw new Error(data.error || 'Failed to initiate call')
+      }
+
+    } catch (error: any) {
+      console.error('Call error:', error)
+      setCallStatus({
+        isActive: false,
+        status: 'failed',
+        customerName: customer.name
+      })
+
+      toast({
+        title: "Call failed",
+        description: error.message || "Could not connect the AI call. Please try again.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleEndCall = () => {
+    setCallStatus({
+      isActive: false,
+      status: 'completed',
+      customerName: callStatus.customerName
+    })
+    
+    toast({
+      title: "Call completed",
+      description: `AI call with ${callStatus.customerName} has ended.`,
+    })
+
+    setTimeout(() => {
+      setShowCallDialog(false)
+      setCallStatus({ isActive: false, status: 'idle' })
+    }, 2000)
   }
 
   const openMessageDialog = (customer: Customer) => {
-    const template = outreachTemplates[customer.stage]
+    const template = outreachTemplates[customer.stage as StageToken] || outreachTemplates.active
     const personalized = template
       .replace("${name}", customer.name)
       .replace("${company}", customer.company)
@@ -97,9 +201,9 @@ export default function CRMPage() {
     <div className="space-y-6 p-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Customer Relationship Hub</h1>
+          <h1 className="text-2xl font-bold">☕ Etarra Coffee - Customer Outreach</h1>
           <p className="text-muted-foreground">
-            Monitor every account, push AI-led reach-outs, and protect revenue relationships.
+            AI-powered voice calls to bring more coffee lovers to our Bandra café. Real conversations with Twilio & Deepgram.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -114,12 +218,12 @@ export default function CRMPage() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Accounts</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Regular Customers</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{summary.active}</p>
-            <p className="text-xs text-muted-foreground">Customer pods live on SocialNest</p>
+            <p className="text-xs text-muted-foreground">Loyal coffee lovers at Etarra</p>
           </CardContent>
         </Card>
         <Card className="border-border bg-card">
@@ -129,17 +233,17 @@ export default function CRMPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{summary.warm}</p>
-            <p className="text-xs text-muted-foreground">Ready for AI guided pilots</p>
+            <p className="text-xs text-muted-foreground">Ready to discover our brews</p>
           </CardContent>
         </Card>
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Churn Watch</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Win Back</CardTitle>
             <TrendingUp className="h-4 w-4 rotate-45 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{summary.risk}</p>
-            <p className="text-xs text-muted-foreground">Accounts needing proactive care</p>
+            <p className="text-xs text-muted-foreground">Missing their Etarra experience</p>
           </CardContent>
         </Card>
         <Card className="border-border bg-card">
@@ -149,7 +253,7 @@ export default function CRMPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{summary.responseTime}</p>
-            <p className="text-xs text-muted-foreground">Across all human + AI touchpoints</p>
+            <p className="text-xs text-muted-foreground">AI call connection speed</p>
           </CardContent>
         </Card>
       </div>
@@ -263,6 +367,122 @@ export default function CRMPage() {
               Cancel
             </Button>
             <Button onClick={handleSaveMessage}>Save Message</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Call Status Dialog */}
+      <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {callStatus.status === 'initiating' && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+              {callStatus.status === 'ringing' && <Phone className="h-5 w-5 text-yellow-500 animate-pulse" />}
+              {callStatus.status === 'in-progress' && <Phone className="h-5 w-5 text-green-500" />}
+              {callStatus.status === 'completed' && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+              {callStatus.status === 'failed' && <PhoneOff className="h-5 w-5 text-red-500" />}
+              Etarra AI Call
+            </DialogTitle>
+            <DialogDescription>
+              {callStatus.status === 'initiating' && 'Connecting to Twilio...'}
+              {callStatus.status === 'ringing' && `Calling ${callStatus.customerName}...`}
+              {callStatus.status === 'in-progress' && 'AI conversation in progress'}
+              {callStatus.status === 'completed' && 'Call completed successfully!'}
+              {callStatus.status === 'failed' && 'Call could not be connected'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Call Info Card */}
+            <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800">
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                    <span className="text-2xl">☕</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold">{callStatus.customerName}</p>
+                    <p className="text-sm text-muted-foreground">Etarra Coffee Shop Pitch</p>
+                  </div>
+                </div>
+
+                {/* Status Indicator */}
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Status</span>
+                    <Badge 
+                      variant={
+                        callStatus.status === 'in-progress' ? 'default' :
+                        callStatus.status === 'completed' ? 'secondary' :
+                        callStatus.status === 'failed' ? 'destructive' : 'outline'
+                      }
+                    >
+                      {callStatus.status === 'initiating' && 'Initiating...'}
+                      {callStatus.status === 'ringing' && 'Ringing...'}
+                      {callStatus.status === 'in-progress' && 'In Progress'}
+                      {callStatus.status === 'completed' && 'Completed'}
+                      {callStatus.status === 'failed' && 'Failed'}
+                    </Badge>
+                  </div>
+                  
+                  {callStatus.status === 'in-progress' && (
+                    <Progress value={66} className="h-1" />
+                  )}
+                </div>
+
+                {/* Features being used */}
+                {callStatus.status === 'in-progress' && (
+                  <div className="mt-4 pt-4 border-t border-amber-200 dark:border-amber-800">
+                    <p className="text-xs font-medium text-amber-700 dark:text-amber-300 mb-2">
+                      AI Features Active:
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      <Badge variant="outline" className="text-xs">
+                        🎙️ Deepgram STT
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        🤖 Gemini AI
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        🔊 Deepgram TTS
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Call Script Preview */}
+            {callStatus.status === 'in-progress' && (
+              <div className="bg-muted/50 rounded-lg p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-1">AI is pitching:</p>
+                <p className="text-sm italic">
+                  "Hi! I'm calling from Etarra Coffee Shop in Bandra. We have amazing cold brews and artisanal pastries..."
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            {callStatus.status === 'in-progress' && (
+              <Button variant="destructive" onClick={handleEndCall} className="gap-2">
+                <PhoneOff className="h-4 w-4" />
+                End Call
+              </Button>
+            )}
+            {(callStatus.status === 'completed' || callStatus.status === 'failed') && (
+              <Button onClick={() => setShowCallDialog(false)}>
+                Close
+              </Button>
+            )}
+            {(callStatus.status === 'initiating' || callStatus.status === 'ringing') && (
+              <Button variant="outline" onClick={() => {
+                setShowCallDialog(false)
+                setCallStatus({ isActive: false, status: 'idle' })
+              }}>
+                Cancel
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

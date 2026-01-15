@@ -41,8 +41,8 @@ export function handleMediaStream(ws: WebSocket) {
                         isActive: true
                     });
 
-                    // Send initial greeting
-                    const greeting = "Hello! Thanks so much for taking my call. I'm excited to tell you about our amazing software solutions that can transform your business. How are you doing today?";
+                    // Send initial greeting - Etarra Coffee Shop pitch
+                    const greeting = "Hi there! This is Aria calling from Etarra Coffee Shop in Bandra, Mumbai. We're a specialty coffee shop serving amazing single-origin pour overs and artisanal pastries. How are you doing today?";
                     await aiService.generateAndSendTTS(greeting);
 
                     break;

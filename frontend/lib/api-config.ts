@@ -1,7 +1,7 @@
 // API Configuration
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:3000";
+  "http://localhost:3000/api";
 
 // Detect the current frontend URL (dev tunnel, localhost, etc.)
 const getFrontendUrl = () => {
@@ -17,29 +17,29 @@ const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || "";
 const USE_PROXY = false;
 const PROXY_URL = "/api/proxy";
 
-// Helper function to get API URL
+// Helper function to get API URL (BACKEND_URL already includes /api)
 const getApiUrl = (path: string) => {
   if (USE_PROXY) {
     // Use local proxy endpoint
-    return PROXY_URL + path.replace("/api", "");
+    return PROXY_URL + path;
   }
   return BACKEND_URL + path;
 };
 
-// API Endpoints
+// API Endpoints (paths are relative to /api which is already in BACKEND_URL)
 export const API_ENDPOINTS = {
   twitter: {
-    status: getApiUrl("/api/twitter/status"),
+    status: getApiUrl("/twitter/status"),
     // Auth must use direct backend URL for OAuth redirect
-    auth: BACKEND_URL + "/api/twitter/auth",
-    post: getApiUrl("/api/twitter/post"),
-    disconnect: getApiUrl("/api/twitter/disconnect"),
+    auth: BACKEND_URL + "/twitter/auth",
+    post: getApiUrl("/twitter/post"),
+    disconnect: getApiUrl("/twitter/disconnect"),
   },
   veo: {
-    tune: getApiUrl("/api/veo/tune"),
-    generate: getApiUrl("/api/veo/generate"),
+    tune: getApiUrl("/veo/tune"),
+    generate: getApiUrl("/veo/generate"),
   },
-  health: getApiUrl("/api/health"),
+  health: getApiUrl("/health"),
 };
 
 // Default fetch options

@@ -114,9 +114,9 @@ export default function AIPage() {
     setShowThoughts(true)
     
     try {
-      // Determine backend API base. Prefer NEXT_PUBLIC_API_BASE, otherwise assume backend on localhost:3001 in dev.
+      // Determine backend API base. Prefer NEXT_PUBLIC_API_BASE, otherwise assume backend on localhost:3000 in dev.
       const apiBase = (typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : '')) ) || '';
-      const url = apiBase ? `${apiBase}/api/nestgpt/chat` : '/api/nestgpt/chat';
+      const url = apiBase ? `${apiBase}/nestgpt/chat` : '/api/nestgpt/chat';
 
       // Send message field for conversational chat (NestGPT will handle intake collection via progressive Q&A)
       const resp = await fetch(url, {
@@ -252,7 +252,7 @@ export default function AIPage() {
         const apiBase = typeof window !== 'undefined' 
           ? (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : ''))
           : ''
-        await fetch(`${apiBase}/api/nestgpt/session/${sessionId}`, {
+        await fetch(`${apiBase}/nestgpt/session/${sessionId}`, {
           method: 'DELETE',
         })
       } catch (e) {
