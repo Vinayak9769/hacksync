@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PlatformSelector, platforms } from "@/components/create/platform-selector"
+import { PlatformSelector, platforms, type Platform } from "@/components/create/platform-selector"
 import { CaptionEditor } from "@/components/create/caption-editor"
 import { MediaUploader, type MediaFile } from "@/components/create/media-uploader"
 import { MediaUrlInput } from "@/components/create/media-url-input"
@@ -232,7 +232,7 @@ export default function CreatePage() {
                         style={{ gridTemplateColumns: `repeat(${nonRedditPlatforms.length}, minmax(0, 1fr))` }}
                       >
                         {nonRedditPlatforms.map((platformId) => {
-                          const platform = platforms.find((p) => p.id === platformId)
+                          const platform = platforms.find((p: Platform) => p.id === platformId)
                           if (!platform) return null
                           return (
                             <TabsTrigger key={platformId} value={platformId} className="flex items-center gap-2">
@@ -243,7 +243,7 @@ export default function CreatePage() {
                         })}
                       </TabsList>
                       {nonRedditPlatforms.map((platformId) => {
-                        const platform = platforms.find((p) => p.id === platformId)
+                        const platform = platforms.find((p: Platform) => p.id === platformId)
                         if (!platform) return null
                         return (
                           <TabsContent key={platformId} value={platformId} className="mt-4">

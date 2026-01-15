@@ -76,7 +76,7 @@ const facebookSvg = (
   </svg>
 );
 
-const platforms: Platform[] = [
+const initialPlatforms: Platform[] = [
   { id: "instagram", name: "Instagram", icon: Instagram(), connected: true, charLimit: 2200 },
   { id: "twitter", name: "Twitter/X", icon: X(), connected: true, charLimit: 280 },
   { id: "reddit", name: "Reddit", icon: redditSvg, connected: true, charLimit: 40000 },

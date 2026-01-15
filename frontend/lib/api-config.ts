@@ -1,7 +1,7 @@
 // API Configuration
 const BACKEND_URL =
     process.env.NEXT_PUBLIC_API_URL ||
-    "https://toucan-driven-admittedly.ngrok-free.app";
+    "https://b0x456pd-3000.inc1.devtunnels.ms";
 
 // Detect the current frontend URL (dev tunnel, localhost, etc.)
 const getFrontendUrl = () => {
