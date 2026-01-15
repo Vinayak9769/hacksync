@@ -37,7 +37,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const mainNavItems = [
-  { title: "Dashboard", href: "/", icon: Home },
+  { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Create", href: "/create", icon: PenSquare },
   { title: "Canvas Studio", href: "/canvas", icon: Palette },
   { title: "Calendar", href: "/calendar", icon: Calendar },
