@@ -54,6 +54,7 @@ async function startServer() {
                     "http://localhost:8000",
                     "http://localhost:3000",
                     "https://toucan-driven-admittedly.ngrok-free.app",
+                    "https://b0x456pd-3000.inc1.devtunnels.ms",
                     "https://b0x456pd-8000.inc1.devtunnels.ms",
                     "https://b0x456pd-3000.inc1.devtunnels.ms",
                     "https://b0x456pd-4000.inc1.devtunnels.ms",
