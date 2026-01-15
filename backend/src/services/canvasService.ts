@@ -94,6 +94,65 @@ class CanvasService {
     return this.canvasStore.get(canvasId) || canvas;
   }
 
+  async createCanvasWithImage(
+    name: string,
+    imageBuffer: Buffer,
+    imageMimeType: string,
+    aspectRatio?: string,
+    brandName?: string,
+    brandColors?: string[]
+  ): Promise<CanvasState> {
+    const canvasId = this.generateId();
+    const now = Date.now();
+    const dimensions = this.getCanvasDimensions(aspectRatio || '1:1');
+
+    // Convert image buffer to base64 data URL
+    const base64Image = imageBuffer.toString('base64');
+    const imageUrl = `data:${imageMimeType};base64,${base64Image}`;
+
+    // Create canvas with uploaded image
+    const canvas: CanvasState = {
+      id: canvasId,
+      name,
+      width: dimensions.width,
+      height: dimensions.height,
+      aspectRatio: aspectRatio || '1:1',
+      backgroundColor: '#ffffff',
+      layers: [],
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+      metadata: {
+        brandName,
+        brandColors,
+      },
+    };
+
+    // Create primary image layer with uploaded image
+    // The bounds will be adjusted by the frontend renderer to fit the canvas
+    const primaryLayer: CanvasLayer = {
+      id: this.generateLayerId(),
+      type: 'primary-image',
+      name: 'Primary Image',
+      zIndex: 0,
+      bounds: { x: 0, y: 0, width: dimensions.width, height: dimensions.height },
+      visible: true,
+      locked: false,
+      opacity: 1,
+      imageData: {
+        imageUrl,
+        generationStatus: 'complete',
+      },
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    canvas.layers.push(primaryLayer);
+    this.canvasStore.set(canvasId, canvas);
+
+    return canvas;
+  }
+
   getCanvas(canvasId: string): CanvasState | null {
     return this.canvasStore.get(canvasId) || null;
   }
@@ -374,6 +433,72 @@ Return ONLY the text content, no explanations or formatting markers.`;
 
     const res = await model.generateContent(fullPrompt);
     return res.response.text().trim();
+  }
+
+  /**
+   * Generate AI element (icon or sticker)
+   */
+  async generateElement(
+    canvasId: string,
+    elementType: 'icon' | 'sticker',
+    prompt: string,
+    bounds: LayerBounds
+  ): Promise<CanvasState> {
+    const canvas = this.canvasStore.get(canvasId);
+    if (!canvas) throw new Error('Canvas not found');
+
+    const now = Date.now();
+    const maxZIndex = canvas.layers.reduce((max, l) => Math.max(max, l.zIndex), 0);
+
+    // Create element layer
+    const elementLayer: CanvasLayer = {
+      id: this.generateLayerId(),
+      type: elementType,
+      name: `${elementType === 'icon' ? 'Icon' : 'Sticker'} Element`,
+      zIndex: maxZIndex + 1,
+      bounds,
+      visible: true,
+      locked: false,
+      opacity: 1,
+      imageData: {
+        userPrompt: prompt,
+        generationStatus: 'generating',
+      },
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    canvas.layers.push(elementLayer);
+    canvas.updatedAt = now;
+    canvas.version += 1;
+    this.canvasStore.set(canvasId, canvas);
+
+    // Generate the element image
+    try {
+      // For icons/stickers, use a smaller size and more focused prompt
+      const elementPrompt = `${prompt}, ${elementType === 'icon' ? 'simple icon design, minimal, clean, transparent background' : 'sticker design, fun, colorful, transparent background'}`;
+      const imageUrl = await this.generateImageViaImagen(elementPrompt, bounds);
+
+      this.updateLayer(canvasId, elementLayer.id, {
+        imageData: {
+          imageUrl,
+          userPrompt: prompt,
+          generationStatus: 'complete',
+        },
+      });
+    } catch (error) {
+      console.error('Failed to generate element image:', error);
+      this.updateLayer(canvasId, elementLayer.id, {
+        imageData: {
+          ...elementLayer.imageData,
+          generationStatus: 'error',
+          errorMessage: (error as Error).message,
+        },
+      });
+      throw error;
+    }
+
+    return this.canvasStore.get(canvasId) || canvas;
   }
 }
 

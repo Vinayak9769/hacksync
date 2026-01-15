@@ -10,6 +10,8 @@ import veoController from "../controllers/veoController";
 import strategistController from "../controllers/strategistController";
 import chatController from "../controllers/chatController";
 import nestgptController from "../controllers/nestgptController";
+import marketingPlanController from "../controllers/marketingPlanController";
+import antiCampaignController from "../controllers/antiCampaignController";
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -91,6 +93,7 @@ router.post("/webhook/pitch/demo", conversationController.handleDemoRequest);
 
 // Canvas endpoints - Structured visual canvas system for brand posters
 router.post("/canvas/create", canvasController.createCanvas);
+router.post("/canvas/create-with-image", upload.single("image"), canvasController.createCanvasWithImage);
 router.get("/canvas/list", canvasController.listCanvases);
 router.get("/canvas/:id", canvasController.getCanvas);
 router.put("/canvas/:canvasId/layer/:layerId", canvasController.updateLayer);
@@ -102,12 +105,22 @@ router.post(
 );
 router.post("/canvas/regenerate-layer", canvasController.regenerateLayer);
 router.post("/canvas/generate-text", canvasController.generateText);
+router.post("/canvas/:canvasId/generate-element", canvasController.generateElement);
 router.get("/canvas/:id/export", canvasController.exportCanvas);
 router.post("/canvas/import", canvasController.importCanvas);
 router.delete("/canvas/:id", canvasController.deleteCanvas);
 // Veo 3 video generation endpoints
 router.post("/veo/tune", veoController.tunePrompt);
 router.post("/veo/generate", veoController.generateVideo);
+
+// Marketing Plans endpoints
+router.post("/marketing-plans", marketingPlanController.savePlan);
+router.get("/marketing-plans", marketingPlanController.getAllPlans);
+router.get("/marketing-plans/:id", marketingPlanController.getPlan);
+router.delete("/marketing-plans/:id", marketingPlanController.deletePlan);
+
+// Anti-Campaign Generator endpoints
+router.post("/anti-campaign/analyze", antiCampaignController.analyzeCampaign);
 export const setRoutes = (app: Express): void => {
     // Session middleware is now configured in app.ts before routes
     app.use("/api", router);

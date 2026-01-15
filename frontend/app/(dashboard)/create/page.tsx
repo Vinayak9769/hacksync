@@ -71,6 +71,27 @@ export default function CreatePage() {
     setRedditData(value)
   }, [])
 
+  const getNormalizedRedditPayload = useCallback((): RedditPostData => {
+    const title = redditData.title.trim()
+    if (!title) {
+      throw new Error("Please add a Reddit post title before publishing.")
+    }
+
+    const text = redditData.text?.trim()
+    const url = redditData.url?.trim()
+
+    if (redditData.type === "link" && !url) {
+      throw new Error("A valid URL is required for Reddit link posts.")
+    }
+
+    return {
+      title,
+      type: redditData.type,
+      text: text || undefined,
+      url: url || undefined,
+    }
+  }, [redditData])
+
 
 
   const handleUrlAdd = useCallback(
@@ -91,6 +112,11 @@ export default function CreatePage() {
 
     try {
       if (publishType === "now") {
+        let redditPayload: RedditPostData | undefined
+        if (isRedditSelected) {
+          redditPayload = getNormalizedRedditPayload()
+        }
+
         // Get media URLs
         const mediaUrls: Record<string, string> = {}
         if (mediaFiles.length > 0 && mediaFiles[0].url) {
@@ -111,6 +137,8 @@ export default function CreatePage() {
                 captions[platform] || '',
                 mediaUrls[platform] ? [mediaUrls[platform]] : undefined
               )
+            } else if (platform === 'reddit' && redditPayload) {
+              result = await socialMediaAPI.postToReddit(redditPayload)
             } else {
               result = await socialMediaAPI.createPost({
                 platform,
@@ -213,9 +241,6 @@ export default function CreatePage() {
               <PlatformSelector selectedPlatforms={selectedPlatforms} onPlatformToggle={handlePlatformToggle} />
 
               <MediaUploader files={mediaFiles} onFilesChange={setMediaFiles} />
-
-              <MediaUrlInput onUrlAdd={handleUrlAdd} />
-
               {selectedPlatforms.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Select at least one platform to start creating your post
@@ -271,10 +296,9 @@ export default function CreatePage() {
           </Card>
         </div>
 
+        <div className="flex flex-col gap-6">
           <PostPreview selectedPlatforms={selectedPlatforms} captions={captions} media={mediaFiles} redditData={redditData} />
         {/* Right Column - Preview & Schedule */}
-      </div>
-
           <SchedulePicker
             publishType={publishType}
             onPublishTypeChange={setPublishType}
@@ -283,7 +307,8 @@ export default function CreatePage() {
             scheduledTime={scheduledTime}
             onTimeChange={setScheduledTime}
           />
-
+        </div>
+      </div>
     </div>
   )
 }

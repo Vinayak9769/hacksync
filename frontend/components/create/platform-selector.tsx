@@ -19,11 +19,12 @@ interface Platform {
 const redditSvg = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    x="0px"
-    y="0px"
+    x="-20px"
+    y="-20px"
     width="23"
     height="23"
     viewBox="0 0 48 48"
+    style={{ transform: "translate(-4px, -3px)" }}
   >
     <path
       fill="#FFF"
@@ -93,39 +94,8 @@ interface PlatformSelectorProps {
 export function PlatformSelector({ selectedPlatforms, onPlatformToggle }: PlatformSelectorProps) {
   const [platforms, setPlatforms] = useState<Platform[]>(initialPlatforms)
 
-  useEffect(() => {
-    checkTwitterConnection()
-
-    // Add event listener to refresh when window gains focus
-    const handleFocus = () => {
-      checkTwitterConnection()
-    }
-
-    window.addEventListener('focus', handleFocus)
-
-    return () => {
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [])
-
-  const checkTwitterConnection = async () => {
-    try {
-      const response = await fetch(API_ENDPOINTS.twitter.status, {
-        ...API_FETCH_OPTIONS
-      })
-      const data = await response.json()
-
-      if (data.connected) {
-        setPlatforms(prev =>
-          prev.map(p =>
-            p.id === 'twitter' ? { ...p, connected: true } : p
-          )
-        )
-      }
-    } catch (error) {
-      console.error('Error checking Twitter connection:', error)
-    }
-  }
+  // Twitter is already set as connected by default
+  // No need to poll the status endpoint repeatedly
 
   return (
     <div className="space-y-3">

@@ -14,36 +14,66 @@ interface CanvasRendererProps {
 }
 
 // Component to render an image layer
-function ImageLayerRenderer({ layer, isSelected, onClick, onDragEnd }: { 
+function ImageLayerRenderer({ layer, isSelected, onClick, onDragEnd, canvasWidth, canvasHeight }: { 
   layer: CanvasLayer; 
   isSelected: boolean;
   onClick: () => void;
   onDragEnd: (e: any) => void;
+  canvasWidth: number;
+  canvasHeight: number;
 }) {
   const [image] = useImage(layer.imageData?.imageUrl || '', 'anonymous')
+  
+  // For primary image, ensure it fills the canvas bounds
+  let imageBounds = layer.bounds
+  if (layer.type === 'primary-image' && image) {
+    // Calculate aspect ratio of the image
+    const imageAspect = image.width / image.height
+    const canvasAspect = canvasWidth / canvasHeight
+    
+    let width = canvasWidth
+    let height = canvasHeight
+    let x = 0
+    let y = 0
+    
+    // Fit image to canvas while maintaining aspect ratio (cover mode)
+    if (imageAspect > canvasAspect) {
+      // Image is wider - fit to height
+      height = canvasHeight
+      width = height * imageAspect
+      x = (canvasWidth - width) / 2
+    } else {
+      // Image is taller - fit to width
+      width = canvasWidth
+      height = width / imageAspect
+      y = (canvasHeight - height) / 2
+    }
+    
+    imageBounds = { x, y, width, height }
+  }
   
   return (
     <>
       <KonvaImage
         image={image}
-        x={layer.bounds.x}
-        y={layer.bounds.y}
-        width={layer.bounds.width}
-        height={layer.bounds.height}
+        x={imageBounds.x}
+        y={imageBounds.y}
+        width={imageBounds.width}
+        height={imageBounds.height}
         opacity={layer.opacity}
         visible={layer.visible}
-        listening={!layer.locked}
-        draggable={!layer.locked}
+        listening={!layer.locked && layer.type !== 'primary-image'}
+        draggable={!layer.locked && layer.type !== 'primary-image'}
         onClick={onClick}
         onTap={onClick}
         onDragEnd={onDragEnd}
       />
       {isSelected && (
         <Rect
-          x={layer.bounds.x}
-          y={layer.bounds.y}
-          width={layer.bounds.width}
-          height={layer.bounds.height}
+          x={imageBounds.x}
+          y={imageBounds.y}
+          width={imageBounds.width}
+          height={imageBounds.height}
           stroke="#3b82f6"
           strokeWidth={2}
           dash={[10, 5]}
@@ -274,6 +304,8 @@ export function CanvasRenderer({
                   isSelected={isSelected}
                   onClick={() => onLayerSelect(layer.id)}
                   onDragEnd={(e) => handleDragEnd(layer.id, e)}
+                  canvasWidth={canvas.width}
+                  canvasHeight={canvas.height}
                 />
               )
             } 

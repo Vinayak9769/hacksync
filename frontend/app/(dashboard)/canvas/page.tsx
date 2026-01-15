@@ -48,8 +48,11 @@ export default function CanvasPage() {
     brandName: '',
     brandColors: ['#3b82f6', '#ffffff']
   })
+  const [imageSource, setImageSource] = useState<'generate' | 'upload'>('generate')
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null)
+  const [uploadedImagePreview, setUploadedImagePreview] = useState<string | null>(null)
   const [addLayerForm, setAddLayerForm] = useState({
-    layerType: 'text' as 'text' | 'shape',
+    layerType: 'text' as 'text' | 'shape' | 'icon' | 'sticker',
     name: '',
     text: 'Your text here',
     fontSize: 48,
@@ -59,6 +62,7 @@ export default function CanvasPage() {
     strokeColor: '#000000',
     useAI: false,
     aiPrompt: '',
+    elementPrompt: '', // For AI-generated elements
   })
 
   // Load canvases on mount
@@ -86,10 +90,33 @@ export default function CanvasPage() {
   const handleCreateCanvas = async () => {
     setIsLoading(true)
     try {
-      const result = await canvasAPI.createCanvas(createForm)
+      let result
+      if (imageSource === 'upload' && uploadedImage) {
+        // Create canvas with uploaded image
+        result = await canvasAPI.createCanvasWithImage({
+          ...createForm,
+          imageFile: uploadedImage
+        })
+      } else {
+        // Create canvas with generated image
+        result = await canvasAPI.createCanvas(createForm)
+      }
+      
       setCanvases([...canvases, result.canvas])
       setCurrentCanvas(result.canvas)
       setShowCreateDialog(false)
+      
+      // Reset form
+      setImageSource('generate')
+      setUploadedImage(null)
+      setUploadedImagePreview(null)
+      setCreateForm({
+        name: 'My Brand Poster',
+        imagePrompt: '',
+        aspectRatio: '1:1',
+        brandName: '',
+        brandColors: ['#3b82f6', '#ffffff']
+      })
 
       toast({
         title: 'Success',
@@ -103,6 +130,18 @@ export default function CanvasPage() {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      setUploadedImage(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setUploadedImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
   }
 
@@ -192,9 +231,54 @@ export default function CanvasPage() {
         }
       }
 
+      // Handle AI-generated elements (icons/stickers)
+      if ((addLayerForm.layerType === 'icon' || addLayerForm.layerType === 'sticker') && addLayerForm.elementPrompt) {
+        try {
+          const result = await canvasAPI.generateElement(currentCanvas.id, {
+            elementType: addLayerForm.layerType,
+            prompt: addLayerForm.elementPrompt,
+            x: currentCanvas.width * 0.4,
+            y: currentCanvas.height * 0.4,
+            width: Math.min(currentCanvas.width * 0.2, 200),
+            height: Math.min(currentCanvas.height * 0.2, 200),
+          })
+          setCurrentCanvas(result.canvas)
+          setSelectedLayerId(result.layer.id)
+          setShowAddLayerDialog(false)
+
+          // Reset form
+          setAddLayerForm({
+            layerType: 'text',
+            name: '',
+            text: 'Your text here',
+            fontSize: 48,
+            color: '#ffffff',
+            shapeType: 'rectangle',
+            fillColor: '#3b82f6',
+            strokeColor: '#000000',
+            useAI: false,
+            aiPrompt: '',
+            elementPrompt: '',
+          })
+
+          toast({
+            title: 'Success',
+            description: 'AI element generated successfully'
+          })
+          return
+        } catch (error: any) {
+          toast({
+            title: 'Error',
+            description: error.message || 'Failed to generate AI element',
+            variant: 'destructive'
+          })
+          return
+        }
+      }
+
       const layerData = {
         layerType: addLayerForm.layerType,
-        name: addLayerForm.name || `${addLayerForm.layerType === 'text' ? 'Text' : 'Shape'} Layer`,
+        name: addLayerForm.name || `${addLayerForm.layerType === 'text' ? 'Text' : addLayerForm.layerType === 'shape' ? 'Shape' : 'Element'} Layer`,
         ...(addLayerForm.layerType === 'text' ? {
           text: textContent,
           fontSize: addLayerForm.fontSize,
@@ -203,7 +287,7 @@ export default function CanvasPage() {
           y: currentCanvas.height * 0.1,
           width: currentCanvas.width * 0.8,
           height: 100,
-        } : {
+        } : addLayerForm.layerType === 'shape' ? {
           shapeType: addLayerForm.shapeType,
           fillColor: addLayerForm.fillColor,
           strokeColor: addLayerForm.strokeColor,
@@ -211,7 +295,7 @@ export default function CanvasPage() {
           y: currentCanvas.height * 0.3,
           width: currentCanvas.width * 0.4,
           height: currentCanvas.height * 0.4,
-        })
+        } : {})
       }
 
       const result = await canvasAPI.addLayer(currentCanvas.id, layerData)
@@ -231,6 +315,7 @@ export default function CanvasPage() {
         strokeColor: '#000000',
         useAI: false,
         aiPrompt: '',
+        elementPrompt: '',
       })
 
       toast({
@@ -383,18 +468,101 @@ export default function CanvasPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Image Prompt *</Label>
-              <textarea
-                value={createForm.imagePrompt}
-                onChange={(e) => setCreateForm({ ...createForm, imagePrompt: e.target.value })}
-                placeholder="Describe the image you want to generate (e.g., 'A modern smartphone on a clean white surface with soft lighting and minimal shadows')"
-                className="w-full min-h-[100px] border rounded px-3 py-2 text-sm resize-none"
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                This will be the main background image. You can add text, shapes, and other elements on top later.
-              </p>
+              <Label>Image Source *</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={imageSource === 'generate' ? 'default' : 'outline'}
+                  className="flex-1"
+                  onClick={() => {
+                    setImageSource('generate')
+                    setUploadedImage(null)
+                    setUploadedImagePreview(null)
+                  }}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generate with AI
+                </Button>
+                <Button
+                  type="button"
+                  variant={imageSource === 'upload' ? 'default' : 'outline'}
+                  className="flex-1"
+                  onClick={() => {
+                    setImageSource('upload')
+                    setCreateForm({ ...createForm, imagePrompt: '' })
+                  }}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Image
+                </Button>
+              </div>
             </div>
+
+            {imageSource === 'generate' ? (
+              <div className="space-y-2">
+                <Label>Image Prompt *</Label>
+                <textarea
+                  value={createForm.imagePrompt}
+                  onChange={(e) => setCreateForm({ ...createForm, imagePrompt: e.target.value })}
+                  placeholder="Describe the image you want to generate (e.g., 'A modern smartphone on a clean white surface with soft lighting and minimal shadows')"
+                  className="w-full min-h-[100px] border rounded px-3 py-2 text-sm resize-none"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  This will be the main background image. You can add text, shapes, and other elements on top later.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Upload Image *</Label>
+                <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="cursor-pointer flex flex-col items-center gap-2"
+                  >
+                    {uploadedImagePreview ? (
+                      <>
+                        <img
+                          src={uploadedImagePreview}
+                          alt="Preview"
+                          className="max-h-48 max-w-full rounded"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          {uploadedImage?.name}
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setUploadedImage(null)
+                            setUploadedImagePreview(null)
+                          }}
+                        >
+                          Change Image
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-muted-foreground" />
+                        <p className="text-sm font-medium">Click to upload or drag and drop</p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG, GIF up to 10MB
+                        </p>
+                      </>
+                    )}
+                  </label>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Brand Name (Optional)</Label>
@@ -439,7 +607,11 @@ export default function CanvasPage() {
             </Button>
             <Button
               onClick={handleCreateCanvas}
-              disabled={isLoading || !createForm.imagePrompt.trim()}
+              disabled={
+                isLoading ||
+                (imageSource === 'generate' && !createForm.imagePrompt.trim()) ||
+                (imageSource === 'upload' && !uploadedImage)
+              }
             >
               {isLoading ? (
                 <>
@@ -457,17 +629,17 @@ export default function CanvasPage() {
       {/* Add Layer Dialog */}
       <Dialog open={showAddLayerDialog} onOpenChange={setShowAddLayerDialog}>
         <DialogContent>
-          <DialogHeader>
+            <DialogHeader>
             <DialogTitle>Add Layer</DialogTitle>
             <DialogDescription>
-              Add a new text or shape layer to your canvas
+              Add a new text, shape, or AI-generated element to your canvas
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Layer Type</Label>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
                   variant={addLayerForm.layerType === 'text' ? 'default' : 'outline'}
@@ -486,6 +658,24 @@ export default function CanvasPage() {
                   <Square className="h-4 w-4" />
                   Shape
                 </Button>
+                <Button
+                  type="button"
+                  variant={addLayerForm.layerType === 'icon' ? 'default' : 'outline'}
+                  className="flex-1 gap-2"
+                  onClick={() => setAddLayerForm({ ...addLayerForm, layerType: 'icon' })}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  AI Icon
+                </Button>
+                <Button
+                  type="button"
+                  variant={addLayerForm.layerType === 'sticker' ? 'default' : 'outline'}
+                  className="flex-1 gap-2"
+                  onClick={() => setAddLayerForm({ ...addLayerForm, layerType: 'sticker' })}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  AI Sticker
+                </Button>
               </div>
             </div>
 
@@ -494,11 +684,25 @@ export default function CanvasPage() {
               <Input
                 value={addLayerForm.name}
                 onChange={(e) => setAddLayerForm({ ...addLayerForm, name: e.target.value })}
-                placeholder={`${addLayerForm.layerType === 'text' ? 'Text' : 'Shape'} Layer`}
+                placeholder={`${addLayerForm.layerType === 'text' ? 'Text' : addLayerForm.layerType === 'shape' ? 'Shape' : addLayerForm.layerType === 'icon' ? 'Icon' : 'Sticker'} Layer`}
               />
             </div>
 
-            {addLayerForm.layerType === 'text' ? (
+            {(addLayerForm.layerType === 'icon' || addLayerForm.layerType === 'sticker') ? (
+              <div className="space-y-2">
+                <Label>AI Element Prompt *</Label>
+                <textarea
+                  value={addLayerForm.elementPrompt}
+                  onChange={(e) => setAddLayerForm({ ...addLayerForm, elementPrompt: e.target.value })}
+                  placeholder={`Describe the ${addLayerForm.layerType === 'icon' ? 'icon' : 'sticker'} you want to generate (e.g., 'a modern rocket icon', 'a cute cat sticker', 'a coffee cup icon')`}
+                  className="w-full min-h-[100px] border rounded px-3 py-2 text-sm resize-none"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  AI will generate a {addLayerForm.layerType === 'icon' ? 'small icon' : 'sticker'} that you can drag around the canvas.
+                </p>
+              </div>
+            ) : addLayerForm.layerType === 'text' ? (
               <>
                 <div className="flex items-center space-x-2 p-3 border rounded bg-muted/30">
                   <input
@@ -596,14 +800,20 @@ export default function CanvasPage() {
             <Button variant="outline" onClick={() => setShowAddLayerDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddLayer} disabled={isLoading}>
+            <Button 
+              onClick={handleAddLayer} 
+              disabled={
+                isLoading ||
+                ((addLayerForm.layerType === 'icon' || addLayerForm.layerType === 'sticker') && !addLayerForm.elementPrompt.trim())
+              }
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Adding...
+                  {addLayerForm.layerType === 'icon' || addLayerForm.layerType === 'sticker' ? 'Generating...' : 'Adding...'}
                 </>
               ) : (
-                'Add Layer'
+                addLayerForm.layerType === 'icon' || addLayerForm.layerType === 'sticker' ? 'Generate Element' : 'Add Layer'
               )}
             </Button>
           </DialogFooter>

@@ -197,9 +197,6 @@ export function CaptionEditor({
                   <TabsTrigger value="hashtags" className="text-xs">
                     Tags
                   </TabsTrigger>
-                  <TabsTrigger value="timing" className="text-xs">
-                    Timing
-                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="improve" className="space-y-3 mt-3">

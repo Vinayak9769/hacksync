@@ -20,6 +20,8 @@ import {
   MessageSquare,
   Video,
   Target,
+  FileText,
+  AlertTriangle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -57,12 +59,14 @@ const analyzeNavItems = [
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
   { title: "Competitor Analysis", href: "/competitor-analysis", icon: Target },
   { title: "Ads Manager", href: "/ads", icon: Megaphone },
+  { title: "Anti-Campaign", href: "/anti-campaign", icon: AlertTriangle },
 ]
 
 const manageNavItems = [
   { title: "CRM", href: "/crm", icon: MessageSquare },
   { title: "Team", href: "/team", icon: Users },
   { title: "Whiteboard", href: "/whiteboard", icon: Layout },
+  { title: "Saved Plans", href: "/plans", icon: FileText },
   { title: "Settings", href: "/settings", icon: Settings },
 ]
 
