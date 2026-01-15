@@ -19,7 +19,7 @@ import socialMediaAPI from "@/lib/social-media-api"
 
 export default function CreatePage() {
   const { toast } = useToast()
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["facebook"])
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["twitter", "facebook", "reddit"])
   const [captions, setCaptions] = useState<Record<string, string>>({})
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
   const [redditData, setRedditData] = useState<RedditPostData>({

@@ -77,11 +77,11 @@ const facebookSvg = (
 );
 
 const initialPlatforms: Platform[] = [
-  { id: "instagram", name: "Instagram", icon: Instagram(), connected: true, charLimit: 2200 },
   { id: "twitter", name: "Twitter/X", icon: X(), connected: true, charLimit: 280 },
-  { id: "reddit", name: "Reddit", icon: redditSvg, connected: true, charLimit: 40000 },
-  // { id: "linkedin", name: "LinkedIn", icon: <Linkedin />, connected: true, charLimit: 3000 },
   { id: "facebook", name: "Facebook", icon: Facebook(), connected: true, charLimit: 63206 },
+  { id: "reddit", name: "Reddit", icon: redditSvg, connected: true, charLimit: 40000 },
+  { id: "linkedin", name: "LinkedIn", icon: <Linkedin className="w-5 h-5" />, connected: false, charLimit: 3000 },
+  { id: "instagram", name: "Instagram", icon: Instagram(), connected: false, charLimit: 2200 },
   { id: "bluesky", name: "Bluesky", icon: BlueSky(), connected: false, charLimit: 300 },
 ]
 

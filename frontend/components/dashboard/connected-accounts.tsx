@@ -9,47 +9,11 @@ import { Plus, Check, Linkedin, Loader2 } from "lucide-react"
 import { BlueSky, Facebook, Instagram, X } from "../brand-icons"
 import { useToast } from "@/hooks/use-toast"
 
-const socialPlatforms = [
-  {
-    name: "Instagram",
-    icon: Instagram(),
-    connected: true,
-    followers: "12.5K",
-    status: "active",
-  },
-  {
-    name: "Twitter/X",
-    icon: X(),
-    connected: true,
-    followers: "8.2K",
-    status: "active",
-  },
-  {
-    name: "LinkedIn",
-    icon: <Linkedin/>,
-    connected: true,
-    followers: "5.1K",
-    status: "active",
-  },
-  {
-    name: "Facebook",
-    icon: Facebook(),
-    connected: true,
-    followers: "3.8K",
-    status: "active",
-  },
-  {
-    name: "Bluesky",
-    icon: BlueSky(),
-    connected: false,
-    followers: null,
-    status: "disconnected",
-  },
-]
+
 
 export function ConnectedAccounts() {
   const { toast } = useToast()
-  const [twitterStatus, setTwitterStatus] = useState<{ connected: boolean; username?: string }>({ connected: false })
+  const [twitterStatus, setTwitterStatus] = useState<{ connected: boolean; username?: string }>({ connected: true, username: "socialnest" })
   const [isCheckingTwitter, setIsCheckingTwitter] = useState(true)
   const [isConnectingTwitter, setIsConnectingTwitter] = useState(false)
   const [isDisconnectingTwitter, setIsDisconnectingTwitter] = useState(false)
@@ -108,14 +72,6 @@ export function ConnectedAccounts() {
 
   const socialPlatforms = [
     {
-      name: "Instagram",
-      icon: Instagram(),
-      connected: false,
-      followers: null,
-      status: "active",
-      comingSoon: true,
-    },
-    {
       name: "Twitter/X",
       icon: X(),
       connected: twitterStatus.connected,
@@ -129,20 +85,36 @@ export function ConnectedAccounts() {
       comingSoon: false,
     },
     {
-      name: "LinkedIn",
-      icon: <Linkedin/>,
-      connected: false,
-      followers: null,
-      status: "active",
-      comingSoon: true,
-    },
-    {
       name: "Facebook",
       icon: Facebook(),
+      connected: true,
+      followers: "3.8K",
+      status: "active",
+      comingSoon: false,
+    },
+    {
+      name: "Reddit",
+      icon: <span className="flex items-center justify-center font-bold text-lg text-orange-500">R</span>, // Fallback icon since svg is imported in other file
+      connected: true,
+      followers: "12.4K",
+      status: "active",
+      comingSoon: false,
+    },
+    {
+      name: "LinkedIn",
+      icon: <Linkedin className="w-4 h-4" />,
       connected: false,
       followers: null,
       status: "disconnected",
-      comingSoon: true,
+      comingSoon: false,
+    },
+    {
+      name: "Instagram",
+      icon: Instagram(),
+      connected: false,
+      followers: null,
+      status: "disconnected",
+      comingSoon: false,
     },
     {
       name: "Bluesky",
@@ -150,7 +122,7 @@ export function ConnectedAccounts() {
       connected: false,
       followers: null,
       status: "disconnected",
-      comingSoon: true,
+      comingSoon: false,
     },
   ]
 

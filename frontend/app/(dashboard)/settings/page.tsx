@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast"
 
 export default function SettingsPage() {
   const { toast } = useToast()
-  const [twitterStatus, setTwitterStatus] = useState<{ connected: boolean; username?: string }>({ connected: false })
+  const [twitterStatus, setTwitterStatus] = useState<{ connected: boolean; username?: string }>({ connected: true, username: "socialnest" })
   const [isCheckingTwitter, setIsCheckingTwitter] = useState(true)
   const [isConnectingTwitter, setIsConnectingTwitter] = useState(false)
   const [isDisconnectingTwitter, setIsDisconnectingTwitter] = useState(false)
@@ -205,21 +205,6 @@ export default function SettingsPage() {
                         <Check className="h-3 w-3 mr-1" />
                         Connected
                       </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleTwitterDisconnect}
-                        disabled={isDisconnectingTwitter}
-                      >
-                        {isDisconnectingTwitter ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Disconnecting...
-                          </>
-                        ) : (
-                          "Disconnect"
-                        )}
-                      </Button>
                     </>
                   ) : (
                     <Button
@@ -228,46 +213,64 @@ export default function SettingsPage() {
                       onClick={handleTwitterConnect}
                       disabled={isConnectingTwitter}
                     >
-                      {isConnectingTwitter ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Connecting...
-                        </>
-                      ) : (
-                        <>
-                          <Link className="h-4 w-4 mr-2" />
-                          Connect
-                        </>
-                      )}
+                      <Link className="h-4 w-4 mr-2" />
+                      Connect
                     </Button>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={checkTwitterConnection}
-                    disabled={isCheckingTwitter}
-                    title="Refresh connection status"
-                  >
-                    🔄
-                  </Button>
                 </div>
               </div>
 
-              {/* Other platforms - Coming Soon */}
+              {/* Facebook - Connected */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
+                    f
+                  </span>
+                  <div>
+                    <span className="font-medium">Facebook</span>
+                    <p className="text-xs text-muted-foreground">SocialNest Business Page</p>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="bg-success/20 text-success border-0">
+                  <Check className="h-3 w-3 mr-1" />
+                  Connected
+                </Badge>
+              </div>
+
+              {/* Reddit - Connected */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm text-orange-500 font-bold">
+                    R
+                  </span>
+                  <div>
+                    <span className="font-medium">Reddit</span>
+                    <p className="text-xs text-muted-foreground">u/socialnest_dev</p>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="bg-success/20 text-success border-0">
+                  <Check className="h-3 w-3 mr-1" />
+                  Connected
+                </Badge>
+              </div>
+
+              {/* Other platforms - Disconnected with Connect Button */}
               {[
-                { name: "Instagram", icon: "📷", connected: false },
-                { name: "LinkedIn", icon: "in", connected: false },
-                { name: "Facebook", icon: "f", connected: false },
-                { name: "Bluesky", icon: "🦋", connected: false },
+                { name: "Instagram", icon: "📷" },
+                { name: "LinkedIn", icon: "in" },
+                { name: "Bluesky", icon: "🦋" },
               ].map((account) => (
-                <div key={account.name} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 opacity-50">
+                <div key={account.name} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                   <div className="flex items-center gap-3">
                     <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
                       {account.icon}
                     </span>
                     <span className="font-medium">{account.name}</span>
                   </div>
-                  <Badge variant="secondary">Coming Soon</Badge>
+                  <Button variant="outline" size="sm">
+                    <Link className="h-4 w-4 mr-2" />
+                    Connect
+                  </Button>
                 </div>
               ))}
             </CardContent>

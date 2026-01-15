@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sparkles, Wand2, Hash, Clock, Loader2, Check } from "lucide-react"
+import { Sparkles, Wand2, Hash, Clock, Loader2, Check, AlertCircle } from "lucide-react"
+import geminiService from "@/lib/services/gemini-service"
+import { useToast } from "@/hooks/use-toast"
 
 interface AIToolsPanelProps {
   caption: string
@@ -23,50 +25,87 @@ const toneOptions = [
   { value: "urgent", label: "Urgent" },
 ]
 
-const suggestedHashtags = [
-  "#socialmedia",
-  "#marketing",
-  "#digitalmarketing",
-  "#contentcreator",
-  "#business",
-  "#entrepreneur",
-  "#success",
-  "#growth",
-  "#strategy",
-  "#branding",
-]
 
-const bestTimes = [
-  { day: "Monday", time: "9:00 AM", engagement: "High" },
-  { day: "Wednesday", time: "12:00 PM", engagement: "Very High" },
-  { day: "Friday", time: "2:00 PM", engagement: "High" },
-  { day: "Saturday", time: "10:00 AM", engagement: "Medium" },
-]
 
 export function AIToolsPanel({ caption, onCaptionUpdate }: AIToolsPanelProps) {
+  const { toast } = useToast()
   const [isImproving, setIsImproving] = useState(false)
   const [isChangingTone, setIsChangingTone] = useState(false)
+  const [isGeneratingHashtags, setIsGeneratingHashtags] = useState(false)
   const [selectedTone, setSelectedTone] = useState("professional")
   const [improvedCaption, setImprovedCaption] = useState("")
+  const [suggestedHashtags, setSuggestedHashtags] = useState<string[]>([
+    "#socialmedia",
+    "#marketing",
+    "#digitalmarketing",
+    "#contentcreator",
+    "#business",
+  ])
+  const [bestTimes, setBestTimes] = useState([
+    { day: "Monday", time: "9:00 AM", engagement: "High" },
+    { day: "Wednesday", time: "12:00 PM", engagement: "Very High" },
+    { day: "Friday", time: "2:00 PM", engagement: "High" },
+    { day: "Saturday", time: "10:00 AM", engagement: "Medium" },
+  ])
   const [copiedHashtag, setCopiedHashtag] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState("improve")
+
+
 
   const handleImproveCaption = async () => {
     if (!caption.trim()) return
     setIsImproving(true)
-    // Simulate AI processing
-    await new Promise((r) => setTimeout(r, 1500))
-    const improved = `${caption}\n\nEnhanced for better engagement and clarity.`
-    setImprovedCaption(improved)
-    setIsImproving(false)
+    setError(null)
+    
+    try {
+      const improved = await geminiService.improveCaption(caption)
+      setImprovedCaption(improved)
+    } catch (err: any) {
+      setError(err.message || "Failed to improve caption")
+      toast({
+        title: "Error",
+        description: err.message || "Failed to improve caption. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsImproving(false)
+    }
   }
 
   const handleChangeTone = async () => {
     if (!caption.trim()) return
     setIsChangingTone(true)
-    await new Promise((r) => setTimeout(r, 1500))
-    const toneAdjusted = `[${selectedTone.toUpperCase()} TONE] ${caption}`
-    setImprovedCaption(toneAdjusted)
-    setIsChangingTone(false)
+    setError(null)
+    
+    try {
+      const adjusted = await geminiService.adjustTone(caption, selectedTone)
+      setImprovedCaption(adjusted)
+    } catch (err: any) {
+      setError(err.message || "Failed to adjust tone")
+      toast({
+        title: "Error",
+        description: err.message || "Failed to adjust tone. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsChangingTone(false)
+    }
+  }
+
+  const handleGenerateHashtags = async () => {
+    if (!caption.trim()) return
+    setIsGeneratingHashtags(true)
+    
+    try {
+      const hashtags = await geminiService.generateHashtags(caption, undefined, 10)
+      setSuggestedHashtags(hashtags)
+    } catch (err: any) {
+      // Silently fail for hashtag generation, keep defaults
+      console.error("Failed to generate hashtags:", err)
+    } finally {
+      setIsGeneratingHashtags(false)
+    }
   }
 
   const applyImprovement = () => {
@@ -82,6 +121,14 @@ export function AIToolsPanel({ caption, onCaptionUpdate }: AIToolsPanelProps) {
     setTimeout(() => setCopiedHashtag(null), 2000)
   }
 
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab)
+    // Generate hashtags when hashtags tab is opened
+    if (newTab === "hashtags" && caption.trim() && suggestedHashtags.length <= 5) {
+      handleGenerateHashtags()
+    }
+  }
+
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-3">
@@ -91,7 +138,7 @@ export function AIToolsPanel({ caption, onCaptionUpdate }: AIToolsPanelProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="improve" className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-secondary">
             <TabsTrigger value="improve" className="text-xs">
               Improve
@@ -172,7 +219,10 @@ export function AIToolsPanel({ caption, onCaptionUpdate }: AIToolsPanelProps) {
           </TabsContent>
 
           <TabsContent value="hashtags" className="space-y-3 mt-3">
-            <p className="text-sm text-muted-foreground">AI-recommended hashtags for your content.</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">AI-recommended hashtags for your content.</p>
+              {isGeneratingHashtags && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+            </div>
             <div className="flex flex-wrap gap-2">
               {suggestedHashtags.map((hashtag) => (
                 <Badge
@@ -190,6 +240,12 @@ export function AIToolsPanel({ caption, onCaptionUpdate }: AIToolsPanelProps) {
           </TabsContent>
 
           <TabsContent value="timing" className="space-y-3 mt-3">
+            {error && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 text-destructive text-sm">
+                <AlertCircle className="h-4 w-4" />
+                <span>{error}</span>
+              </div>
+            )}
             <p className="text-sm text-muted-foreground">Best times to post based on your audience activity.</p>
             <div className="space-y-2">
               {bestTimes.map((slot, i) => (

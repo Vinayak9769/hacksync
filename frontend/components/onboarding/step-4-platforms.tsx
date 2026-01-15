@@ -3,17 +3,22 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useState } from "react"
-import { Instagram, Linkedin, Twitter, Youtube } from "lucide-react"
+import { Facebook, Instagram, Linkedin, X } from "lucide-react"
+import { BlueSky, Reddit } from "../brand-icons"
 
 const platforms = [
-  { id: "instagram", name: "Instagram", icon: Instagram },
+  { id: "twitter", name: "Twitter/X", icon: X },
+  { id: "facebook", name: "Facebook", icon: Facebook }, 
   { id: "linkedin", name: "LinkedIn", icon: Linkedin },
-  { id: "twitter", name: "X (Twitter)", icon: Twitter },
-  { id: "youtube", name: "YouTube", icon: Youtube },
+  { id: "instagram", name: "Instagram", icon: Instagram },
 ]
 
 export default function OnboardingStep4({ formData, onContinue, onBack }: any) {
-  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>(formData.connectedPlatforms || [])
+  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>(
+    formData.connectedPlatforms && formData.connectedPlatforms.length > 0 
+      ? formData.connectedPlatforms 
+      : []
+  )
 
   const handleContinue = () => {
     onContinue({ connectedPlatforms })

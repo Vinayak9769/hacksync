@@ -18,9 +18,12 @@ export default function OnboardingStep5({ formData, onContinue, onBack }: any) {
   }
 
   const platformNames: Record<string, string> = {
-    instagram: "Instagram",
+    twitter: "Twitter/X",
+    facebook: "Facebook", 
+    reddit: "Reddit",
     linkedin: "LinkedIn",
-    twitter: "X (Twitter)",
+    instagram: "Instagram",
+    bluesky: "Bluesky",
     youtube: "YouTube",
   }
 
