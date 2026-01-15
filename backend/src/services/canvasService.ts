@@ -129,6 +129,7 @@ class CanvasService {
     };
 
     // Create primary image layer with uploaded image
+    // The bounds will be adjusted by the frontend renderer to fit the canvas
     const primaryLayer: CanvasLayer = {
       id: this.generateLayerId(),
       type: 'primary-image',
@@ -432,6 +433,72 @@ Return ONLY the text content, no explanations or formatting markers.`;
 
     const res = await model.generateContent(fullPrompt);
     return res.response.text().trim();
+  }
+
+  /**
+   * Generate AI element (icon or sticker)
+   */
+  async generateElement(
+    canvasId: string,
+    elementType: 'icon' | 'sticker',
+    prompt: string,
+    bounds: LayerBounds
+  ): Promise<CanvasState> {
+    const canvas = this.canvasStore.get(canvasId);
+    if (!canvas) throw new Error('Canvas not found');
+
+    const now = Date.now();
+    const maxZIndex = canvas.layers.reduce((max, l) => Math.max(max, l.zIndex), 0);
+
+    // Create element layer
+    const elementLayer: CanvasLayer = {
+      id: this.generateLayerId(),
+      type: elementType,
+      name: `${elementType === 'icon' ? 'Icon' : 'Sticker'} Element`,
+      zIndex: maxZIndex + 1,
+      bounds,
+      visible: true,
+      locked: false,
+      opacity: 1,
+      imageData: {
+        userPrompt: prompt,
+        generationStatus: 'generating',
+      },
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    canvas.layers.push(elementLayer);
+    canvas.updatedAt = now;
+    canvas.version += 1;
+    this.canvasStore.set(canvasId, canvas);
+
+    // Generate the element image
+    try {
+      // For icons/stickers, use a smaller size and more focused prompt
+      const elementPrompt = `${prompt}, ${elementType === 'icon' ? 'simple icon design, minimal, clean, transparent background' : 'sticker design, fun, colorful, transparent background'}`;
+      const imageUrl = await this.generateImageViaImagen(elementPrompt, bounds);
+
+      this.updateLayer(canvasId, elementLayer.id, {
+        imageData: {
+          imageUrl,
+          userPrompt: prompt,
+          generationStatus: 'complete',
+        },
+      });
+    } catch (error) {
+      console.error('Failed to generate element image:', error);
+      this.updateLayer(canvasId, elementLayer.id, {
+        imageData: {
+          ...elementLayer.imageData,
+          generationStatus: 'error',
+          errorMessage: (error as Error).message,
+        },
+      });
+      throw error;
+    }
+
+    return this.canvasStore.get(canvasId) || canvas;
   }
 }
 

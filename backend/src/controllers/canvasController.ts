@@ -405,6 +405,59 @@ class CanvasController {
       });
     }
   }
+
+  /**
+   * Generate AI element (icon or sticker)
+   * POST /api/canvas/:canvasId/generate-element
+   */
+  async generateElement(req: Request, res: Response): Promise<void> {
+    try {
+      const { canvasId } = req.params;
+      const { elementType, prompt, x, y, width, height } = req.body;
+
+      if (!elementType || !prompt) {
+        res.status(400).json({ error: 'Element type and prompt are required' });
+        return;
+      }
+
+      if (elementType !== 'icon' && elementType !== 'sticker') {
+        res.status(400).json({ error: 'Element type must be "icon" or "sticker"' });
+        return;
+      }
+
+      const bounds = {
+        x: x || 100,
+        y: y || 100,
+        width: width || 200,
+        height: height || 200,
+      };
+
+      const canvas = await canvasService.generateElement(
+        canvasId,
+        elementType,
+        prompt,
+        bounds
+      );
+
+      const layer = canvas.layers.find(l => 
+        l.type === elementType && 
+        l.imageData?.userPrompt === prompt
+      );
+
+      res.json({
+        success: true,
+        message: 'Element generated successfully',
+        layer,
+        canvas
+      });
+    } catch (error) {
+      console.error('Error generating element:', error);
+      res.status(500).json({
+        error: 'Failed to generate element',
+        details: (error as Error).message
+      });
+    }
+  }
 }
 
 export default new CanvasController();

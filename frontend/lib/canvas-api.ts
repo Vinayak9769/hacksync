@@ -230,6 +230,34 @@ class CanvasAPI {
 
     return response.json();
   }
+
+  /**
+   * Generate AI element (icon or sticker)
+   */
+  async generateElement(
+    canvasId: string,
+    elementData: {
+      elementType: 'icon' | 'sticker';
+      prompt: string;
+      x?: number;
+      y?: number;
+      width?: number;
+      height?: number;
+    }
+  ): Promise<{ success: boolean; layer: any; canvas: CanvasState }> {
+    const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/generate-element`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(elementData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to generate element');
+    }
+
+    return response.json();
+  }
 }
 
 export default new CanvasAPI();

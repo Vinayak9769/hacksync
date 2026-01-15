@@ -52,7 +52,7 @@ export default function CanvasPage() {
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
   const [uploadedImagePreview, setUploadedImagePreview] = useState<string | null>(null)
   const [addLayerForm, setAddLayerForm] = useState({
-    layerType: 'text' as 'text' | 'shape',
+    layerType: 'text' as 'text' | 'shape' | 'icon' | 'sticker',
     name: '',
     text: 'Your text here',
     fontSize: 48,
@@ -62,6 +62,7 @@ export default function CanvasPage() {
     strokeColor: '#000000',
     useAI: false,
     aiPrompt: '',
+    elementPrompt: '', // For AI-generated elements
   })
 
   // Load canvases on mount
@@ -230,9 +231,54 @@ export default function CanvasPage() {
         }
       }
 
+      // Handle AI-generated elements (icons/stickers)
+      if ((addLayerForm.layerType === 'icon' || addLayerForm.layerType === 'sticker') && addLayerForm.elementPrompt) {
+        try {
+          const result = await canvasAPI.generateElement(currentCanvas.id, {
+            elementType: addLayerForm.layerType,
+            prompt: addLayerForm.elementPrompt,
+            x: currentCanvas.width * 0.4,
+            y: currentCanvas.height * 0.4,
+            width: Math.min(currentCanvas.width * 0.2, 200),
+            height: Math.min(currentCanvas.height * 0.2, 200),
+          })
+          setCurrentCanvas(result.canvas)
+          setSelectedLayerId(result.layer.id)
+          setShowAddLayerDialog(false)
+
+          // Reset form
+          setAddLayerForm({
+            layerType: 'text',
+            name: '',
+            text: 'Your text here',
+            fontSize: 48,
+            color: '#ffffff',
+            shapeType: 'rectangle',
+            fillColor: '#3b82f6',
+            strokeColor: '#000000',
+            useAI: false,
+            aiPrompt: '',
+            elementPrompt: '',
+          })
+
+          toast({
+            title: 'Success',
+            description: 'AI element generated successfully'
+          })
+          return
+        } catch (error: any) {
+          toast({
+            title: 'Error',
+            description: error.message || 'Failed to generate AI element',
+            variant: 'destructive'
+          })
+          return
+        }
+      }
+
       const layerData = {
         layerType: addLayerForm.layerType,
-        name: addLayerForm.name || `${addLayerForm.layerType === 'text' ? 'Text' : 'Shape'} Layer`,
+        name: addLayerForm.name || `${addLayerForm.layerType === 'text' ? 'Text' : addLayerForm.layerType === 'shape' ? 'Shape' : 'Element'} Layer`,
         ...(addLayerForm.layerType === 'text' ? {
           text: textContent,
           fontSize: addLayerForm.fontSize,
@@ -241,7 +287,7 @@ export default function CanvasPage() {
           y: currentCanvas.height * 0.1,
           width: currentCanvas.width * 0.8,
           height: 100,
-        } : {
+        } : addLayerForm.layerType === 'shape' ? {
           shapeType: addLayerForm.shapeType,
           fillColor: addLayerForm.fillColor,
           strokeColor: addLayerForm.strokeColor,
@@ -249,7 +295,7 @@ export default function CanvasPage() {
           y: currentCanvas.height * 0.3,
           width: currentCanvas.width * 0.4,
           height: currentCanvas.height * 0.4,
-        })
+        } : {})
       }
 
       const result = await canvasAPI.addLayer(currentCanvas.id, layerData)
@@ -269,6 +315,7 @@ export default function CanvasPage() {
         strokeColor: '#000000',
         useAI: false,
         aiPrompt: '',
+        elementPrompt: '',
       })
 
       toast({
@@ -582,17 +629,17 @@ export default function CanvasPage() {
       {/* Add Layer Dialog */}
       <Dialog open={showAddLayerDialog} onOpenChange={setShowAddLayerDialog}>
         <DialogContent>
-          <DialogHeader>
+            <DialogHeader>
             <DialogTitle>Add Layer</DialogTitle>
             <DialogDescription>
-              Add a new text or shape layer to your canvas
+              Add a new text, shape, or AI-generated element to your canvas
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Layer Type</Label>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
                   variant={addLayerForm.layerType === 'text' ? 'default' : 'outline'}
@@ -611,6 +658,24 @@ export default function CanvasPage() {
                   <Square className="h-4 w-4" />
                   Shape
                 </Button>
+                <Button
+                  type="button"
+                  variant={addLayerForm.layerType === 'icon' ? 'default' : 'outline'}
+                  className="flex-1 gap-2"
+                  onClick={() => setAddLayerForm({ ...addLayerForm, layerType: 'icon' })}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  AI Icon
+                </Button>
+                <Button
+                  type="button"
+                  variant={addLayerForm.layerType === 'sticker' ? 'default' : 'outline'}
+                  className="flex-1 gap-2"
+                  onClick={() => setAddLayerForm({ ...addLayerForm, layerType: 'sticker' })}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  AI Sticker
+                </Button>
               </div>
             </div>
 
@@ -619,11 +684,25 @@ export default function CanvasPage() {
               <Input
                 value={addLayerForm.name}
                 onChange={(e) => setAddLayerForm({ ...addLayerForm, name: e.target.value })}
-                placeholder={`${addLayerForm.layerType === 'text' ? 'Text' : 'Shape'} Layer`}
+                placeholder={`${addLayerForm.layerType === 'text' ? 'Text' : addLayerForm.layerType === 'shape' ? 'Shape' : addLayerForm.layerType === 'icon' ? 'Icon' : 'Sticker'} Layer`}
               />
             </div>
 
-            {addLayerForm.layerType === 'text' ? (
+            {(addLayerForm.layerType === 'icon' || addLayerForm.layerType === 'sticker') ? (
+              <div className="space-y-2">
+                <Label>AI Element Prompt *</Label>
+                <textarea
+                  value={addLayerForm.elementPrompt}
+                  onChange={(e) => setAddLayerForm({ ...addLayerForm, elementPrompt: e.target.value })}
+                  placeholder={`Describe the ${addLayerForm.layerType === 'icon' ? 'icon' : 'sticker'} you want to generate (e.g., 'a modern rocket icon', 'a cute cat sticker', 'a coffee cup icon')`}
+                  className="w-full min-h-[100px] border rounded px-3 py-2 text-sm resize-none"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  AI will generate a {addLayerForm.layerType === 'icon' ? 'small icon' : 'sticker'} that you can drag around the canvas.
+                </p>
+              </div>
+            ) : addLayerForm.layerType === 'text' ? (
               <>
                 <div className="flex items-center space-x-2 p-3 border rounded bg-muted/30">
                   <input
@@ -721,14 +800,20 @@ export default function CanvasPage() {
             <Button variant="outline" onClick={() => setShowAddLayerDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddLayer} disabled={isLoading}>
+            <Button 
+              onClick={handleAddLayer} 
+              disabled={
+                isLoading ||
+                ((addLayerForm.layerType === 'icon' || addLayerForm.layerType === 'sticker') && !addLayerForm.elementPrompt.trim())
+              }
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Adding...
+                  {addLayerForm.layerType === 'icon' || addLayerForm.layerType === 'sticker' ? 'Generating...' : 'Adding...'}
                 </>
               ) : (
-                'Add Layer'
+                addLayerForm.layerType === 'icon' || addLayerForm.layerType === 'sticker' ? 'Generate Element' : 'Add Layer'
               )}
             </Button>
           </DialogFooter>

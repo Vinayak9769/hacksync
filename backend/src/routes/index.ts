@@ -103,6 +103,7 @@ router.post(
 );
 router.post("/canvas/regenerate-layer", canvasController.regenerateLayer);
 router.post("/canvas/generate-text", canvasController.generateText);
+router.post("/canvas/:canvasId/generate-element", canvasController.generateElement);
 router.get("/canvas/:id/export", canvasController.exportCanvas);
 router.post("/canvas/import", canvasController.importCanvas);
 router.delete("/canvas/:id", canvasController.deleteCanvas);
