@@ -54,11 +54,24 @@ app.use(
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  // Simple request logger + CORS
+  // Simple request logger + safety-net CORS headers for credentialed requests
   app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
+    const existingOriginHeader = res.getHeader('Access-Control-Allow-Origin');
+    if (!existingOriginHeader) {
+      const configuredOrigin = process.env.ALLOWED_ORIGIN || req.headers.origin || '*';
+      res.setHeader('Access-Control-Allow-Origin', configuredOrigin);
+      if (configuredOrigin !== '*') {
+        res.setHeader('Vary', 'Origin');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+      }
+    }
+
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization, ngrok-skip-browser-warning'
+    );
+
     if (req.method === 'OPTIONS') {
       res.sendStatus(204);
       return;

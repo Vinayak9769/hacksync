@@ -45,6 +45,18 @@ type RedditTimelineBucket = {
 }
 
 const REDDIT_COLOR = "oklch(0.68 0.12 25)"
+const formatEngagementTooltip = (value: number | string, name: string) => {
+  const numericValue = typeof value === "number" ? value : Number(value)
+
+  if (name === "reddit") {
+    return [Number.isFinite(numericValue) ? `${numericValue} posts` : value, "Reddit Posts"]
+  }
+
+  return [
+    Number.isFinite(numericValue) ? numericValue.toLocaleString() : value,
+    name.charAt(0).toUpperCase() + name.slice(1),
+  ]
+}
 
 const DEFAULT_ENGAGEMENT_DATA: EngagementPoint[] = [
   { name: "Jan 1", instagram: 4000, twitter: 2400, linkedin: 1200 },
@@ -337,11 +349,21 @@ export default function AnalyticsPage() {
                     </defs>
                     <XAxis dataKey="name" stroke="oklch(0.65 0 0)" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis
+                      yAxisId="primary"
                       stroke="oklch(0.65 0 0)"
                       fontSize={12}
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(value) => `${value / 1000}k`}
+                    />
+                    <YAxis
+                      yAxisId="reddit"
+                      orientation="right"
+                      stroke={REDDIT_COLOR}
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      allowDecimals={false}
                     />
                     <Tooltip
                       contentStyle={{
@@ -350,10 +372,12 @@ export default function AnalyticsPage() {
                         borderRadius: "8px",
                         color: "oklch(0.95 0 0)",
                       }}
+                      formatter={formatEngagementTooltip}
                     />
                     <Area
                       type="monotone"
                       dataKey="instagram"
+                      yAxisId="primary"
                       stroke="oklch(0.7 0.18 165)"
                       strokeWidth={2}
                       fill="url(#instagramGradient)"
@@ -361,6 +385,7 @@ export default function AnalyticsPage() {
                     <Area
                       type="monotone"
                       dataKey="twitter"
+                      yAxisId="primary"
                       stroke="oklch(0.65 0.15 250)"
                       strokeWidth={2}
                       fill="url(#twitterGradient)"
@@ -368,6 +393,7 @@ export default function AnalyticsPage() {
                     <Area
                       type="monotone"
                       dataKey="linkedin"
+                      yAxisId="primary"
                       stroke="oklch(0.75 0.15 50)"
                       strokeWidth={2}
                       fill="url(#linkedinGradient)"
@@ -375,6 +401,7 @@ export default function AnalyticsPage() {
                     <Area
                       type="monotone"
                       dataKey="reddit"
+                      yAxisId="reddit"
                       stroke={REDDIT_COLOR}
                       strokeWidth={2}
                       fill="url(#redditGradient)"
