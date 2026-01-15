@@ -9,6 +9,7 @@ import { PlatformSelector, platforms } from "@/components/create/platform-select
 import { CaptionEditor } from "@/components/create/caption-editor"
 import { MediaUploader, type MediaFile } from "@/components/create/media-uploader"
 import { MediaUrlInput } from "@/components/create/media-url-input"
+import { RedditInput, type RedditPostData } from "@/components/create/reddit-input"
 import { AIToolsPanel } from "@/components/create/ai-tools-panel"
 
 import { SchedulePicker } from "@/components/create/schedule-picker"
@@ -22,12 +23,20 @@ export default function CreatePage() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["instagram", "twitter"])
   const [captions, setCaptions] = useState<Record<string, string>>({})
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
+  const [redditData, setRedditData] = useState<RedditPostData>({
+    title: "",
+    text: "",
+    url: "",
+    type: "text",
+  })
   const [publishType, setPublishType] = useState<"now" | "schedule">("schedule")
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined)
   const [scheduledTime, setScheduledTime] = useState<string>("12:00 PM")
   const [isPublishing, setIsPublishing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<string>("")
+  const isRedditSelected = selectedPlatforms.includes("reddit")
+  const nonRedditPlatforms = selectedPlatforms.filter((platformId) => platformId !== "reddit")
 
   const handlePlatformToggle = useCallback((platformId: string) => {
     setSelectedPlatforms((prev) =>
@@ -37,6 +46,10 @@ export default function CreatePage() {
 
   const handleCaptionChange = useCallback((platformId: string, value: string) => {
     setCaptions((prev) => ({ ...prev, [platformId]: value }))
+  }, [])
+
+  const handleRedditDataChange = useCallback((value: RedditPostData) => {
+    setRedditData(value)
   }, [])
 
 
@@ -55,10 +68,10 @@ export default function CreatePage() {
   )
 
   const handlePublish = async () => {
-    if (!selectedPlatforms.includes('twitter')) {
+    if (selectedPlatforms.length === 0) {
       toast({
-        title: "Twitter not selected",
-        description: "Please select Twitter to publish",
+        title: "No platform selected",
+        description: "Please select at least one platform to publish.",
         variant: "destructive"
       })
       return
@@ -66,143 +79,178 @@ export default function CreatePage() {
 
     setIsPublishing(true)
 
-    try {
-      if (publishType === "now") {
-        // Get media URLs
-        const mediaUrls: Record<string, string> = {}
-        if (mediaFiles.length > 0 && mediaFiles[0].url) {
-          selectedPlatforms.forEach(platform => {
-            mediaUrls[platform] = mediaFiles[0].url!
-          })
-        }
-
-        // Post to each platform
-        const results = []
-        for (const platform of selectedPlatforms) {
-          try {
-            console.log(`📤 Posting to ${platform}...`, {
-              caption: captions[platform] || '',
-              mediaUrl: mediaUrls[platform] || 'none'
-            })
-
-            const result = await socialMediaAPI.createPost({
-              platform,
-              content: {
-                caption: captions[platform] || '',
-                mediaUrl: mediaUrls[platform]
-              }
-            })
-
-            console.log(`✅ Successfully posted to ${platform}:`, result)
-            results.push({ platform, success: true, result })
-          } catch (error: any) {
-            console.error(`❌ Failed to post to ${platform}:`, error)
-            results.push({ platform, success: false, error: error.message })
-          }
-        }
-
-        // Show results
-        const successCount = results.filter(r => r.success).length
-        const failCount = results.length - successCount
-        const successPlatforms = results.filter(r => r.success).map(r => r.platform).join(', ')
-        const failedPlatforms = results.filter(r => !r.success).map(r => r.platform).join(', ')
-
-        if (successCount > 0 && failCount === 0) {
-          toast({
-            title: "Posts published! 🎉",
-            description: `Successfully posted to ${successPlatforms}`,
-          })
-        } else if (successCount > 0) {
-          toast({
-            title: "Partial success",
-            description: `Posted to ${successPlatforms}. Failed: ${failedPlatforms}`,
-            variant: "default"
-          })
-        } else {
-          toast({
-            title: "Publishing failed",
-            description: `Failed to post to ${failedPlatforms}. ${results[0]?.error || 'Check console for details.'}`,
-            variant: "destructive"
-          })
-        }
-      } else {
-        // Schedule for later (mock for now)
-        await new Promise((r) => setTimeout(r, 1000))
+    if (isRedditSelected) {
+      if (!redditData.title.trim()) {
         toast({
-          title: "Post scheduled! 📅",
-          description: `Your post will be published on ${scheduledDate?.toLocaleDateString()} at ${scheduledTime}.`,
-        })
-      }
-    } catch (error: any) {
-      console.error('Error publishing post:', error)
-      toast({
-        title: "Error",
-        description: error.message || "Failed to publish post. Please try again.",
-      })
-    }
-
-    try {
-      // Check if user is connected to Twitter
-      const statusResponse = await fetch(API_ENDPOINTS.twitter.status, {
-        ...API_FETCH_OPTIONS
-      })
-      const statusData = await statusResponse.json()
-
-      if (!statusData.connected) {
-        toast({
-          title: "Not connected to Twitter",
-          description: "Please connect your Twitter account first from Settings",
+          title: "Reddit title required",
+          description: "Add a title before publishing to Reddit.",
           variant: "destructive"
         })
         setIsPublishing(false)
         return
       }
 
-      const formData = new FormData()
-
-      // Add caption text
-      const twitterCaption = captions['twitter'] || ''
-      formData.append('text', twitterCaption)
-
-      // Add media files if any
-      if (mediaFiles.length > 0) {
-        for (const mediaFile of mediaFiles) {
-          if (mediaFile.file) {
-            formData.append('media', mediaFile.file)
-          }
-        }
-      }
-
-      // Call backend API
-      const response = await fetch(API_ENDPOINTS.twitter.post, {
-        method: 'POST',
-        body: formData,
-        ...API_FETCH_OPTIONS
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
+      if (redditData.type === "link" && !redditData.url?.trim()) {
         toast({
-          title: "Posted to Twitter!",
-          description: "Your tweet has been published successfully.",
-        })
-        // Clear the form
-        setCaptions((prev) => ({ ...prev, twitter: '' }))
-      } else {
-        toast({
-          title: "Failed to post",
-          description: result.error || "Something went wrong",
+          title: "Reddit URL required",
+          description: "Link posts must include a valid URL.",
           variant: "destructive"
         })
+        setIsPublishing(false)
+        return
       }
-    } catch (error: any) {
-      console.error('Error publishing:', error)
-      toast({
-        title: "Error",
-        description: error.message || "Failed to connect to server",
-        variant: "destructive"
-      })
+    }
+
+    try {
+      try {
+        if (publishType === "now") {
+          // Get media URLs
+          const mediaUrls: Record<string, string> = {}
+          if (mediaFiles.length > 0 && mediaFiles[0].url) {
+            selectedPlatforms.forEach((platform) => {
+              mediaUrls[platform] = mediaFiles[0].url!
+            })
+          }
+
+          // Post to each platform
+          const results: Array<{ platform: string; success: boolean; result?: any; error?: string }> = []
+          for (const platform of selectedPlatforms) {
+            try {
+              console.log(
+                `📤 Posting to ${platform}...`,
+                platform === "reddit"
+                  ? redditData
+                  : {
+                      caption: captions[platform] || "",
+                      mediaUrl: mediaUrls[platform] || "none"
+                    }
+              )
+
+              let result
+              if (platform === "reddit") {
+                result = await socialMediaAPI.postToReddit(redditData)
+              } else {
+                result = await socialMediaAPI.createPost({
+                  platform,
+                  content: {
+                    caption: captions[platform] || "",
+                    mediaUrl: mediaUrls[platform]
+                  }
+                })
+              }
+
+              console.log(`✅ Successfully posted to ${platform}:`, result)
+              results.push({ platform, success: true, result })
+            } catch (error: any) {
+              console.error(`❌ Failed to post to ${platform}:`, error)
+              results.push({ platform, success: false, error: error.message })
+            }
+          }
+
+          // Show results
+          const successCount = results.filter((r) => r.success).length
+          const failCount = results.length - successCount
+          const successPlatforms = results.filter((r) => r.success).map((r) => r.platform).join(", ")
+          const failedPlatforms = results.filter((r) => !r.success).map((r) => r.platform).join(", ")
+
+          if (successCount > 0 && failCount === 0) {
+            toast({
+              title: "Posts published! 🎉",
+              description: `Successfully posted to ${successPlatforms}`,
+            })
+          } else if (successCount > 0) {
+            toast({
+              title: "Partial success",
+              description: `Posted to ${successPlatforms}. Failed: ${failedPlatforms}`,
+              variant: "default"
+            })
+          } else {
+            toast({
+              title: "Publishing failed",
+              description: `Failed to post to ${failedPlatforms}. ${results[0]?.error || "Check console for details."}`,
+              variant: "destructive"
+            })
+          }
+        } else {
+          // Schedule for later (mock for now)
+          await new Promise((r) => setTimeout(r, 1000))
+          toast({
+            title: "Post scheduled! 📅",
+            description: `Your post will be published on ${scheduledDate?.toLocaleDateString()} at ${scheduledTime}.`,
+          })
+        }
+      } catch (error: any) {
+        console.error("Error publishing post:", error)
+        toast({
+          title: "Error",
+          description: error.message || "Failed to publish post. Please try again.",
+        })
+      }
+
+      if (selectedPlatforms.includes("twitter")) {
+        try {
+          // Check if user is connected to Twitter
+          const statusResponse = await fetch(API_ENDPOINTS.twitter.status, {
+            ...API_FETCH_OPTIONS
+          })
+          const statusData = await statusResponse.json()
+
+          if (!statusData.connected) {
+            toast({
+              title: "Not connected to Twitter",
+              description: "Please connect your Twitter account first from Settings",
+              variant: "destructive"
+            })
+            return
+          }
+
+          const formData = new FormData()
+
+          // Add caption text
+          const twitterCaption = captions["twitter"] || ""
+          formData.append("text", twitterCaption)
+
+          // Add media files if any
+          if (mediaFiles.length > 0) {
+            for (const mediaFile of mediaFiles) {
+              if (mediaFile.file) {
+                formData.append("media", mediaFile.file)
+              }
+            }
+          }
+
+          // Call backend API
+          const response = await fetch(API_ENDPOINTS.twitter.post, {
+            method: "POST",
+            body: formData,
+            ...API_FETCH_OPTIONS
+          })
+
+          const result = await response.json()
+
+          if (result.success) {
+            toast({
+              title: "Posted to Twitter!",
+              description: "Your tweet has been published successfully.",
+            })
+            // Clear the form
+            setCaptions((prev) => ({ ...prev, twitter: "" }))
+          } else {
+            toast({
+              title: "Failed to post",
+              description: result.error || "Something went wrong",
+              variant: "destructive"
+            })
+          }
+        } catch (error: any) {
+          console.error("Error publishing:", error)
+          toast({
+            title: "Error",
+            description: error.message || "Failed to connect to server",
+            variant: "destructive"
+          })
+        }
+      }
     } finally {
       setIsPublishing(false)
     }
@@ -251,51 +299,62 @@ export default function CreatePage() {
 
               <MediaUrlInput onUrlAdd={handleUrlAdd} />
 
-              {selectedPlatforms.length > 0 ? (
-                <Tabs
-                  value={activeTab || selectedPlatforms[0]}
-                  onValueChange={setActiveTab}
-                  className="w-full"
-                >
-                  <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${selectedPlatforms.length}, minmax(0, 1fr))` }}>
-                    {selectedPlatforms.map((platformId) => {
-                      const platform = platforms.find((p) => p.id === platformId)
-                      if (!platform) return null
-                      return (
-                        <TabsTrigger key={platformId} value={platformId} className="flex items-center gap-2">
-                          <span className="text-lg">{platform.icon}</span>
-                          <span>{platform.name}</span>
-                        </TabsTrigger>
-                      )
-                    })}
-                  </TabsList>
-                  {selectedPlatforms.map((platformId) => {
-                    const platform = platforms.find((p) => p.id === platformId)
-                    if (!platform) return null
-                    return (
-                      <TabsContent key={platformId} value={platformId} className="mt-4">
-                        <CaptionEditor
-                          platformId={platformId}
-                          platformName={platform.name}
-                          platformIcon={platform.icon}
-                          charLimit={platform.charLimit}
-                          value={captions[platformId] || ""}
-                          onChange={(value) => handleCaptionChange(platformId, value)}
-                        />
-                      </TabsContent>
-                    )
-                  })}
-                </Tabs>
-              ) : (
+              {selectedPlatforms.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Select at least one platform to start creating your post
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {nonRedditPlatforms.length > 0 && (
+                    <Tabs
+                      value={nonRedditPlatforms.includes(activeTab) ? activeTab : nonRedditPlatforms[0]}
+                      onValueChange={setActiveTab}
+                      className="w-full"
+                    >
+                      <TabsList
+                        className="grid w-full"
+                        style={{ gridTemplateColumns: `repeat(${nonRedditPlatforms.length}, minmax(0, 1fr))` }}
+                      >
+                        {nonRedditPlatforms.map((platformId) => {
+                          const platform = platforms.find((p) => p.id === platformId)
+                          if (!platform) return null
+                          return (
+                            <TabsTrigger key={platformId} value={platformId} className="flex items-center gap-2">
+                              <span className="text-lg">{platform.icon}</span>
+                              <span>{platform.name}</span>
+                            </TabsTrigger>
+                          )
+                        })}
+                      </TabsList>
+                      {nonRedditPlatforms.map((platformId) => {
+                        const platform = platforms.find((p) => p.id === platformId)
+                        if (!platform) return null
+                        return (
+                          <TabsContent key={platformId} value={platformId} className="mt-4">
+                            <CaptionEditor
+                              platformId={platformId}
+                              platformName={platform.name}
+                              platformIcon={platform.icon}
+                              charLimit={platform.charLimit}
+                              value={captions[platformId] || ""}
+                              onChange={(value) => handleCaptionChange(platformId, value)}
+                            />
+                          </TabsContent>
+                        )
+                      })}
+                    </Tabs>
+                  )}
+
+                  {isRedditSelected && (
+                    <RedditInput value={redditData} onChange={handleRedditDataChange} />
+                  )}
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-          <PostPreview selectedPlatforms={selectedPlatforms} captions={captions} media={mediaFiles} />
+          <PostPreview selectedPlatforms={selectedPlatforms} captions={captions} media={mediaFiles} redditData={redditData} />
         {/* Right Column - Preview & Schedule */}
       </div>
 
