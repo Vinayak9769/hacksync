@@ -64,6 +64,8 @@ router.get("/reddit/test-auth", redditController.testAuth);
 router.post("/reddit/post", redditController.submitPost);
 router.get("/reddit/posts/:subreddit", redditController.getSubredditPosts);
 router.get("/reddit/comments/:postId", redditController.getPostComments);
+router.get("/reddit/inbox", redditController.getInbox);
+router.post("/reddit/inbox/reply", redditController.replyToInbox);
 router.get(
     "/reddit/subreddits/:subreddit/engagement",
     redditController.getSubredditEngagement,

@@ -35,6 +35,10 @@ export const API_ENDPOINTS = {
         post: "/api/twitter/post",
         disconnect: "/api/twitter/disconnect",
     },
+    reddit: {
+        inbox: getApiUrl("/reddit/inbox"),
+        reply: getApiUrl("/reddit/inbox/reply"),
+    },
     social: {
         post: getApiUrl("/social/post"),
         health: getApiUrl("/social/health"),

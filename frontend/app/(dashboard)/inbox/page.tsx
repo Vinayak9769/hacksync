@@ -1,27 +1,32 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { InboxSidebar } from "@/components/inbox/inbox-sidebar"
 import { MessageList } from "@/components/inbox/message-list"
 import { MessageDetail } from "@/components/inbox/message-detail"
-import { inboxMessages, type InboxMessage } from "@/lib/inbox-data"
+import type { InboxMessage } from "@/lib/inbox-data"
 import { Search, Inbox } from "lucide-react"
+import { fetchRedditInbox } from "@/lib/inbox-api"
+import { useToast } from "@/hooks/use-toast"
 
 export default function InboxPage() {
-  const [messages, setMessages] = useState<InboxMessage[]>(inboxMessages)
+  const { toast } = useToast()
+  const [messages, setMessages] = useState<InboxMessage[]>([])
   const [activeFilter, setActiveFilter] = useState("all")
   const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
   const counts = useMemo(
     () => ({
-      all: messages.length,
+      all: messages.filter((m) => m.status !== "resolved").length,
       unread: messages.filter((m) => m.status === "unread").length,
-      dms: messages.filter((m) => m.type === "dm").length,
-      mentions: messages.filter((m) => m.type === "mention").length,
-      comments: messages.filter((m) => m.type === "comment").length,
+      dms: messages.filter((m) => m.type === "dm" && m.status !== "resolved").length,
+      mentions: messages.filter((m) => m.type === "mention" && m.status !== "resolved").length,
+      comments: messages.filter((m) => m.type === "comment" && m.status !== "resolved").length,
+      resolved: messages.filter((m) => m.status === "resolved").length,
     }),
     [messages],
   )
@@ -36,6 +41,8 @@ export default function InboxPage() {
       filtered = filtered.filter((m) => m.status === "resolved")
     } else if (activeFilter !== "all") {
       filtered = filtered.filter((m) => m.type === activeFilter)
+    } else {
+      filtered = filtered.filter((m) => m.status !== "resolved")
     }
 
     // Apply search filter
@@ -52,6 +59,38 @@ export default function InboxPage() {
     return filtered.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
   }, [messages, activeFilter, searchQuery])
 
+  useEffect(() => {
+    let isMounted = true
+
+    const loadInbox = async () => {
+      setIsLoading(true)
+      try {
+        const inbox = await fetchRedditInbox(50)
+        if (isMounted) {
+          setMessages(inbox)
+        }
+      } catch (error: any) {
+        if (isMounted) {
+          toast({
+            title: "Inbox load failed",
+            description: error?.message || "Unable to fetch Reddit inbox.",
+            variant: "destructive",
+          })
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadInbox()
+
+    return () => {
+      isMounted = false
+    }
+  }, [toast])
+
   const handleSelectMessage = (message: InboxMessage) => {
     setSelectedMessage(message)
     // Mark as read
@@ -63,7 +102,43 @@ export default function InboxPage() {
   const handleStatusChange = (id: string, status: InboxMessage["status"]) => {
     setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status } : m)))
     if (selectedMessage?.id === id) {
-      setSelectedMessage((prev) => (prev ? { ...prev, status } : null))
+      if (status === "resolved" && activeFilter !== "resolved") {
+        setSelectedMessage(null)
+      } else {
+        setSelectedMessage((prev) => (prev ? { ...prev, status } : null))
+      }
+    }
+  }
+
+  const handleReply = (id: string, text: string) => {
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === id
+          ? {
+              ...m,
+              status: "replied",
+              replies: [
+                ...(m.replies || []),
+                { id: `${Date.now()}`, text, timestamp: new Date() },
+              ],
+            }
+          : m,
+      ),
+    )
+
+    if (selectedMessage?.id === id) {
+      setSelectedMessage((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "replied",
+              replies: [
+                ...(prev.replies || []),
+                { id: `${Date.now()}`, text, timestamp: new Date() },
+              ],
+            }
+          : null,
+      )
     }
   }
 
@@ -101,11 +176,19 @@ export default function InboxPage() {
               </div>
             </div>
             <div className="flex-1 overflow-auto">
-              <MessageList
-                messages={filteredMessages}
-                selectedId={selectedMessage?.id || null}
-                onSelect={handleSelectMessage}
-              />
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                  <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="font-medium">Loading inbox</h3>
+                  <p className="text-sm text-muted-foreground">Fetching Reddit messages...</p>
+                </div>
+              ) : (
+                <MessageList
+                  messages={filteredMessages}
+                  selectedId={selectedMessage?.id || null}
+                  onSelect={handleSelectMessage}
+                />
+              )}
             </div>
           </Card>
         </div>
@@ -114,7 +197,12 @@ export default function InboxPage() {
         <div className="col-span-12 lg:col-span-6">
           <Card className="bg-card border-border h-full">
             {selectedMessage ? (
-              <MessageDetail message={selectedMessage} onStatusChange={handleStatusChange} onAssign={handleAssign} />
+              <MessageDetail
+                message={selectedMessage}
+                onStatusChange={handleStatusChange}
+                onAssign={handleAssign}
+                onReply={handleReply}
+              />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-6">
                 <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
