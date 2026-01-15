@@ -49,11 +49,11 @@ export function SchedulePicker({
 }: SchedulePickerProps) {
   return (
     <Card className="bg-card border-border">
-      <CardHeader className="pb-3">
+      <CardHeader className="">
         <CardTitle className="text-base">Schedule</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <RadioGroup value={publishType} onValueChange={(v) => onPublishTypeChange(v as "now" | "schedule")}>
+        <RadioGroup className="flex" value={publishType} onValueChange={(v) => onPublishTypeChange(v as "now" | "schedule")}>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="now" id="now" />
             <Label htmlFor="now" className="cursor-pointer">
@@ -70,7 +70,8 @@ export function SchedulePicker({
 
         {publishType === "schedule" && (
           <div className="space-y-3 pt-2">
-            <div className="space-y-2">
+            <div className="flex gap-4">
+            <div className="space-y-2 w-1/2">
               <Label className="text-sm">Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -112,6 +113,7 @@ export function SchedulePicker({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
             </div>
 
             <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
