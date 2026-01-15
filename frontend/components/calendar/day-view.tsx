@@ -12,11 +12,12 @@ import { Edit, Trash2 } from "lucide-react"
 interface DayViewProps {
   currentDate: Date
   posts: ScheduledPost[]
+  onDeletePost?: (postId: string) => void
 }
 
 const hours = Array.from({ length: 24 }, (_, i) => i)
 
-export function DayView({ currentDate, posts }: DayViewProps) {
+export function DayView({ currentDate, posts, onDeletePost }: DayViewProps) {
   const dayPosts = posts.filter((post) => isSameDay(post.scheduledFor, currentDate))
 
   const getPostsForHour = (hour: number) => {
@@ -73,7 +74,12 @@ export function DayView({ currentDate, posts }: DayViewProps) {
                               <Button variant="ghost" size="icon" className="h-7 w-7">
                                 <Edit className="h-3 w-3" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive"
+                                onClick={() => onDeletePost?.(post.id)}
+                              >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
                             </div>

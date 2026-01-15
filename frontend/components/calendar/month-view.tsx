@@ -31,9 +31,10 @@ interface MonthViewProps {
   currentDate: Date
   posts: ScheduledPost[]
   onPostClick?: (post: ScheduledPost) => void
+  onDeletePost?: (postId: string) => void
 }
 
-export function MonthView({ currentDate, posts }: MonthViewProps) {
+export function MonthView({ currentDate, posts, onDeletePost }: MonthViewProps) {
   const days = useMemo(() => {
     const monthStart = startOfMonth(currentDate)
     const monthEnd = endOfMonth(currentDate)
@@ -88,7 +89,7 @@ export function MonthView({ currentDate, posts }: MonthViewProps) {
 
               <div className="space-y-1">
                 {dayPosts.slice(0, 3).map((post) => (
-                  <PostItem key={post.id} post={post} />
+                  <PostItem key={post.id} post={post} onDeletePost={onDeletePost} />
                 ))}
                 {dayPosts.length > 3 && (
                   <span className="text-xs text-muted-foreground">+{dayPosts.length - 3} more</span>
@@ -102,7 +103,7 @@ export function MonthView({ currentDate, posts }: MonthViewProps) {
   )
 }
 
-function PostItem({ post }: { post: ScheduledPost }) {
+function PostItem({ post, onDeletePost }: { post: ScheduledPost; onDeletePost?: (postId: string) => void }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -163,7 +164,7 @@ function PostItem({ post }: { post: ScheduledPost }) {
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button variant="destructive" size="sm">
+            <Button variant="destructive" size="sm" onClick={() => onDeletePost?.(post.id)}>
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
