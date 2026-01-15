@@ -5,12 +5,12 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 interface CaptionEditorProps {
-  platformId: string
-  platformName: string
-  platformIcon: string
-  charLimit: number
-  value: string
-  onChange: (value: string) => void
+  platformId: string;
+  platformName: string;
+  platformIcon: string | React.ReactNode;
+  charLimit: number;
+  value: string;
+  onChange: (value: string) => void;
 }
 
 export function CaptionEditor({

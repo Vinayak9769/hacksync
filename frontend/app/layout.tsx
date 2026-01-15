@@ -7,6 +7,8 @@ import "./globals.css"
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
+export const baseURL= "http://localhost:3000";
+
 export const metadata: Metadata = {
   title: "SocialNest - AI Powered Social Media Command Center",
   description: "Manage all your social media from one dashboard with deep AI automation",

@@ -141,6 +141,47 @@ class SocialMediaAPI {
   }
 
   /**
+   * Post to Reddit
+   */
+  async postToReddit(redditData: {
+    title: string;
+    text?: string;
+    url?: string;
+    type: 'text' | 'link';
+  }): Promise<PostResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/reddit/post`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subreddit: 'Ettara',
+          title: redditData.title,
+          text: redditData.text,
+          url: redditData.url,
+          type: redditData.type
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to post to Reddit');
+      }
+
+      return {
+        success: true,
+        platform: 'reddit',
+        data: data,
+      };
+    } catch (error: any) {
+      console.error('Error posting to Reddit:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Post to multiple platforms
    */
   async postToMultiplePlatforms(

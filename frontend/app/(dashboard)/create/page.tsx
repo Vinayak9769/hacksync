@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PlatformSelector, platforms } from "@/components/create/platform-selector"
 import { CaptionEditor } from "@/components/create/caption-editor"
 import { MediaUploader, type MediaFile } from "@/components/create/media-uploader"
+import { RedditInput, type RedditPostData } from "@/components/create/reddit-input"
 import { MediaUrlInput } from "@/components/create/media-url-input"
 import { AIToolsPanel } from "@/components/create/ai-tools-panel"
 import { SchedulePicker } from "@/components/create/schedule-picker"
@@ -24,6 +25,12 @@ export default function CreatePage() {
   const [scheduledTime, setScheduledTime] = useState<string>("12:00 PM")
   const [isPublishing, setIsPublishing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [redditData, setRedditData] = useState<RedditPostData>({
+    title: "",
+    text: "",
+    url: "",
+    type: "text"
+  })
 
   const handlePlatformToggle = useCallback((platformId: string) => {
     setSelectedPlatforms((prev) =>
@@ -66,6 +73,28 @@ export default function CreatePage() {
     setIsPublishing(true)
     
     try {
+      // Validate Reddit post if Reddit is selected
+      if (selectedPlatforms.includes('reddit')) {
+        if (!redditData.title.trim()) {
+          toast({
+            title: "Validation Error",
+            description: "Reddit post requires a title",
+            variant: "destructive"
+          })
+          setIsPublishing(false)
+          return
+        }
+        if (redditData.type === 'link' && !redditData.url?.trim()) {
+          toast({
+            title: "Validation Error",
+            description: "Link posts require a URL",
+            variant: "destructive"
+          })
+          setIsPublishing(false)
+          return
+        }
+      }
+
       if (publishType === "now") {
         // Get media URLs
         const mediaUrls: Record<string, string> = {}
@@ -84,13 +113,19 @@ export default function CreatePage() {
               mediaUrl: mediaUrls[platform] || 'none'
             })
 
-            const result = await socialMediaAPI.createPost({
-              platform,
-              content: {
-                caption: captions[platform] || '',
-                mediaUrl: mediaUrls[platform]
-              }
-            })
+            let result
+            if (platform === 'reddit') {
+              // Handle Reddit post separately
+              result = await socialMediaAPI.postToReddit(redditData)
+            } else {
+              result = await socialMediaAPI.createPost({
+                platform,
+                content: {
+                  caption: captions[platform] || '',
+                  mediaUrl: mediaUrls[platform]
+                }
+              })
+            }
             
             console.log(`✅ Successfully posted to ${platform}:`, result)
             results.push({ platform, success: true, result })
@@ -190,8 +225,12 @@ export default function CreatePage() {
               
               <MediaUrlInput onUrlAdd={handleUrlAdd} />
 
-              <div className="space-y-4">
-                {selectedPlatforms.map((platformId) => {
+              {selectedPlatforms.includes("reddit") && (
+                <RedditInput value={redditData} onChange={setRedditData} />
+              )}
+
+               <div className="space-y-4">
+                {selectedPlatforms.filter(p => p !== "reddit").map((platformId) => {
                   const platform = platforms.find((p) => p.id === platformId)
                   if (!platform) return null
                   return (
@@ -224,7 +263,12 @@ export default function CreatePage() {
 
           <AIToolsPanel caption={primaryCaption} onCaptionUpdate={handleAICaptionUpdate} />
 
-          <PostPreview selectedPlatforms={selectedPlatforms} captions={captions} media={mediaFiles} />
+          <PostPreview 
+            selectedPlatforms={selectedPlatforms} 
+            captions={captions} 
+            media={mediaFiles}
+            redditData={redditData}
+          />
         </div>
       </div>
     </div>
