@@ -1,14 +1,15 @@
 import { Express, Router } from "express";
+import multer from "multer";
 import conversationController from "../controllers/conversationController";
 import conversationalAIController from "../controllers/conversationalAIController";
 import redditController from "../controllers/redditController";
 import socialMediaController from "../controllers/socialMediaController";
 import twitterController from "../controllers/twitterController";
-import session from "express-session";
-import multer from "multer";
 import canvasController from "../controllers/canvasController";
 import veoController from "../controllers/veoController";
-
+import strategistController from "../controllers/strategistController";
+import chatController from "../controllers/chatController";
+import nestgptController from "../controllers/nestgptController";
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -26,9 +27,7 @@ const upload = multer({
             cb(new Error("Only image and video files are allowed"));
         }
     },
-});import strategistController from '../controllers/strategistController';
-import chatController from '../controllers/chatController';
-import nestgptController from '../controllers/nestgptController';
+});
 
 const router = Router();
 
@@ -82,8 +81,11 @@ router.get(
 // router.get('/strategist/metrics', strategistController.getMetrics);
 router.post('/strategist/generate', strategistController.generateStrategy);
 router.post('/strategist/chat', chatController.chat);
-// Dedicated NestGPT strategist chat (separate from Twilio sales flows)
+
+// Dedicated NestGPT Agent chat (separate from Twilio sales flows)
 router.post('/nestgpt/chat', nestgptController.chat);
+router.get('/nestgpt/session/:sessionId', nestgptController.getSession);
+router.delete('/nestgpt/session/:sessionId', nestgptController.resetSession);
 
 // Legacy: Twilio webhook endpoints for voice calls (TwiML-based)
 router.post("/webhook/voice", conversationController.handleIncomingCall);

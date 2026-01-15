@@ -1,5 +1,7 @@
 // API Configuration
-const BACKEND_URL = "https://b0x456pd-3000.inc1.devtunnels.ms";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:3000";
 
 // Detect the current frontend URL (dev tunnel, localhost, etc.)
 const getFrontendUrl = () => {
@@ -12,7 +14,7 @@ const getFrontendUrl = () => {
 const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || "";
 
 // Use proxy for API calls to avoid CORS/cookie issues
-const USE_PROXY = true;
+const USE_PROXY = false;
 const PROXY_URL = "/api/proxy";
 
 // Helper function to get API URL
