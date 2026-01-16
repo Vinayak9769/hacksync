@@ -63,7 +63,7 @@ const engageNavItems = [
 
 const analyzeNavItems = [
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
-  { title: "Competitor Analysis", href: "/competitor-analysis", icon: Eye },
+  { title: "Competitor Analysis", href: "/competitor-analysis", icon: EyeIcon },
   { title: "Ads Manager", href: "/ads", icon: Megaphone },
   { title: "Anti-Campaign", href: "/anti-campaign", icon: AlertTriangle },
 ]
