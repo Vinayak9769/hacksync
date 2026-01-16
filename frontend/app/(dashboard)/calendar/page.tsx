@@ -110,8 +110,8 @@ export default function CalendarPage() {
         onStatusFilterChange={setStatusFilter}
       />
 
-      {/* <div className="grid gap-6 lg:grid-cols-[2fr_1fr]"> */}
-      <div className="grid gap-6">
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+      {/* <div className="grid gap-6"> */}
         <div>
           {view === "month" && (
             <MonthView currentDate={currentDate} posts={filteredPosts} onDeletePost={handleDeletePost} />
@@ -122,7 +122,7 @@ export default function CalendarPage() {
           )}
         </div>
 
-       {/* <Card className="h-fit">
+       <Card className="h-fit">
           <CardHeader>
             <CardTitle>Quick add event</CardTitle>
           </CardHeader>
@@ -212,7 +212,7 @@ export default function CalendarPage() {
               </Button>
             </form>
           </CardContent>
-        </Card>*/}
+        </Card>
       </div>
     </div>
   )
