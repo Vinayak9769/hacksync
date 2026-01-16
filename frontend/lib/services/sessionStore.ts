@@ -39,6 +39,7 @@ export interface Session {
         codeVerifier: string;
         provider: "twitter" | "facebook" | "instagram";
         createdAt: number;
+        returnTo?: string;
     };
 }
 

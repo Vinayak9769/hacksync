@@ -21,13 +21,17 @@ export async function GET(request: NextRequest) {
         const { url, codeVerifier, state } =
             await twitterService.generateAuthUrl();
 
-        // Store OAuth state in session
+        // Get returnTo from search params
+        const returnTo = request.nextUrl.searchParams.get("returnTo");
+        console.log("[Twitter Auth] Return to:", returnTo);
 
+        // Store OAuth state in session
         sessionStore.setOAuthState(sessionId, {
             state,
             codeVerifier,
             provider: "twitter",
             createdAt: Date.now(),
+            returnTo: returnTo || undefined,
         });
 
         // Verify the state was stored correctly

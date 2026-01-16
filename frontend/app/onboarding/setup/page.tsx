@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import OnboardingStep1 from "@/components/onboarding/step-1-welcome"
 import OnboardingStep2 from "@/components/onboarding/step-2-brand"
 import OnboardingStep3 from "@/components/onboarding/step-3-audience"
@@ -23,6 +23,25 @@ export default function OnboardingPage() {
     tone: "",
     connectedPlatforms: [],
   })
+
+  useEffect(() => {
+    // Check if we have saved onboarding state (returning from OAuth)
+    const savedData = localStorage.getItem("onboarding_formData")
+    const savedStep = localStorage.getItem("onboarding_currentStep")
+    
+    if (savedData && savedStep) {
+      try {
+        setFormData(JSON.parse(savedData))
+        setCurrentStep(parseInt(savedStep))
+        
+        // Clear them so we don't restore again on future visits
+        localStorage.removeItem("onboarding_formData")
+        localStorage.removeItem("onboarding_currentStep")
+      } catch (e) {
+        console.error("Failed to restore onboarding state", e)
+      }
+    }
+  }, [])
 
   const handleContinue = (stepData: any) => {
     setFormData((prev) => ({ ...prev, ...stepData }))

@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 
 export function ConnectedAccounts() {
   const { toast } = useToast()
-  const [twitterStatus, setTwitterStatus] = useState<{ connected: boolean; username?: string }>({ connected: true, username: "socialnest" })
+  const [twitterStatus, setTwitterStatus] = useState<{ connected: boolean; username?: string }>({ connected: false })
   const [isCheckingTwitter, setIsCheckingTwitter] = useState(true)
   const [isConnectingTwitter, setIsConnectingTwitter] = useState(false)
   const [isDisconnectingTwitter, setIsDisconnectingTwitter] = useState(false)
@@ -74,12 +74,12 @@ export function ConnectedAccounts() {
     {
       name: "Twitter/X",
       icon: <X className="w-4 h-4" />,
-      connected: true,
-      followers: "@socialnest",
-      status: "active",
-      isLoading: false,
-      isConnecting: false,
-      isDisconnecting: false,
+      connected: twitterStatus.connected,
+      followers: twitterStatus.username ? `@${twitterStatus.username}` : null,
+      status: twitterStatus.connected ? "active" : "disconnected",
+      isLoading: isCheckingTwitter,
+      isConnecting: isConnectingTwitter,
+      isDisconnecting: isDisconnectingTwitter,
       onConnect: handleTwitterConnect,
       onDisconnect: handleTwitterDisconnect,
       comingSoon: false,

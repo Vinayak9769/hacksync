@@ -6,6 +6,10 @@ import { useState } from "react"
 import { Facebook, Instagram, Linkedin } from "lucide-react"
 import { BlueSky, Reddit, X } from "../brand-icons"
 
+import { API_ENDPOINTS, API_FETCH_OPTIONS } from "@/lib/api-config"
+import { Loader2 } from "lucide-react"
+import { useEffect } from "react"
+
 const platforms = [
   { id: "twitter", name: "Twitter/X", icon: X },
   { id: "facebook", name: "Facebook", icon: Facebook }, 
@@ -16,11 +20,47 @@ const platforms = [
 ]
 
 export default function OnboardingStep4({ formData, onContinue, onBack }: any) {
+  const [isCheckingTwitter, setIsCheckingTwitter] = useState(true)
+  const [twitterConnected, setTwitterConnected] = useState(false)
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>(
     formData.connectedPlatforms && formData.connectedPlatforms.length > 0 
       ? formData.connectedPlatforms 
       : []
   )
+
+  useEffect(() => {
+    const checkTwitter = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.twitter.status, {
+          ...API_FETCH_OPTIONS
+        })
+        const data = await response.json()
+        if (data.connected) {
+          setTwitterConnected(true)
+          if (!connectedPlatforms.includes("twitter")) {
+            setConnectedPlatforms(prev => [...prev, "twitter"])
+          }
+        }
+      } catch (error) {
+        console.error("Error checking Twitter status during onboarding:", error)
+      } finally {
+        setIsCheckingTwitter(false)
+      }
+    }
+    checkTwitter()
+  }, [])
+
+  const handleTwitterConnect = () => {
+    // Save current onboarding state to localStorage so we can resume
+    localStorage.setItem("onboarding_formData", JSON.stringify({
+      ...formData,
+      connectedPlatforms: connectedPlatforms
+    }))
+    localStorage.setItem("onboarding_currentStep", "4")
+    
+    // Redirect to Twitter auth with returnTo pointing back here
+    window.location.href = `${API_ENDPOINTS.twitter.auth}?returnTo=/onboarding/setup`
+  }
 
   const handleContinue = () => {
     onContinue({ connectedPlatforms })
@@ -38,7 +78,7 @@ export default function OnboardingStep4({ formData, onContinue, onBack }: any) {
       <div className="grid md:grid-cols-2 gap-6">
         {platforms.map((platform) => {
           const Icon = platform.icon
-          const isConnected = connectedPlatforms.includes(platform.id)
+          const isConnected = platform.id === "twitter" ? twitterConnected : connectedPlatforms.includes(platform.id)
 
           return (
             <Card
@@ -56,17 +96,28 @@ export default function OnboardingStep4({ formData, onContinue, onBack }: any) {
                 )}
               </div>
               <h3 className="font-semibold mb-4">{platform.name}</h3>
-              <Button
-                onClick={() =>
-                  setConnectedPlatforms((prev) =>
-                    prev.includes(platform.id) ? prev.filter((p) => p !== platform.id) : [...prev, platform.id],
-                  )
-                }
-                variant={isConnected ? "default" : "outline"}
-                className="w-full"
-              >
-                {isConnected ? "Disconnect" : "Connect"}
-              </Button>
+              {platform.id === "twitter" && isCheckingTwitter ? (
+                <Button disabled className="w-full">
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Checking...
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    if (platform.id === "twitter" && !isConnected) {
+                      handleTwitterConnect()
+                      return
+                    }
+                    setConnectedPlatforms((prev) =>
+                      prev.includes(platform.id) ? prev.filter((p) => p !== platform.id) : [...prev, platform.id],
+                    )
+                  }}
+                  variant={isConnected ? (platform.id === "twitter" ? "outline" : "default") : "outline"}
+                  className="w-full"
+                >
+                  {isConnected ? (platform.id === "twitter" ? "Disconnect" : "Connected") : "Connect"}
+                </Button>
+              )}
             </Card>
           )
         })}
