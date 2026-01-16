@@ -27,7 +27,7 @@ export function ChatMessage({ role, content, timestamp, onSendToCreate, isGenera
     <div className={cn("flex gap-3", role === "user" && "flex-row-reverse")}>
       <Avatar className="h-8 w-8 shrink-0">
         <AvatarFallback className={cn(role === "assistant" && "bg-primary text-primary-foreground")}>
-          {role === "assistant" ? <Sparkles className="h-4 w-4" /> : "JD"}
+          {role === "assistant" ? <Sparkles className="h-4 w-4" /> : "YY"}
         </AvatarFallback>
       </Avatar>
       <div className={cn("flex flex-col gap-1 max-w-[80%]", role === "user" && "items-end")}>

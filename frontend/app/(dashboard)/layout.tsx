@@ -43,7 +43,6 @@ function DashboardLayoutContent({
                           <AvatarImage src="/diverse-user-avatars.png" />
                           <AvatarFallback>YY</AvatarFallback>
                         </Avatar>
-                        <span className="flex-1 text-left">John Doe</span>
                         <ChevronDown className="h-4 w-4" />
                       </SidebarMenuButton>
                     </DropdownMenuTrigger>

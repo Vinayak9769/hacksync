@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import twilioService from '../services/twilioService';
 import twilio from 'twilio';
+import { getCallTranscript } from '../services/mediaStreamHandler';
 
 class ConversationalController {
     // Make an outbound call with real-time conversational AI
@@ -67,6 +68,22 @@ class ConversationalController {
                 'Twilio Media Streams'
             ],
             timestamp: new Date().toISOString()
+        });
+    }
+
+    // Fetch live transcript for a call
+    public getCallTranscript(req: Request, res: Response): void {
+        const { callSid } = req.params;
+        if (!callSid) {
+            res.status(400).json({ error: 'Missing callSid' });
+            return;
+        }
+
+        const transcript = getCallTranscript(callSid);
+        res.json({
+            success: true,
+            callSid,
+            transcript,
         });
     }
 }

@@ -54,6 +54,7 @@ const aiSidebarItems = [
   { title: "NestGPT", href: "/ai", icon: Sparkles },
   { title: "Veo Studio", href: "/veo", icon: Video },
   { title: "Canvas Studio", href: "/canvas", icon: Palette },
+  { title: "Anti-Campaign", href: "/anti-campaign", icon: AlertTriangle },
 ]
 
 const engageNavItems = [
@@ -65,14 +66,13 @@ const analyzeNavItems = [
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
   { title: "Competitor Analysis", href: "/competitor-analysis", icon: EyeIcon },
   { title: "Ads Manager", href: "/ads", icon: Megaphone },
-  { title: "Anti-Campaign", href: "/anti-campaign", icon: AlertTriangle },
+  { title: "Saved Plans", href: "/plans", icon: FileText },
 ]
 
 const manageNavItems = [
   { title: "CRM", href: "/crm", icon: MessageSquare },
   { title: "Team", href: "/team", icon: Users },
   { title: "Whiteboard", href: "/whiteboard", icon: Layout },
-  { title: "Saved Plans", href: "/plans", icon: FileText },
   { title: "Settings", href: "/settings", icon: Settings },
 ]
 

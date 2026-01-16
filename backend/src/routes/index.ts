@@ -58,6 +58,7 @@ const router = Router();
 
 // Health check
 router.get("/health", conversationalAIController.healthCheck);
+router.get("/calls/:callSid/transcript", conversationalAIController.getCallTranscript);
 
 // Social Media Integration endpoints
 router.post("/social/post", socialMediaController.createPost);

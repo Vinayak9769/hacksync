@@ -27,7 +27,7 @@ export class ConversationalAIService extends EventEmitter {
         }
         this.genAI = new GoogleGenerativeAI(geminiKey);
         this.model = this.genAI.getGenerativeModel({ 
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-flash-preview',
             generationConfig: {
                 temperature: 0.7,
                 maxOutputTokens: 800,
@@ -90,7 +90,6 @@ Remember: You're having a warm phone conversation inviting someone to experience
                 const transcript = data.channel?.alternatives?.[0]?.transcript;
                 
                 if (transcript && transcript.trim().length > 0) {
-                    console.log('User said:', transcript);
                     this.emit('transcript', transcript);
                     
                     // Get AI response and convert to speech
@@ -144,7 +143,7 @@ Remember: You're having a warm phone conversation inviting someone to experience
                     ];
                 }
 
-                console.log('AI Response:', response);
+                this.emit('ai-response', response);
                 return response;
             } catch (inner) {
                 console.error('Gemini chat/sendMessage error:', inner);
