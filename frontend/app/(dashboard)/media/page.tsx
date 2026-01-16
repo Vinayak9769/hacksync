@@ -209,7 +209,7 @@ export default function MediaLibraryPage() {
               )}
               onClick={() => toggleSelection(item.id)}
             >
-              <div className="aspect-square relative bg-secondary h-32 scale-[140%]">
+              <div className="aspect-square relative bg-secondary h-44 scale-[140%]">
                 <img
                   src={item.type === "video" ? (item.thumbnail || "/placeholder.svg") : (item.url || "/placeholder.svg")}
                   alt={item.name}
