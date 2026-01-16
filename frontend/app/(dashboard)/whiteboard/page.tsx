@@ -159,7 +159,7 @@ export default function WhiteboardPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="gap-1">
-                        <Users className="h-3 w-3" />3 online
+                        <Users className="h-3 w-3" />1 online
                     </Badge>
                     <Button variant="outline" onClick={() => addNote("sticky")}>
                         <StickyNote className="h-4 w-4 mr-2" />

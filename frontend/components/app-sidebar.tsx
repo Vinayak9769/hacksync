@@ -1,6 +1,7 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useCommandMenu } from "@/components/command-menu-provider"
 import {
   Home,
   PenSquare,
@@ -19,9 +20,10 @@ import {
   Palette,
   MessageSquare,
   Video,
-  Target,
   FileText,
   AlertTriangle,
+  Target,
+  EyeIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -43,11 +45,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 const mainNavItems = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Create", href: "/create", icon: PenSquare },
-  { title: "Canvas Studio", href: "/canvas", icon: Palette },
-  { title: "Veo Studio", href: "/veo", icon: Video },
   { title: "Calendar", href: "/calendar", icon: Calendar },
   { title: "Media Library", href: "/media", icon: ImageIcon },
+]
+
+const aiSidebarItems = [
   { title: "NestGPT", href: "/ai", icon: Sparkles },
+  { title: "Veo Studio", href: "/veo", icon: Video },
+  { title: "Canvas Studio", href: "/canvas", icon: Palette },
 ]
 
 const engageNavItems = [
@@ -57,7 +62,11 @@ const engageNavItems = [
 
 const analyzeNavItems = [
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
-  { title: "Competitor Analysis", href: "/competitor-analysis", icon: Target },
+<<<<<<< HEAD
+  { title: "Competitor Analysis", href: "/competitor-analysis", icon: EyeIcon },
+=======
+  { title: "Competitor Analysis", href: "/competitor-analysis", icon: Eye },
+>>>>>>> 4793630 (qq)
   { title: "Ads Manager", href: "/ads", icon: Megaphone },
   { title: "Anti-Campaign", href: "/anti-campaign", icon: AlertTriangle },
 ]
@@ -72,6 +81,7 @@ const manageNavItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { setOpen } = useCommandMenu()
 
   return (
     <Sidebar>
@@ -83,11 +93,16 @@ export function AppSidebar() {
           <span className="text-lg font-semibold">SocialNest</span>
         </div>
         <div className="px-2 pb-2">
-          <Button variant="outline" size="sm" className="w-full justify-start gap-2 bg-transparent">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2 bg-transparent"
+            onClick={() => setOpen(true)}
+          >
             <Search className="h-4 w-4" />
             <span className="text-muted-foreground">Search...</span>
             <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium text-muted-foreground sm:flex">
-              ⌘K
+              <span className="text-[10px] translate-y-[0.5px] translate-x-[1px]">⌘</span>K
             </kbd>
           </Button>
         </div>
@@ -110,6 +125,23 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        <SidebarGroup>
+          <SidebarGroupLabel>Ai Studio</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {aiSidebarItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton asChild isActive={pathname === item.href}>
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel>Engage</SidebarGroupLabel>
           <SidebarGroupContent>
