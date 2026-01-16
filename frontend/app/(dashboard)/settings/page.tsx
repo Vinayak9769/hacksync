@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast"
 
 export default function SettingsPage() {
   const { toast } = useToast()
-  const [twitterStatus, setTwitterStatus] = useState<{ connected: boolean; username?: string }>({ connected: true, username: "socialnest" })
+  const [twitterStatus, setTwitterStatus] = useState<{ connected: boolean; username?: string }>({ connected: false })
   const [isCheckingTwitter, setIsCheckingTwitter] = useState(true)
   const [isConnectingTwitter, setIsConnectingTwitter] = useState(false)
   const [isDisconnectingTwitter, setIsDisconnectingTwitter] = useState(false)
@@ -155,7 +155,7 @@ export default function SettingsPage() {
               <CardDescription>Manage your social media connections</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {/* Twitter/X - Connected */}
+              {/* Twitter/X */}
               <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded bg-background text-sm">
@@ -163,13 +163,24 @@ export default function SettingsPage() {
                   </span>
                   <div>
                     <span className="font-medium">Twitter/X</span>
-                    <p className="text-xs text-muted-foreground">@socialnest</p>
+                    {twitterStatus.connected && (
+                      <p className="text-xs text-muted-foreground">@{twitterStatus.username || "connected"}</p>
+                    )}
                   </div>
                 </div>
-                <Badge variant="secondary" className="bg-success/20 text-success border-0">
-                  <Check className="h-3 w-3 mr-1" />
-                  Connected
-                </Badge>
+                {isCheckingTwitter ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                ) : twitterStatus.connected ? (
+                  <Badge variant="secondary" className="bg-success/20 text-success border-0">
+                    <Check className="h-3 w-3 mr-1" />
+                    Connected
+                  </Badge>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={handleTwitterConnect}>
+                    <Link className="h-4 w-4 mr-2" />
+                    Connect
+                  </Button>
+                )}
               </div>
 
               {/* Facebook - Connected */}

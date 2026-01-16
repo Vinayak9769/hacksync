@@ -139,7 +139,16 @@ export async function GET(request: NextRequest) {
         // Redirect to success page
         const baseUrl =
             process.env.NEXT_PUBLIC_FRONTEND_URL || request.nextUrl.origin;
-        const successUrl = new URL("/twitter-connected", baseUrl);
+        
+        // Handle returnTo if present (e.g. from onboarding)
+        let successUrl;
+        if (oauthState.returnTo) {
+            successUrl = new URL(oauthState.returnTo, baseUrl);
+            successUrl.searchParams.set("twitter_connected", "true");
+        } else {
+            successUrl = new URL("/twitter-connected", baseUrl);
+        }
+        
         successUrl.searchParams.set("success", "true");
         successUrl.searchParams.set("username", username);
 
