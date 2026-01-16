@@ -212,7 +212,7 @@ export default function TeamPage() {
       </Card>
 
       {/* Approval Workflows */}
-      <Card className="bg-card border-border">
+      {/*<Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-base">Approval Workflows</CardTitle>
           <CardDescription>Configure content approval requirements</CardDescription>
@@ -240,7 +240,7 @@ export default function TeamPage() {
             <Switch defaultChecked />
           </div>
         </CardContent>
-      </Card>
+      </Card>*/}
 
       {/* Role Permissions */}
       <Card className="bg-card border-border">

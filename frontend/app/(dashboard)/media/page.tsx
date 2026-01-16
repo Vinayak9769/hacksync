@@ -128,7 +128,7 @@ export default function MediaLibraryPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Media Libra3ry</h1>
+          <h1 className="text-2xl font-bold">Media Library</h1>
           <p className="text-muted-foreground">Manage and organize your media assets</p>
         </div>
         <Dialog>
