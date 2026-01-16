@@ -56,3 +56,32 @@ export const Reddit = ({ className }: { className?: string }) => {
     </svg>
   );
 };
+
+export const Starbucks = ({ className }: { className?: string }) => {
+  return (
+    <svg role="img" className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <title>Starbucks</title>
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 21.818c-5.412 0-9.818-4.406-9.818-9.818S6.588 2.182 12 2.182c5.412 0 9.818 4.406 9.818 9.818S17.412 21.818 12 21.818zm4.909-13.09c0 .603-.491 1.09-1.09 1.09h-7.636c-.603 0-1.09-.49-1.09-1.09 0-.603.49-1.09 1.09-1.09h7.636c.602 0 1.09.49 1.09 1.09zm0 3.272c0 .603-.491 1.09-1.09 1.09h-7.636c-.603 0-1.09-.49-1.09-1.09 0-.603.49-1.09 1.09-1.09h7.636c.602 0 1.09.49 1.09 1.09zm0 3.273c0 .603-.491 1.09-1.09 1.09h-7.636c-.603 0-1.09-.49-1.09-1.09 0-.603.49-1.09 1.09-1.09h7.636c.602 0 1.09.49 1.09 1.09z"/>
+      <circle cx="12" cy="12" r="3" className="text-secondary-foreground" opacity="0.5"/>
+    </svg>
+  );
+};
+
+export const ThirdWave = ({ className }: { className?: string }) => {
+  return (
+    <svg role="img" className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <title>Third Wave Coffee</title>
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm4 0h-2v-6h2v6zm-2-8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+    </svg>
+  );
+};
+
+export const BlueTokai = ({ className }: { className?: string }) => {
+  return (
+    <svg role="img" className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <title>Blue Tokai</title>
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      <path d="M9 10a3 3 0 0 1 3-3V5a5 5 0 0 0-5 5h2z" opacity="0.6"/>
+    </svg>
+  );
+};
