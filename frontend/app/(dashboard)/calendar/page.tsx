@@ -7,7 +7,7 @@ import { CalendarHeader } from "@/components/calendar/calendar-header"
 import { MonthView } from "@/components/calendar/month-view"
 import { WeekView } from "@/components/calendar/week-view"
 import { DayView } from "@/components/calendar/day-view"
-import { samplePosts } from "@/lib/calendar-data"
+import { useScheduledPosts } from "@/lib/scheduled-posts-context"
 import type { ScheduledPost } from "@/lib/calendar-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 0, 15))
-  const [posts, setPosts] = useState<ScheduledPost[]>(samplePosts)
+  const { posts, addPost, removePost } = useScheduledPosts()
   const [view, setView] = useState<"day" | "week" | "month">("month")
   const [platformFilter, setPlatformFilter] = useState<string[]>([
     "instagram",
@@ -60,7 +60,7 @@ export default function CalendarPage() {
   }
 
   const handleDeletePost = (postId: string) => {
-    setPosts((prev) => prev.filter((post) => post.id !== postId))
+    removePost(postId)
   }
 
   const handleAddEvent = (event: FormEvent<HTMLFormElement>) => {
@@ -86,7 +86,7 @@ export default function CalendarPage() {
       status: newEvent.status,
     }
 
-    setPosts((prev) => [...prev, createdPost])
+    addPost(createdPost)
     setNewEvent((prev) => ({ ...prev, title: "", description: "" }))
   }
 

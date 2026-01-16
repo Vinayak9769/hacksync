@@ -11,6 +11,7 @@ import { CommandMenuProvider, useCommandMenu } from "@/components/command-menu-p
 import { CommandMenu } from "@/components/command-menu"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScheduledPostsProvider } from "@/lib/scheduled-posts-context";
 
 function DashboardLayoutContent({
   children,
@@ -70,8 +71,10 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <CommandMenuProvider>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
-    </CommandMenuProvider>
+    <ScheduledPostsProvider>
+      <CommandMenuProvider>
+        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      </CommandMenuProvider>
+    </ScheduledPostsProvider>
   )
 }
