@@ -199,7 +199,8 @@ export default function VeoStudioPage() {
       }
 
       setTunedPrompt(data.tunedPrompt || tunedPrompt)
-      setVideoUrl(data.videoUrl)
+      // Handle both videoUri (from backend) and videoUrl (legacy)
+      setVideoUrl(data.videoUri || data.videoUrl)
       setStatus(data.status || "ready")
     } catch (error) {
       toast({
@@ -681,9 +682,39 @@ export default function VeoStudioPage() {
                     ref={videoRef}
                     src={videoUrl}
                     controls
+                    preload="metadata"
                     className="w-full rounded-md"
                     onLoadedMetadata={handleLoadedMetadata}
-                  />
+                    onError={(e) => {
+                      const video = e.currentTarget
+                      const error = video.error
+                      if (error) {
+                        let errorMessage = 'Failed to load video'
+                        switch (error.code) {
+                          case error.MEDIA_ERR_ABORTED:
+                            errorMessage = 'Video loading aborted'
+                            break
+                          case error.MEDIA_ERR_NETWORK:
+                            errorMessage = 'Network error while loading video. Check CORS settings.'
+                            break
+                          case error.MEDIA_ERR_DECODE:
+                            errorMessage = 'Video decoding error'
+                            break
+                          case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                            errorMessage = 'Video format not supported or MIME type issue'
+                            break
+                        }
+                        toast({
+                          title: 'Video Error',
+                          description: errorMessage,
+                          variant: 'destructive'
+                        })
+                      }
+                    }}
+                  >
+                    <source src={videoUrl} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
                 ) : (
                   <div className="flex h-48 flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Play className="h-8 w-8" />

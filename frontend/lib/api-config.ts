@@ -51,6 +51,11 @@ export const API_ENDPOINTS = {
         tune: getApiUrl("/veo/tune"),
         generate: getApiUrl("/veo/generate"),
     },
+    ads: {
+        upload: getApiUrl("/ads/upload"),
+        report: getApiUrl("/ads/report"),
+        data: getApiUrl("/ads/data"),
+    },
     health: getApiUrl("/health"),
 };
 

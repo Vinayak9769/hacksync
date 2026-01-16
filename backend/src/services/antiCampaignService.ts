@@ -62,14 +62,14 @@ Critically analyze this campaign and provide a concise critique in the following
       "mitigation": "How to prevent or handle this"
     }
   ],
-  "criticalFeedback": "A concise critical analysis (4-6 sentences) pointing out key flaws and assumptions. Be candid but constructive.",
+  "criticalFeedback": "A concise critical analysis (2-3 sentences) pointing out key flaws and assumptions. Be candid but constructive.",
   "recommendations": ["Actionable recommendations to improve the campaign"]
 }
 
 ## Guidelines:
 - Be candid but constructive
-- Limit lists to 3-5 items each
-- Keep potential backfires to 2-3 scenarios
+- Limit lists to 2-3 items each
+- Keep potential backfires to 1-2 scenarios
 - Focus on the highest-impact weaknesses
 - Keep mitigation strategies short and actionable
 - Avoid piling on; prioritize clarity over volume

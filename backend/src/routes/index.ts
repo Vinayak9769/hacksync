@@ -1,5 +1,7 @@
-import { Express, Router } from "express";
+import { Express, Router, Request, Response } from "express";
 import multer from "multer";
+import path from "path";
+import fs from "fs";
 import conversationController from "../controllers/conversationController";
 import conversationalAIController from "../controllers/conversationalAIController";
 import redditController from "../controllers/redditController";
@@ -12,6 +14,7 @@ import chatController from "../controllers/chatController";
 import nestgptController from "../controllers/nestgptController";
 import marketingPlanController from "../controllers/marketingPlanController";
 import antiCampaignController from "../controllers/antiCampaignController";
+import adDataController from "../controllers/adDataController";
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -27,6 +30,26 @@ const upload = multer({
             cb(null, true);
         } else {
             cb(new Error("Only image and video files are allowed"));
+        }
+    },
+});
+
+// CSV upload configuration for ad data
+const csvUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit for CSV files
+    },
+    fileFilter: (req, file, cb) => {
+        // Accept CSV files
+        if (
+            file.mimetype === "text/csv" ||
+            file.mimetype === "application/vnd.ms-excel" ||
+            file.originalname.endsWith(".csv")
+        ) {
+            cb(null, true);
+        } else {
+            cb(new Error("Only CSV files are allowed"));
         }
     },
 });
@@ -123,6 +146,69 @@ router.delete("/marketing-plans/:id", marketingPlanController.deletePlan);
 
 // Anti-Campaign Generator endpoints
 router.post("/anti-campaign/analyze", antiCampaignController.analyzeCampaign);
+
+// Ad Data Management endpoints
+router.post("/ads/upload", csvUpload.single("csv"), adDataController.uploadCSV);
+router.get("/ads/report", adDataController.getReport);
+router.get("/ads/data", adDataController.getAdData);
+router.delete("/ads/data", adDataController.deleteAllAdData);
+
+// Video proxy endpoint with CORS headers
+router.get("/veo/video/:filename", (req: Request, res: Response) => {
+  try {
+    const { filename } = req.params;
+    const videoPath = path.resolve(process.cwd(), "public", "veo", filename);
+    
+    // Check if file exists
+    if (!fs.existsSync(videoPath)) {
+      res.status(404).json({ error: "Video not found" });
+      return;
+    }
+    
+    // Set CORS headers
+    const origin = req.headers.origin;
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, ngrok-skip-browser-warning');
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Accept-Ranges', 'bytes');
+    
+    // Stream the video file
+    const stat = fs.statSync(videoPath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+    
+    if (range) {
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunksize = (end - start) + 1;
+      const file = fs.createReadStream(videoPath, { start, end });
+      const head = {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': 'video/mp4',
+      };
+      res.writeHead(206, head);
+      file.pipe(res);
+    } else {
+      const head = {
+        'Content-Length': fileSize,
+        'Content-Type': 'video/mp4',
+      };
+      res.writeHead(200, head);
+      fs.createReadStream(videoPath).pipe(res);
+    }
+  } catch (error) {
+    console.error('Error serving video:', error);
+    res.status(500).json({ error: 'Failed to serve video' });
+  }
+});
+
 export const setRoutes = (app: Express): void => {
     // Session middleware is now configured in app.ts before routes
     app.use("/api", router);

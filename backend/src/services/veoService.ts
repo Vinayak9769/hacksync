@@ -138,8 +138,9 @@ class VeoService {
 
     await this.execFileAsync("gsutil", ["cp", gcsUri, destination]);
 
+    // Use API proxy endpoint for better CORS handling
     return {
-      publicUrl: `${this.baseUrl}/media/veo/${filename}`,
+      publicUrl: `${this.baseUrl}/api/veo/video/${filename}`,
     };
   }
 
