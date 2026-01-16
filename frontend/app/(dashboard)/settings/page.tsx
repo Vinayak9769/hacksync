@@ -113,22 +113,22 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20">
-                  <AvatarFallback className="text-xl">JD</AvatarFallback>
+                  <AvatarFallback className="text-xl">YY</AvatarFallback>
                 </Avatar>
                 <Button variant="outline">Change Avatar</Button>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Full Name</Label>
-                  <Input defaultValue="John Doe" className="bg-secondary/50" />
+                  <Input defaultValue="Yasnshuman Yadav" className="bg-secondary/50" />
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input defaultValue="john@example.com" type="email" className="bg-secondary/50" />
+                  <Input defaultValue="yanshuman2005@gmail.com" type="email" className="bg-secondary/50" />
                 </div>
                 <div className="space-y-2">
                   <Label>Company</Label>
-                  <Input defaultValue="SocialNest Inc." className="bg-secondary/50" />
+                  <Input defaultValue="Ettara Inc." className="bg-secondary/50" />
                 </div>
                 <div className="space-y-2">
                   <Label>Timezone</Label>

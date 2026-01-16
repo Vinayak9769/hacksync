@@ -2,6 +2,8 @@
 import { API_ENDPOINTS, API_FETCH_OPTIONS } from '@/lib/api-config'
 
 import { useState, useCallback, useEffect } from "react"
+import { useScheduledPosts } from "@/lib/scheduled-posts-context"
+import type { ScheduledPost } from "@/lib/calendar-data"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -19,6 +21,7 @@ import socialMediaAPI from "@/lib/social-media-api"
 
 export default function CreatePage() {
   const { toast } = useToast()
+  const { addPost } = useScheduledPosts()
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["twitter", "facebook", "reddit"])
   const [captions, setCaptions] = useState<Record<string, string>>({})
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
@@ -183,12 +186,64 @@ export default function CreatePage() {
           })
         }
       } else {
-        // Schedule for later (mock for now)
-        await new Promise((r) => setTimeout(r, 1000))
+        // Schedule for later - add to calendar
+        if (!scheduledDate) {
+          toast({
+            title: "Error",
+            description: "Please select a date for scheduling.",
+            variant: "destructive"
+          })
+          return
+        }
+
+        // Parse time string (e.g., "12:00 PM") to get hours and minutes
+        const timeParts = scheduledTime.match(/(\d+):(\d+)\s*(AM|PM)?/i)
+        let hour = 12
+        let minute = 0
+        if (timeParts) {
+          hour = parseInt(timeParts[1], 10)
+          minute = parseInt(timeParts[2], 10)
+          const period = timeParts[3]?.toUpperCase()
+          if (period === "PM" && hour !== 12) {
+            hour += 12
+          } else if (period === "AM" && hour === 12) {
+            hour = 0
+          }
+        }
+
+        const scheduledFor = new Date(scheduledDate)
+        scheduledFor.setHours(hour, minute, 0, 0)
+
+        // Build content from captions
+        const captionContent = Object.entries(captions)
+          .filter(([platform, caption]) => selectedPlatforms.includes(platform) && caption)
+          .map(([_, caption]) => caption)
+          .join(" | ")
+
+        const redditContent = isRedditSelected && redditData.title ? redditData.title : ""
+        const content = captionContent || redditContent || "Scheduled post"
+
+        const newScheduledPost: ScheduledPost = {
+          id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2),
+          content,
+          platforms: selectedPlatforms,
+          scheduledFor,
+          status: "scheduled",
+          media: mediaFiles.length > 0 ? mediaFiles.map(f => f.url).filter((url): url is string => !!url) : undefined,
+        }
+
+        addPost(newScheduledPost)
+
         toast({
           title: "Post scheduled! 📅",
           description: `Your post will be published on ${scheduledDate?.toLocaleDateString()} at ${scheduledTime}.`,
         })
+
+        // Clear the form after scheduling
+        setCaptions({})
+        setMediaFiles([])
+        setRedditData({ title: "", text: "", url: "", type: "text" })
+        setScheduledDate(undefined)
       }
     } catch (error: any) {
       toast({

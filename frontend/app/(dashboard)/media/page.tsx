@@ -49,12 +49,12 @@ const mediaItems: MediaItem[] = [
   {
     id: "0",
     type: "video",
-    name: "sample_0.mp4",
+    name: "gen.mp4",
     url: "/sample_0.mp4",
-    thumbnail: "/demo-video-thumbnail.jpg",
+    thumbnail: "/video-thumb.jpg",
     size: "12.5 MB",
     uploadedAt: "Jan 15, 2026",
-    tags: ["featured", "promo", "etarra"],
+    tags: ["featured", "promo"],
   },
   {
     id: "1",
@@ -63,53 +63,43 @@ const mediaItems: MediaItem[] = [
     url: "/product-launch-hero-image.jpg",
     size: "2.4 MB",
     uploadedAt: "Jan 15, 2026",
-    tags: ["product", "launch"],
+    tags: ["facebook", "social"],
   },
   {
     id: "2",
     type: "image",
-    name: "team-photo.jpg",
-    url: "/team-office-photo.jpg",
+    name: "coffee.jpg",
+    url: "/coffee.jpg",
     size: "3.1 MB",
     uploadedAt: "Jan 14, 2026",
-    tags: ["team", "office"],
-  },
-  {
-    id: "3",
-    type: "video",
-    name: "demo-video.mp4",
-    url: "/demo-video-thumbnail.jpg",
-    thumbnail: "/demo-video-thumbnail.jpg",
-    size: "45 MB",
-    uploadedAt: "Jan 13, 2026",
-    tags: ["demo", "product"],
+    tags: ["facebook", "social"],
   },
   {
     id: "4",
     type: "image",
     name: "social-banner.png",
-    url: "/social-media-banner.png",
+    url: "/coffee-3.jpg",
     size: "1.8 MB",
     uploadedAt: "Jan 12, 2026",
-    tags: ["social", "banner"],
+    tags: ["facebook", "social"],
   },
   {
     id: "5",
     type: "image",
-    name: "infographic.png",
-    url: "/marketing-infographic.jpg",
+    name: "coffee2.png",
+    url: "/coffee-2.jpg",
     size: "2.2 MB",
     uploadedAt: "Jan 11, 2026",
-    tags: ["infographic", "marketing"],
+    tags: ["facebook", "social"],
   },
   {
     id: "6",
     type: "image",
-    name: "quote-card.jpg",
-    url: "/inspirational-quote-card.jpg",
+    name: "coffee4.png",
+    url: "/coffee-4.jpg",
     size: "0.8 MB",
     uploadedAt: "Jan 10, 2026",
-    tags: ["quote", "social"],
+    tags: ["facebook", "social"],
   },
 ]
 
@@ -219,14 +209,14 @@ export default function MediaLibraryPage() {
               )}
               onClick={() => toggleSelection(item.id)}
             >
-              <div className="aspect-square relative bg-secondary">
-                <img 
-                  src={item.type === "video" ? (item.thumbnail || "/placeholder.svg") : (item.url || "/placeholder.svg")} 
-                  alt={item.name} 
-                  className="w-full h-full object-cover" 
+              <div className="aspect-square relative bg-secondary h-32 scale-[140%]">
+                <img
+                  src={item.type === "video" ? (item.thumbnail || "/placeholder.svg") : (item.url || "/placeholder.svg")}
+                  alt={item.name}
+                  className="w-full h-full object-cover"
                 />
                 {item.type === "video" && (
-                  <div 
+                  <div
                     className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/50 transition-colors"
                     onClick={(e) => openPreview(item, e)}
                   >
@@ -299,13 +289,13 @@ export default function MediaLibraryPage() {
                   onClick={() => toggleSelection(item.id)}
                 >
                   <div className="h-16 w-16 rounded bg-secondary overflow-hidden shrink-0 relative">
-                    <img 
-                      src={item.type === "video" ? (item.thumbnail || "/placeholder.svg") : (item.url || "/placeholder.svg")} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover" 
+                    <img
+                      src={item.type === "video" ? (item.thumbnail || "/placeholder.svg") : (item.url || "/placeholder.svg")}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
                     />
                     {item.type === "video" && (
-                      <div 
+                      <div
                         className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/50"
                         onClick={(e) => openPreview(item, e)}
                       >
@@ -337,9 +327,9 @@ export default function MediaLibraryPage() {
                     )}
                   </div>
                   {item.type === "video" && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={(e) => openPreview(item, e)}
                       className="shrink-0"
                     >
@@ -398,7 +388,7 @@ export default function MediaLibraryPage() {
             >
               <X className="h-4 w-4" />
             </Button>
-            
+
             {/* Video player */}
             {previewItem?.type === "video" && (
               <video
@@ -410,7 +400,7 @@ export default function MediaLibraryPage() {
                 Your browser does not support the video tag.
               </video>
             )}
-            
+
             {/* Image preview */}
             {previewItem?.type === "image" && (
               <img
@@ -420,7 +410,7 @@ export default function MediaLibraryPage() {
               />
             )}
           </div>
-          
+
           {/* Video info bar */}
           <div className="bg-background p-4 border-t">
             <div className="flex items-center justify-between">

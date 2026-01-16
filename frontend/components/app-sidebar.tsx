@@ -24,6 +24,7 @@ import {
   AlertTriangle,
   Target,
   EyeIcon,
+  Eye,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -53,6 +54,7 @@ const aiSidebarItems = [
   { title: "NestGPT", href: "/ai", icon: Sparkles },
   { title: "Veo Studio", href: "/veo", icon: Video },
   { title: "Canvas Studio", href: "/canvas", icon: Palette },
+  { title: "Anti-Campaign", href: "/anti-campaign", icon: AlertTriangle },
 ]
 
 const engageNavItems = [
@@ -64,14 +66,13 @@ const analyzeNavItems = [
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
   { title: "Competitor Analysis", href: "/competitor-analysis", icon: EyeIcon },
   { title: "Ads Manager", href: "/ads", icon: Megaphone },
-  { title: "Anti-Campaign", href: "/anti-campaign", icon: AlertTriangle },
+  { title: "Saved Plans", href: "/plans", icon: FileText },
 ]
 
 const manageNavItems = [
   { title: "CRM", href: "/crm", icon: MessageSquare },
   { title: "Team", href: "/team", icon: Users },
   { title: "Whiteboard", href: "/whiteboard", icon: Layout },
-  { title: "Saved Plans", href: "/plans", icon: FileText },
   { title: "Settings", href: "/settings", icon: Settings },
 ]
 
@@ -80,7 +81,7 @@ export function AppSidebar() {
   const { setOpen } = useCommandMenu()
 
   return (
-    <Sidebar>
+    <Sidebar className="[&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
@@ -192,29 +193,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="w-full">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src="/diverse-user-avatars.png" />
-                    <AvatarFallback>JD</AvatarFallback>
-                  </Avatar>
-                  <span className="flex-1 text-left">John Doe</span>
-                  <ChevronDown className="h-4 w-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" align="start" className="w-56">
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Billing</DropdownMenuItem>
-                <DropdownMenuItem>Sign out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      {/*<SidebarFooter className="border-t border-sidebar-border">
+
+      </SidebarFooter>*/}
       <SidebarRail />
     </Sidebar>
   )

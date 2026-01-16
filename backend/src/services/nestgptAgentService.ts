@@ -286,7 +286,7 @@ const generateContentCalendar = async (params: any) => {
 // Create marketing plan
 const createMarketingPlan = async (params: any) => {
     const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-flash-lite",
         generationConfig: { temperature: 0.7, maxOutputTokens: 4000 },
     });
 
@@ -488,7 +488,7 @@ class NestGptAgentService {
 
         // Create the agent model with tools - force function calling after enough questions
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.5-flash-lite",
             tools: [agentToolsConfig as any],
             toolConfig: shouldForceAction
                 ? {
@@ -1015,7 +1015,7 @@ Be friendly, professional, and guide the user step by step.`;
         userMessage: string,
     ): Promise<string> {
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.5-flash-lite",
             generationConfig: { temperature: 0.8, maxOutputTokens: 500 },
         });
 

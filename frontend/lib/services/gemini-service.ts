@@ -25,6 +25,11 @@ export interface PostingTime {
   reason?: string;
 }
 
+export interface AdRecommendation {
+  title: string;
+  rationale: string;
+}
+
 class GeminiService {
   private genAI: GoogleGenerativeAI | null = null;
 
@@ -222,6 +227,59 @@ Provide only the JSON array without any markdown formatting or explanations.`;
         { day: "Friday", time: "2:00 PM", engagement: "High" },
         { day: "Saturday", time: "10:00 AM", engagement: "Medium" },
       ];
+    }
+  }
+
+  /**
+   * Generate ad performance recommendations based on summary data
+   */
+  async generateAdRecommendations(
+    summary: string,
+    platform?: string
+  ): Promise<AdRecommendation[]> {
+    try {
+      const genAI = this.getClient();
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+      const platformContext = platform ? ` for ${platform}` : " across all platforms";
+      const prompt = `You are a paid media strategist. Provide 4 concise, actionable recommendations${platformContext}.
+
+Summary data:
+${summary}
+
+Return ONLY valid JSON array with this structure:
+[
+  { "title": "Short recommendation", "rationale": "1 sentence rationale" }
+]
+
+Keep each title under 8 words and each rationale under 20 words.`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let responseText = response.text().trim();
+
+      responseText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+
+      try {
+        const recommendations = JSON.parse(responseText);
+        if (Array.isArray(recommendations) && recommendations.length > 0) {
+          return recommendations.slice(0, 4);
+        }
+      } catch (parseError) {
+        console.error("Error parsing ad recommendations:", parseError);
+      }
+
+      return [
+        { title: "Refine targeting", rationale: "Narrow audience segments to reduce wasted spend." },
+        { title: "Refresh creatives", rationale: "Rotate assets to prevent fatigue and lift CTR." },
+        { title: "Shift budget", rationale: "Reallocate spend toward highest-converting ads." },
+        { title: "Optimize bids", rationale: "Adjust bids to improve CPA efficiency." },
+      ];
+    } catch (error: any) {
+      console.error("Error generating ad recommendations:", error);
+      throw new Error(
+        error.message || "Failed to generate recommendations. Please try again."
+      );
     }
   }
 

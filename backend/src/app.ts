@@ -106,7 +106,28 @@ async function startServer() {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
 
-    app.use("/media", express.static(path.resolve(process.cwd(), "public")));
+    // Serve media files with CORS headers
+    app.use("/media", (req, res, next) => {
+        // Set CORS headers for media files
+        const origin = req.headers.origin;
+        if (origin) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+        }
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, ngrok-skip-browser-warning');
+        
+        // Set proper content type for video files
+        if (req.path.endsWith('.mp4')) {
+            res.setHeader('Content-Type', 'video/mp4');
+        }
+        
+        if (req.method === 'OPTIONS') {
+            return res.sendStatus(200);
+        }
+        
+        next();
+    }, express.static(path.resolve(process.cwd(), "public")));
     // Simple request logger + safety-net CORS headers for credentialed requests
     app.use((req, res, next) => {
         const existingOriginHeader = res.getHeader(

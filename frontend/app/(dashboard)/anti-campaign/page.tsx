@@ -122,7 +122,6 @@ export default function AntiCampaignPage() {
       {/* Header */}
       <div className="mb-6 flex-shrink-0">
         <div className="flex items-center gap-2 mb-2">
-          <AlertTriangle className="h-6 w-6 text-destructive" />
           <h1 className="text-2xl font-bold">Anti-Campaign Generator</h1>
         </div>
         <p className="text-muted-foreground">
@@ -135,11 +134,10 @@ export default function AntiCampaignPage() {
         <div className="flex flex-col min-h-0 overflow-hidden">
           <Card className="flex-1 flex flex-col overflow-hidden">
             <CardHeader>
-              <CardTitle>Campaign Input</CardTitle>
+              <CardTitle>Campaign Plan</CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col min-h-0 overflow-auto space-y-4">
               <div className="space-y-2">
-                <Label>Campaign Plan *</Label>
                 <Textarea
                   value={plan}
                   onChange={(e) => setPlan(e.target.value)}
@@ -212,7 +210,6 @@ export default function AntiCampaignPage() {
           <Card className="flex-1 flex flex-col overflow-hidden">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
                 Critical Analysis
               </CardTitle>
             </CardHeader>
@@ -288,7 +285,7 @@ export default function AntiCampaignPage() {
                                 <p className="font-medium text-sm flex-1">{backfire.scenario}</p>
                                 <div className="flex gap-2 flex-shrink-0">
                                   <Badge variant="outline" className="text-xs">
-                                    <span className="w-2 h-2 rounded-full bg-current mr-1 inline-block" 
+                                    <span className="w-2 h-2 rounded-full bg-current mr-1 inline-block"
                                       style={{ backgroundColor: getLikelihoodColor(backfire.likelihood) }}
                                     />
                                     {backfire.likelihood} likelihood
@@ -338,4 +335,3 @@ export default function AntiCampaignPage() {
     </div>
   )
 }
-

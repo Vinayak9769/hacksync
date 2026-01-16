@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Sparkles, PhoneCall, MessageSquare, Filter, TrendingUp, Target, Users, Clock, Loader2, Phone, PhoneOff, CheckCircle2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,6 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
-import { Progress } from "@/components/ui/progress"
 
 const customers = [
   {
@@ -66,6 +65,12 @@ interface CallStatus {
   duration?: number
 }
 
+interface ConversationEntry {
+  role: 'user' | 'assistant'
+  text: string
+  timestamp: number
+}
+
 export default function CRMPage() {
   const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -76,6 +81,7 @@ export default function CRMPage() {
     status: 'idle'
   })
   const [showCallDialog, setShowCallDialog] = useState(false)
+  const [conversationLog, setConversationLog] = useState<ConversationEntry[]>([])
 
   const summary = useMemo(
     () => ({
@@ -96,6 +102,7 @@ export default function CRMPage() {
 
   // Make actual AI call via backend Twilio + Deepgram pipeline
   const handleRowAiDial = async (customer: Customer) => {
+    setConversationLog([])
     setCallStatus({
       isActive: true,
       status: 'initiating',
@@ -108,7 +115,7 @@ export default function CRMPage() {
         ? (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : ''))
         : ''
       
-      const response = await fetch(`${apiBase}/make-call`, {
+  const response = await fetch(`${apiBase}/api/make-call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -171,8 +178,41 @@ export default function CRMPage() {
     setTimeout(() => {
       setShowCallDialog(false)
       setCallStatus({ isActive: false, status: 'idle' })
+      setConversationLog([])
     }, 2000)
   }
+
+  useEffect(() => {
+    if (!showCallDialog || !callStatus.callSid) {
+      return
+    }
+
+    let isMounted = true
+    const apiBase = typeof window !== 'undefined'
+      ? (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : ''))
+      : ''
+
+    const fetchTranscript = async () => {
+      try {
+        const response = await fetch(`${apiBase}/api/calls/${callStatus.callSid}/transcript`)
+        const data = await response.json()
+        if (!isMounted) return
+        if (response.ok && data.success) {
+          setConversationLog(data.transcript || [])
+        }
+      } catch (error) {
+        console.error('Transcript fetch error:', error)
+      }
+    }
+
+    fetchTranscript()
+    const interval = setInterval(fetchTranscript, 2000)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [showCallDialog, callStatus.callSid])
 
   const openMessageDialog = (customer: Customer) => {
     const template = outreachTemplates[customer.stage as StageToken] || outreachTemplates.active
@@ -373,7 +413,7 @@ export default function CRMPage() {
 
       {/* AI Call Status Dialog */}
       <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {callStatus.status === 'initiating' && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
@@ -425,9 +465,6 @@ export default function CRMPage() {
                     </Badge>
                   </div>
                   
-                  {callStatus.status === 'in-progress' && (
-                    <Progress value={66} className="h-1" />
-                  )}
                 </div>
 
                 {/* Features being used */}
@@ -452,13 +489,22 @@ export default function CRMPage() {
               </CardContent>
             </Card>
 
-            {/* Call Script Preview */}
-            {callStatus.status === 'in-progress' && (
-              <div className="bg-muted/50 rounded-lg p-3">
-                <p className="text-xs font-medium text-muted-foreground mb-1">AI is pitching:</p>
-                <p className="text-sm italic">
-                  "Hi! I'm calling from Etarra Coffee Shop in Bandra. We have amazing cold brews and artisanal pastries..."
-                </p>
+            {/* Live Conversation */}
+            {(callStatus.status === 'in-progress' || callStatus.status === 'completed') && (
+              <div className="bg-muted/50 rounded-lg p-3 max-h-56 overflow-y-auto space-y-3">
+                <p className="text-xs font-medium text-muted-foreground">Live conversation</p>
+                {conversationLog.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Waiting for transcript...</p>
+                ) : (
+                  conversationLog.map((entry, index) => (
+                    <div key={`${entry.timestamp}-${index}`} className="text-sm">
+                      <span className={entry.role === 'assistant' ? "text-primary font-medium" : "text-foreground font-medium"}>
+                        {entry.role === 'assistant' ? 'AI' : 'Customer'}:
+                      </span>{" "}
+                      <span className="text-muted-foreground">{entry.text}</span>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>

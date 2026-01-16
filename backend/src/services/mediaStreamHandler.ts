@@ -6,9 +6,34 @@ interface CallSession {
     streamSid: string;
     aiService: ConversationalAIService;
     isActive: boolean;
+    transcript: Array<{ role: 'user' | 'assistant'; text: string; timestamp: number }>;
 }
 
 const activeSessions = new Map<string, CallSession>();
+const recentTranscripts = new Map<string, { transcript: CallSession['transcript']; endedAt: number }>();
+
+const MAX_TRANSCRIPT_ENTRIES = 200;
+
+const appendTranscript = (
+    session: CallSession,
+    entry: { role: 'user' | 'assistant'; text: string; timestamp: number },
+) => {
+    session.transcript.push(entry);
+    if (session.transcript.length > MAX_TRANSCRIPT_ENTRIES) {
+        session.transcript.splice(0, session.transcript.length - MAX_TRANSCRIPT_ENTRIES);
+    }
+};
+
+const archiveSession = (callSid: string) => {
+    const session = activeSessions.get(callSid);
+    if (session) {
+        recentTranscripts.set(callSid, {
+            transcript: session.transcript,
+            endedAt: Date.now(),
+        });
+        activeSessions.delete(callSid);
+    }
+};
 
 export function handleMediaStream(ws: WebSocket) {
     console.log('New WebSocket connection established');
@@ -32,18 +57,50 @@ export function handleMediaStream(ws: WebSocket) {
                     aiService = new ConversationalAIService();
                     aiService.setTwilioWebSocket(ws, streamSid);
                     await aiService.startDeepgramConnection();
+
+                    aiService.on('transcript', (text: string) => {
+                        const session = activeSessions.get(callSid);
+                        if (session) {
+                            appendTranscript(session, {
+                                role: 'user',
+                                text,
+                                timestamp: Date.now(),
+                            });
+                        }
+                    });
+
+                    aiService.on('ai-response', (text: string) => {
+                        const session = activeSessions.get(callSid);
+                        if (session) {
+                            appendTranscript(session, {
+                                role: 'assistant',
+                                text,
+                                timestamp: Date.now(),
+                            });
+                        }
+                    });
                     
                     // Store session
                     activeSessions.set(callSid, {
                         callSid,
                         streamSid,
                         aiService,
-                        isActive: true
+                        isActive: true,
+                        transcript: []
                     });
 
                     // Send initial greeting - Etarra Coffee Shop pitch
                     const greeting = "Hi there! This is Aria calling from Etarra Coffee Shop in Bandra, Mumbai. We're a specialty coffee shop serving amazing single-origin pour overs and artisanal pastries. How are you doing today?";
                     await aiService.generateAndSendTTS(greeting);
+
+                    const session = activeSessions.get(callSid);
+                    if (session) {
+                        appendTranscript(session, {
+                            role: 'assistant',
+                            text: greeting,
+                            timestamp: Date.now(),
+                        });
+                    }
 
                     break;
 
@@ -60,7 +117,7 @@ export function handleMediaStream(ws: WebSocket) {
                     if (aiService) {
                         aiService.close();
                     }
-                    activeSessions.delete(callSid);
+                    archiveSession(callSid);
                     break;
 
                 default:
@@ -78,7 +135,7 @@ export function handleMediaStream(ws: WebSocket) {
             aiService.close();
         }
         if (callSid) {
-            activeSessions.delete(callSid);
+            archiveSession(callSid);
         }
     });
 
@@ -88,3 +145,10 @@ export function handleMediaStream(ws: WebSocket) {
 }
 
 export { activeSessions };
+
+export const getCallTranscript = (callSid: string) => {
+    const active = activeSessions.get(callSid);
+    if (active) return active.transcript;
+    const recent = recentTranscripts.get(callSid);
+    return recent?.transcript ?? [];
+};
