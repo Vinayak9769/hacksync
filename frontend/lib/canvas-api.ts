@@ -67,7 +67,7 @@ class CanvasAPI {
    * List all canvases
    */
   async listCanvases(): Promise<{ success: boolean; count: number; canvases: CanvasState[] }> {
-    const response = await fetch(`${API_BASE_URL}/canvas/list`);
+    const response = await fetch(`${API_BASE_URL}/api/canvas/list`);
 
     if (!response.ok) {
       const error = await response.json();

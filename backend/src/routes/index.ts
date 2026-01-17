@@ -62,21 +62,12 @@ router.get("/calls/:callSid/transcript", conversationalAIController.getCallTrans
 
 // Social Media Integration endpoints
 router.post("/social/post", socialMediaController.createPost);
-router.get(
-    "/social/facebook/validate",
-    socialMediaController.validateFacebookToken,
-);
-router.get(
-    "/social/facebook/page-info",
-    socialMediaController.getFacebookPageInfo,
-);
+router.get("/social/facebook/validate", socialMediaController.validateFacebookToken);
+router.get("/social/facebook/page-info", socialMediaController.getFacebookPageInfo);
 router.get("/social/health", socialMediaController.healthCheck);
 
 // NEW: Conversational AI endpoints (Deepgram + Gemini)
-router.post(
-    "/webhook/conversational",
-    conversationalAIController.handleIncomingCall,
-);
+router.post("/webhook/conversational", conversationalAIController.handleIncomingCall);
 router.post("/make-call", conversationalAIController.makeCall);
 
 // Sales pitch call endpoint (Etarra Coffee Shop)
@@ -90,10 +81,7 @@ router.get("/reddit/posts/:subreddit", redditController.getSubredditPosts);
 router.get("/reddit/comments/:postId", redditController.getPostComments);
 router.get("/reddit/inbox", redditController.getInbox);
 router.post("/reddit/inbox/reply", redditController.replyToInbox);
-router.get(
-    "/reddit/subreddits/:subreddit/engagement",
-    redditController.getSubredditEngagement,
-);
+router.get("/reddit/subreddits/:subreddit/engagement", redditController.getSubredditEngagement);
 
 // BRANDPULSE strategist endpoints
 // router.get('/strategist/metrics', strategistController.getMetrics);
@@ -111,10 +99,7 @@ router.post("/webhook/voice/gather", conversationController.handleGather);
 
 // Legacy: Twilio webhook endpoints for outbound sales pitch
 router.post("/webhook/sales-pitch", conversationController.handleSalesPitch);
-router.post(
-    "/webhook/pitch/response",
-    conversationController.handlePitchResponse,
-);
+router.post("/webhook/pitch/response",conversationController.handlePitchResponse);
 router.post("/webhook/pitch/demo", conversationController.handleDemoRequest);
 
 // Canvas endpoints - Structured visual canvas system for brand posters
@@ -125,16 +110,14 @@ router.get("/canvas/:id", canvasController.getCanvas);
 router.put("/canvas/:canvasId/layer/:layerId", canvasController.updateLayer);
 router.post("/canvas/:canvasId/add-layer", canvasController.addLayer);
 router.delete("/canvas/:canvasId/layer/:layerId", canvasController.deleteLayer);
-router.post(
-    "/canvas/:canvasId/layer/:layerId/generate",
-    canvasController.generateLayerImage,
-);
+router.post("/canvas/:canvasId/layer/:layerId/generate", canvasController.generateLayerImage);
 router.post("/canvas/regenerate-layer", canvasController.regenerateLayer);
 router.post("/canvas/generate-text", canvasController.generateText);
 router.post("/canvas/:canvasId/generate-element", canvasController.generateElement);
 router.get("/canvas/:id/export", canvasController.exportCanvas);
 router.post("/canvas/import", canvasController.importCanvas);
 router.delete("/canvas/:id", canvasController.deleteCanvas);
+
 // Veo 3 video generation endpoints
 router.post("/veo/tune", veoController.tunePrompt);
 router.post("/veo/generate", veoController.generateVideo);
