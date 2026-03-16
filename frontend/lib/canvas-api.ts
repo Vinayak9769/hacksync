@@ -1,9 +1,6 @@
 import { CanvasState, CreateCanvasRequest, CanvasLayer, AddLayerRequest } from './canvas-types';
 
-const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://16.171.53.167:3000';
-const API_BASE_URL = rawApiBaseUrl.replace(/\/$/, '').endsWith('/api')
-  ? rawApiBaseUrl.replace(/\/$/, '')
-  : `${rawApiBaseUrl.replace(/\/$/, '')}/api`;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://16.171.53.167:3000/api';
 
 class CanvasAPI {
   /**
@@ -70,7 +67,7 @@ class CanvasAPI {
    * List all canvases
    */
   async listCanvases(): Promise<{ success: boolean; count: number; canvases: CanvasState[] }> {
-    const response = await fetch(`${API_BASE_URL}/canvas/list`);
+    const response = await fetch(`${API_BASE_URL}/api/canvas/list`);
 
     if (!response.ok) {
       const error = await response.json();

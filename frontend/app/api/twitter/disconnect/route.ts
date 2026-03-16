@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Get backend URL from environment or default to localhost
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.53.167:3000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.53.167:3000/api";
 
 export async function POST(request: NextRequest) {
     try {
