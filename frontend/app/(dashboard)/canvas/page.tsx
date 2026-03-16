@@ -210,7 +210,7 @@ export default function CanvasPage() {
       if (addLayerForm.useAI && addLayerForm.aiPrompt && addLayerForm.layerType === 'text') {
         try {
           // Call backend to generate text using Gemini
-          const aiResponse = await fetch('http://localhost:3000/api/canvas/generate-text', {
+          const aiResponse = await fetch('http://16.171.53.167:3000/api/canvas/generate-text', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

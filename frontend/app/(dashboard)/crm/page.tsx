@@ -112,7 +112,7 @@ export default function CRMPage() {
 
     try {
       const apiBase = typeof window !== 'undefined' 
-        ? (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : ''))
+        ? (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://16.171.53.167:3000' : ''))
         : ''
       
   const response = await fetch(`${apiBase}/api/make-call`, {
@@ -189,7 +189,7 @@ export default function CRMPage() {
 
     let isMounted = true
     const apiBase = typeof window !== 'undefined'
-      ? (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : ''))
+      ? (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://16.171.53.167:3000' : ''))
       : ''
 
     const fetchTranscript = async () => {

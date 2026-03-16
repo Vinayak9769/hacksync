@@ -6,7 +6,7 @@ import {
 } from "./api-config";
 
 const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+    process.env.NEXT_PUBLIC_API_URL || "http://16.171.53.167:3000/api";
 
 export interface PostData {
     platform: string;

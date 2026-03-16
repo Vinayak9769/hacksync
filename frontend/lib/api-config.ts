@@ -1,7 +1,7 @@
 // API Configuration
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:3000/api";
+    "http://16.171.53.167:3000/api";
 
 // Detect the current frontend URL (dev tunnel, localhost, etc.)
 const getFrontendUrl = () => {

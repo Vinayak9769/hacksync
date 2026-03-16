@@ -50,7 +50,7 @@ export default function PlansPage() {
     setIsLoading(true)
     try {
       const apiBase = typeof window !== 'undefined'
-        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api')
+        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://16.171.53.167:3000/api')
         : ''
       
       const response = await fetch(`${apiBase}/marketing-plans`)
@@ -75,7 +75,7 @@ export default function PlansPage() {
 
     try {
       const apiBase = typeof window !== 'undefined'
-        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api')
+        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://16.171.53.167:3000/api')
         : ''
       
       const response = await fetch(`${apiBase}/marketing-plans/${id}`, {

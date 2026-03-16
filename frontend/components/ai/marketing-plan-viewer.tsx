@@ -184,7 +184,7 @@ export function MarketingPlanViewer({ plan, brandName, campaignName, onSave, col
     setIsSaving(true)
     try {
       const apiBase = typeof window !== 'undefined'
-        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api')
+        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://16.171.53.167:3000/api')
         : ''
       
       const title = campaignName || `${brandName || 'Marketing'} Campaign Plan`

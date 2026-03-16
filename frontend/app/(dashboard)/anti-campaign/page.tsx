@@ -60,7 +60,7 @@ export default function AntiCampaignPage() {
     setIsAnalyzing(true)
     try {
       const apiBase = typeof window !== 'undefined'
-        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api')
+        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://16.171.53.167:3000/api')
         : ''
 
       const response = await fetch(`${apiBase}/anti-campaign/analyze`, {

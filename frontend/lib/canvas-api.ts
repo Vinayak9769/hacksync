@@ -1,6 +1,6 @@
 import { CanvasState, CreateCanvasRequest, CanvasLayer, AddLayerRequest } from './canvas-types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://16.171.53.167:3000';
 
 class CanvasAPI {
   /**
