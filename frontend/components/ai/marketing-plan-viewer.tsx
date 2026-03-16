@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { uploadGeneratedPdfToS3 } from '@/lib/services/pdf-storage'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -164,6 +165,18 @@ export function MarketingPlanViewer({ plan, brandName, campaignName, onSave, col
       }
       
       const fileName = `${campaignName || brandName || 'marketing'}-plan-${new Date().toISOString().split('T')[0]}.pdf`
+      const pdfBlob = pdf.output('blob')
+
+      try {
+        await uploadGeneratedPdfToS3({
+          pdfBlob,
+          fileName,
+          documentType: 'marketing-plan',
+        })
+      } catch (uploadError) {
+        console.error('Failed to upload generated marketing plan PDF to S3:', uploadError)
+      }
+
       pdf.save(fileName)
     } catch (error) {
       console.error('PDF export failed:', error)

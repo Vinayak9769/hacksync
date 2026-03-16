@@ -15,6 +15,8 @@ import nestgptController from "../controllers/nestgptController";
 import marketingPlanController from "../controllers/marketingPlanController";
 import antiCampaignController from "../controllers/antiCampaignController";
 import adDataController from "../controllers/adDataController";
+import storageController from "../controllers/storageController";
+import calendarController from "../controllers/calendarController";
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -50,6 +52,24 @@ const csvUpload = multer({
             cb(null, true);
         } else {
             cb(new Error("Only CSV files are allowed"));
+        }
+    },
+});
+
+// PDF upload configuration for generated documents only
+const pdfUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 20 * 1024 * 1024, // 20MB limit for generated PDFs
+    },
+    fileFilter: (req, file, cb) => {
+        if (
+            file.mimetype === "application/pdf" &&
+            file.originalname.toLowerCase().endsWith(".pdf")
+        ) {
+            cb(null, true);
+        } else {
+            cb(new Error("Only PDF files are allowed"));
         }
     },
 });
@@ -127,6 +147,20 @@ router.post("/marketing-plans", marketingPlanController.savePlan);
 router.get("/marketing-plans", marketingPlanController.getAllPlans);
 router.get("/marketing-plans/:id", marketingPlanController.getPlan);
 router.delete("/marketing-plans/:id", marketingPlanController.deletePlan);
+
+// Generated document storage (S3)
+router.post(
+    "/storage/generated-pdf",
+    pdfUpload.single("file"),
+    storageController.uploadGeneratedPdf,
+);
+
+// Content calendar persistence (RDS)
+router.get(
+    "/calendar/session/:sessionId",
+    calendarController.getCalendarsBySession,
+);
+router.post("/calendar", calendarController.saveCalendar);
 
 // Anti-Campaign Generator endpoints
 router.post("/anti-campaign/analyze", antiCampaignController.analyzeCampaign);

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useRef, useState } from 'react'
+import { uploadGeneratedPdfToS3 } from '@/lib/services/pdf-storage'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -172,6 +173,18 @@ export function AnalyticsInsightsViewer({ data, brandName }: AnalyticsInsightsVi
       }
       
       const fileName = `${brandName || 'analytics'}-insights-${new Date().toISOString().split('T')[0]}.pdf`
+      const pdfBlob = pdf.output('blob')
+
+      try {
+        await uploadGeneratedPdfToS3({
+          pdfBlob,
+          fileName,
+          documentType: 'analytics-insights',
+        })
+      } catch (uploadError) {
+        console.error('Failed to upload generated analytics PDF to S3:', uploadError)
+      }
+
       pdf.save(fileName)
     } catch (error) {
       console.error('PDF export failed:', error)

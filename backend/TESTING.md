@@ -35,6 +35,78 @@ Expected response:
 }
 ```
 
+### 3. Upload a Generated PDF to S3
+```bash
+curl -X POST http://localhost:3000/api/storage/generated-pdf \
+  -F "file=@./sample-generated.pdf" \
+  -F "fileName=sample-generated.pdf" \
+  -F "source=generated" \
+  -F "documentType=marketing-plan"
+```
+
+Expected response:
+```json
+{
+  "success": true,
+  "message": "Generated PDF uploaded to S3 successfully",
+  "storage": {
+    "provider": "s3",
+    "bucket": "...",
+    "key": "generated-pdfs/...",
+    "url": "https://..."
+  }
+}
+```
+
+### 4. Save Content Calendar in RDS
+```bash
+curl -X POST http://localhost:3000/api/calendar \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sessionId": "test-session-1",
+    "campaignTheme": "Spring Product Launch",
+    "campaignName": "Spring 2026",
+    "brandName": "Demo Brand",
+    "durationWeeks": 2,
+    "channels": ["instagram", "linkedin"],
+    "calendar": [
+      {
+        "week": 1,
+        "theme": "Launch",
+        "posts": []
+      }
+    ]
+  }'
+```
+
+Expected response:
+```json
+{
+  "success": true,
+  "message": "Calendar information saved to RDS",
+  "calendarId": 1
+}
+```
+
+### 5. Read Calendar Data by Session from RDS
+```bash
+curl http://localhost:3000/api/calendar/session/test-session-1
+```
+
+Expected response:
+```json
+{
+  "success": true,
+  "count": 1,
+  "calendars": [
+    {
+      "session_id": "test-session-1",
+      "calendar": []
+    }
+  ]
+}
+```
+
 ## Testing Twilio Voice Webhook Locally
 
 ### Using ngrok:

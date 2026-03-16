@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import sessionStore, { Session } from "./sessionStore";
 import canvasService from "./canvasService";
+import calendarRdsService from "./calendarRdsService";
 import { v4 as uuidv4 } from "uuid";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
@@ -825,7 +826,34 @@ Be friendly, professional, and guide the user step by step.`;
 
             case "generate_content_calendar":
                 const calendar = await generateContentCalendar(args);
-                return { calendar, weeks: args.durationWeeks };
+                const persistence =
+                    await calendarRdsService.saveGeneratedCalendar({
+                        sessionId: session.id,
+                        campaignTheme: args.campaignTheme,
+                        campaignName:
+                            args.campaignName || session.campaignPlan?.campaignName,
+                        brandName: args.brandName || session.collectedInfo.brandName,
+                        startDate: args.startDate,
+                        durationWeeks: args.durationWeeks,
+                        channels: args.channels || session.collectedInfo.channels,
+                        calendar,
+                    });
+
+                if (persistence.saved) {
+                    thoughts.push(
+                        `🗄️ Saved content calendar to RDS (id: ${persistence.calendarId})`,
+                    );
+                } else {
+                    thoughts.push(
+                        `ℹ️ RDS calendar persistence skipped: ${persistence.reason || "unknown reason"}`,
+                    );
+                }
+
+                return {
+                    calendar,
+                    weeks: args.durationWeeks,
+                    persistence,
+                };
 
             case "save_campaign":
                 // In production, save to database
