@@ -27,7 +27,7 @@ export class ConversationalAIService extends EventEmitter {
         }
         this.genAI = new GoogleGenerativeAI(geminiKey);
         this.model = this.genAI.getGenerativeModel({ 
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-3.1-flash-lite-preview',
             generationConfig: {
                 temperature: 0.7,
                 maxOutputTokens: 800,

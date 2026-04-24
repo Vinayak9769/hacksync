@@ -95,7 +95,7 @@ async function analyzeWithGemini(comments: RedditComment[], posts: RedditPost[])
 
   // Initialize the Gemini client
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+  const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
 
   // Prepare the data for analysis
   const commentsText = comments.slice(0, 50).map(c => ({

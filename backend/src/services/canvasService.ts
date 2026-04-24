@@ -1,7 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import axios from 'axios';
-import { GoogleAuth } from 'google-auth-library';
-
 import {
   CanvasState,
   CanvasLayer,
@@ -10,29 +6,9 @@ import {
 } from '../types/canvas';
 
 class CanvasService {
-  private genAI: GoogleGenerativeAI;
   private canvasStore: Map<string, CanvasState> = new Map();
-  private auth: GoogleAuth;
 
-  constructor() {
-    this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-    this.auth = new GoogleAuth({
-      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-    });
-  }
-
-  /* =========================
-     AUTH
-  ========================== */
-
-  private async getAccessToken(): Promise<string> {
-    const client = await this.auth.getClient();
-    const token = await client.getAccessToken();
-    if (!token.token) {
-      throw new Error('Failed to obtain Google OAuth access token');
-    }
-    return token.token;
-  }
+  private readonly cloudflareModel = '@cf/black-forest-labs/flux-1-schnell';
 
   /* =========================
      CANVAS CORE
@@ -257,7 +233,7 @@ class CanvasService {
   ========================== */
 
   /* =========================
-     IMAGE GENERATION (Vertex Imagen)
+     IMAGE GENERATION (Cloudflare Workers AI)
   ========================== */
 
   async generateLayerImage(
@@ -283,7 +259,7 @@ class CanvasService {
     });
 
     try {
-      const imageUrl = await this.generateImageViaImagen(prompt, layer.bounds);
+      const imageUrl = await this.generateImageViaCloudflare(prompt, layer.bounds);
 
       this.updateLayer(canvasId, layerId, {
         imageData: {
@@ -306,62 +282,74 @@ class CanvasService {
     }
   }
 
-  private async generateImageViaImagen(
+  private async generateImageViaCloudflare(
     prompt: string,
     bounds: LayerBounds
   ): Promise<string> {
-    const projectId = process.env.GCP_PROJECT_ID;
-    const location = process.env.GCP_LOCATION || 'us-central1';
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
-    if (!projectId) throw new Error('GCP_PROJECT_ID not set');
-
-    const accessToken = await this.getAccessToken();
-
-    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/imagen-3.0-generate-001:predict`;
-
-    const res = await axios.post<{
-      predictions?: Array<{
-        bytesBase64Encoded?: string;
-        mimeType?: string;
-      }>;
-    }>(
-      endpoint,
-      {
-        instances: [{ prompt }],
-        parameters: {
-          sampleCount: 1,
-          aspectRatio: this.getImagenAspectRatio(bounds),
-          negativePrompt:
-            'blurry, low quality, distorted, watermark, text, words, letters',
-          safetyFilterLevel: 'BLOCK_ONLY_HIGH',
-          personGeneration: 'ALLOW_ADULT',
-        },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    const prediction = res.data?.predictions?.[0];
-    if (!prediction?.bytesBase64Encoded) {
-      throw new Error('Imagen returned no image data');
+    if (!accountId) {
+      throw new Error('CLOUDFLARE_ACCOUNT_ID not set');
     }
 
-    return `data:image/png;base64,${prediction.bytesBase64Encoded}`;
+    if (!apiToken) {
+      throw new Error('CLOUDFLARE_API_TOKEN not set');
+    }
+
+    const endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${this.cloudflareModel}`;
+    const promptWithLayout = this.addLayoutHint(prompt, bounds);
+    const steps = this.getCloudflareSteps(bounds);
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: promptWithLayout,
+        steps,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Cloudflare image generation failed: ${errorText}`);
+    }
+
+    const result = await response.json() as {
+      result?: { image?: string } | Array<{ image?: string }>;
+      success?: boolean;
+      errors?: Array<{ message?: string }>;
+    };
+
+    const imageBase64 = Array.isArray(result.result)
+      ? result.result[0]?.image
+      : result.result?.image;
+
+    if (!imageBase64) {
+      throw new Error('Cloudflare returned no image data');
+    }
+
+    return `data:image/jpeg;base64,${imageBase64}`;
   }
 
   /* =========================
      HELPERS
   ========================== */
 
-  private getImagenAspectRatio(bounds: LayerBounds): string {
-    const r = bounds.width / bounds.height;
-    if (r > 1.6) return '16:9';
-    if (r < 0.7) return '9:16';
-    return '1:1';
+  private addLayoutHint(prompt: string, bounds: LayerBounds): string {
+    const orientation = bounds.width > bounds.height ? 'landscape' : bounds.width < bounds.height ? 'portrait' : 'square';
+    return `${prompt}. Generate a ${orientation} image composition.`;
+  }
+
+  private getCloudflareSteps(bounds: LayerBounds): number {
+    const ratio = bounds.width / bounds.height;
+    if (ratio > 1.6 || ratio < 0.7) {
+      return 6;
+    }
+    return 4;
   }
 
   private generateId(): string {
@@ -410,7 +398,15 @@ class CanvasService {
   ========================== */
 
   async generateTextWithAI(prompt: string, context?: any): Promise<string> {
-    const model = this.genAI.getGenerativeModel({
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY not set');
+    }
+
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.9,
@@ -477,7 +473,7 @@ Return ONLY the text content, no explanations or formatting markers.`;
     try {
       // For icons/stickers, use a smaller size and more focused prompt
       const elementPrompt = `${prompt}, ${elementType === 'icon' ? 'simple icon design, minimal, clean, transparent background' : 'sticker design, fun, colorful, transparent background'}`;
-      const imageUrl = await this.generateImageViaImagen(elementPrompt, bounds);
+      const imageUrl = await this.generateImageViaCloudflare(elementPrompt, bounds);
 
       this.updateLayer(canvasId, elementLayer.id, {
         imageData: {
