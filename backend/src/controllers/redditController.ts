@@ -7,7 +7,7 @@ class RedditController {
      */
     public async healthCheck(req: Request, res: Response): Promise<void> {
         try {
-            const isAvailable = redditService.isClientAvailable();
+            const isAvailable = await redditService.isClientAvailable();
             
             res.json({
                 success: true,

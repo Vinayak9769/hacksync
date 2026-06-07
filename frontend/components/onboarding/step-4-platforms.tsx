@@ -75,6 +75,16 @@ export default function OnboardingStep4({ formData, onContinue, onBack }: any) {
         </p>
       </div>
 
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-amber-500 flex items-start gap-3">
+        <span className="text-lg">⚠️</span>
+        <div>
+          <h5 className="font-semibold">Local Environment Recommendation</h5>
+          <p className="text-sm opacity-90">
+            For integrating OAuth flows and fully testing the Veo Studio generation capabilities, please ensure you are running the local development servers for both the frontend and backend.
+          </p>
+        </div>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-6">
         {platforms.map((platform) => {
           const Icon = platform.icon
