@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IMarketingPlan extends Document {
+  userId?: string;
   title: string;
   plan: string; // Markdown content
   brandName?: string;
@@ -22,6 +23,7 @@ export interface IMarketingPlan extends Document {
 
 const MarketingPlanSchema: Schema = new Schema(
   {
+    userId: { type: String, required: true, index: true },
     title: { type: String, required: true },
     plan: { type: String, required: true },
     brandName: { type: String },

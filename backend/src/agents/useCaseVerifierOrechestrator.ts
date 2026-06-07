@@ -1,6 +1,6 @@
 import { URLSearchParams } from "url"
 import { DynamicTool } from "@langchain/core/tools"
-import { StateGraph, END } from "@langchain/langgraph"
+import { StateGraph, END, START, Annotation } from "@langchain/langgraph"
 
 type SearchItem = {
   title: string
@@ -50,21 +50,20 @@ const getEnv = (name: string) => {
   return value
 }
 
-const googleSearch = async (query: string): Promise<SearchItem[]> => {
-  const key = getEnv("GOOGLE_API_KEY")
-  const cx = getEnv("GOOGLE_CX")
+const serpApiSearch = async (query: string): Promise<SearchItem[]> => {
+  const key = getEnv("SERPAPI_API_KEY")
   const params = new URLSearchParams({
-    key,
-    cx,
-    q: query
+    engine: "google",
+    q: query,
+    api_key: key
   })
-  const response = await fetch(`https://customsearch.googleapis.com/customsearch/v1?${params.toString()}`)
+  const response = await fetch(`https://serpapi.com/search.json?${params.toString()}`)
   if (!response.ok) {
     const message = await response.text()
-    throw new Error(`Google search failed: ${message}`)
+    throw new Error(`SerpApi search failed: ${message}`)
   }
   const data = await response.json()
-  return (data.items || []).map((item: any) => ({
+  return (data.organic_results || []).map((item: any) => ({
     title: item.title || "",
     link: item.link || "",
     snippet: item.snippet || ""
@@ -72,56 +71,53 @@ const googleSearch = async (query: string): Promise<SearchItem[]> => {
 }
 
 const searchTool = new DynamicTool({
-  name: "google_domain_search",
-  description: "Search Google Custom Search for a query and return result snippets",
+  name: "serpapi_domain_search",
+  description: "Search SerpApi for a query and return result snippets",
   func: async (query: string) => {
-    const results = await googleSearch(query)
+    const results = await serpApiSearch(query)
     return JSON.stringify(results)
   }
 })
 
 const buildQuery = (useCase: string, domain: string) => `site:${domain} "${useCase}"`
 
+const AgentStateAnnotation = Annotation.Root({
+  useCase: Annotation<string>(),
+  domains: Annotation<string[]>(),
+  evidence: Annotation<EvidenceItem[]>(),
+  verified: Annotation<boolean>(),
+  confidence: Annotation<number>(),
+})
+
 const buildAgent = () => {
-  const graph = new StateGraph<AgentState>({
-    channels: {
-      useCase: { value: (value: string) => value, default: "" },
-      domains: { value: (value: string[]) => value, default: [] },
-      evidence: { value: (value: EvidenceItem[]) => value, default: [] },
-      verified: { value: (value: boolean) => value, default: false },
-      confidence: { value: (value: number) => value, default: 0 }
-    }
-  })
-
-  graph.addNode("searchDomains", async (state: AgentState) => {
-    const evidence: EvidenceItem[] = []
-    for (const domain of state.domains) {
-      const query = buildQuery(state.useCase, domain)
-  const response = (await searchTool.invoke(query)) as string
-  const parsed = JSON.parse(response) as SearchItem[]
-      evidence.push({
-        domain,
-        query,
-        matchCount: parsed.length,
-        results: parsed.slice(0, 3)
-      })
-    }
-    return { evidence }
-  })
-
-  graph.addNode("verify", (state: AgentState) => {
-    const totalMatches = state.evidence.reduce(
-      (sum: number, item: EvidenceItem) => sum + item.matchCount,
-      0
-    )
-    const verified = totalMatches > 0
-    const confidence = Math.min(1, totalMatches / (state.domains.length * 3))
-    return { verified, confidence }
-  })
-
-  graph.setEntryPoint("searchDomains")
-  graph.addEdge("searchDomains", "verify")
-  graph.addEdge("verify", END)
+  const graph = new StateGraph(AgentStateAnnotation)
+    .addNode("searchDomains", async (state) => {
+      const evidence: EvidenceItem[] = []
+      for (const domain of state.domains) {
+        const query = buildQuery(state.useCase, domain)
+        const response = (await searchTool.invoke(query)) as string
+        const parsed = JSON.parse(response) as SearchItem[]
+        evidence.push({
+          domain,
+          query,
+          matchCount: parsed.length,
+          results: parsed.slice(0, 3)
+        })
+      }
+      return { evidence }
+    })
+    .addNode("verify", (state) => {
+      const totalMatches = state.evidence.reduce(
+        (sum: number, item: EvidenceItem) => sum + item.matchCount,
+        0
+      )
+      const verified = totalMatches > 0
+      const confidence = Math.min(1, totalMatches / (state.domains.length * 3))
+      return { verified, confidence }
+    })
+    .addEdge(START, "searchDomains")
+    .addEdge("searchDomains", "verify")
+    .addEdge("verify", END)
 
   return graph.compile()
 }

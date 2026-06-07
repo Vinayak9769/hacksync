@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.53.167:3000/api";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY_LISTENING;
 
 interface RedditComment {

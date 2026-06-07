@@ -8,14 +8,19 @@ class AdDataController {
    */
   async uploadCSV(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       if (!req.file) {
         res.status(400).json({ error: 'No CSV file provided' });
         return;
       }
 
-  const userId = (req as any).userId || (req.session as any)?.userId; // Optional user ID
-  const platform = typeof req.body?.platform === 'string' ? req.body.platform : undefined;
-  const result = await adDataService.saveAdDataFromCSV(req.file.buffer, userId, platform);
+      const platform = typeof req.body?.platform === 'string' ? req.body.platform : undefined;
+      const result = await adDataService.saveAdDataFromCSV(req.file.buffer, userId, platform);
 
       res.json({
         success: true,
@@ -38,7 +43,12 @@ class AdDataController {
    */
   async getReport(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).userId || (req.session as any)?.userId;
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
 
@@ -73,7 +83,12 @@ class AdDataController {
    */
   async getAdData(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).userId || (req.session as any)?.userId;
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
       const platform = req.query.platform as string | undefined;
@@ -110,7 +125,12 @@ class AdDataController {
    */
   async deleteAllAdData(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).userId || (req.session as any)?.userId;
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const deletedCount = await adDataService.deleteAllAdData(userId);
 
       res.json({
@@ -129,4 +149,3 @@ class AdDataController {
 }
 
 export default new AdDataController();
-

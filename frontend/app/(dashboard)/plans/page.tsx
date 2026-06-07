@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { MarketingPlanViewer } from '@/components/ai/marketing-plan-viewer'
 import { useToast } from '@/hooks/use-toast'
+import { API_URL } from '@/lib/api-config'
 import {
   FileText,
   Search,
@@ -49,11 +50,7 @@ export default function PlansPage() {
   const loadPlans = async () => {
     setIsLoading(true)
     try {
-      const apiBase = typeof window !== 'undefined'
-        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://16.171.53.167:3000/api')
-        : ''
-      
-      const response = await fetch(`${apiBase}/marketing-plans`)
+      const response = await fetch(`${API_URL}/marketing-plans`)
       const data = await response.json()
       
       if (data.success) {
@@ -74,11 +71,7 @@ export default function PlansPage() {
     if (!confirm('Are you sure you want to delete this plan?')) return
 
     try {
-      const apiBase = typeof window !== 'undefined'
-        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://16.171.53.167:3000/api')
-        : ''
-      
-      const response = await fetch(`${apiBase}/marketing-plans/${id}`, {
+      const response = await fetch(`${API_URL}/marketing-plans/${id}`, {
         method: 'DELETE',
       })
 

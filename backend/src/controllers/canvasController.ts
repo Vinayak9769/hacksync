@@ -9,6 +9,12 @@ class CanvasController {
    */
   async createCanvas(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const request: CreateCanvasRequest = req.body;
       
       if (!request.name) {
@@ -21,7 +27,7 @@ class CanvasController {
         return;
       }
 
-      const canvas = await canvasService.createCanvas(request);
+      const canvas = await canvasService.createCanvas(userId, request);
       
       res.json({
         success: true,
@@ -43,6 +49,12 @@ class CanvasController {
    */
   async createCanvasWithImage(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const name = req.body.name;
       const aspectRatio = req.body.aspectRatio;
       const brandName = req.body.brandName;
@@ -65,6 +77,7 @@ class CanvasController {
       }
 
       const canvas = await canvasService.createCanvasWithImage(
+        userId,
         name,
         file.buffer,
         file.mimetype,
@@ -93,8 +106,14 @@ class CanvasController {
    */
   async getCanvas(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { id } = req.params;
-      const canvas = canvasService.getCanvas(id);
+      const canvas = await canvasService.getCanvas(userId, id);
       
       if (!canvas) {
         res.status(404).json({ error: 'Canvas not found' });
@@ -120,7 +139,13 @@ class CanvasController {
    */
   async listCanvases(req: Request, res: Response): Promise<void> {
     try {
-      const canvases = canvasService.getAllCanvases();
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const canvases = await canvasService.getAllCanvases(userId);
       
       res.json({
         success: true,
@@ -142,10 +167,16 @@ class CanvasController {
    */
   async updateLayer(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { canvasId, layerId } = req.params;
       const updates = req.body;
 
-      const canvas = canvasService.updateLayer(canvasId, layerId, updates);
+      const canvas = await canvasService.updateLayer(userId, canvasId, layerId, updates);
       
       if (!canvas) {
         res.status(404).json({ error: 'Canvas or layer not found' });
@@ -172,6 +203,12 @@ class CanvasController {
    */
   async addLayer(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { canvasId } = req.params;
       const layerData = req.body;
 
@@ -180,8 +217,8 @@ class CanvasController {
         return;
       }
 
-      const layer = canvasService.addLayer(canvasId, layerData);
-      const canvas = canvasService.getCanvas(canvasId);
+      const layer = await canvasService.addLayer(userId, canvasId, layerData);
+      const canvas = await canvasService.getCanvas(userId, canvasId);
 
       res.json({
         success: true,
@@ -204,10 +241,16 @@ class CanvasController {
    */
   async deleteLayer(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { canvasId, layerId } = req.params;
 
-      canvasService.deleteLayer(canvasId, layerId);
-      const canvas = canvasService.getCanvas(canvasId);
+      await canvasService.deleteLayer(userId, canvasId, layerId);
+      const canvas = await canvasService.getCanvas(userId, canvasId);
 
       res.json({
         success: true,
@@ -229,17 +272,24 @@ class CanvasController {
    */
   async generateLayerImage(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { canvasId, layerId } = req.params;
       const { customPrompt } = req.body;
 
       const result = await canvasService.generateLayerImage(
+        userId,
         canvasId, 
         layerId, 
         customPrompt
       );
 
       // Get updated canvas
-      const canvas = canvasService.getCanvas(canvasId);
+      const canvas = await canvasService.getCanvas(userId, canvasId);
       
       res.json({
         success: true,
@@ -263,6 +313,12 @@ class CanvasController {
    */
   async regenerateLayer(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { canvasId, layerId, userPrompt }: RegenerateLayerRequest = req.body;
 
       if (!canvasId || !layerId) {
@@ -273,12 +329,13 @@ class CanvasController {
       }
 
       const result = await canvasService.generateLayerImage(
+        userId,
         canvasId, 
         layerId, 
         userPrompt
       );
 
-      const canvas = canvasService.getCanvas(canvasId);
+      const canvas = await canvasService.getCanvas(userId, canvasId);
       
       res.json({
         success: true,
@@ -302,8 +359,14 @@ class CanvasController {
    */
   async exportCanvas(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { id } = req.params;
-      const jsonState = canvasService.exportCanvasState(id);
+      const jsonState = await canvasService.exportCanvasState(userId, id);
       
       if (!jsonState) {
         res.status(404).json({ error: 'Canvas not found' });
@@ -328,6 +391,12 @@ class CanvasController {
    */
   async importCanvas(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { jsonState } = req.body;
       
       if (!jsonState) {
@@ -335,7 +404,7 @@ class CanvasController {
         return;
       }
 
-      const canvas = canvasService.importCanvasState(jsonState);
+      const canvas = await canvasService.importCanvasState(userId, jsonState);
       
       res.json({
         success: true,
@@ -357,8 +426,14 @@ class CanvasController {
    */
   async deleteCanvas(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { id } = req.params;
-      const deleted = canvasService.deleteCanvas(id);
+      const deleted = await canvasService.deleteCanvas(userId, id);
       
       if (!deleted) {
         res.status(404).json({ error: 'Canvas not found' });
@@ -412,6 +487,12 @@ class CanvasController {
    */
   async generateElement(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { canvasId } = req.params;
       const { elementType, prompt, x, y, width, height } = req.body;
 
@@ -433,6 +514,7 @@ class CanvasController {
       };
 
       const canvas = await canvasService.generateElement(
+        userId,
         canvasId,
         elementType,
         prompt,

@@ -8,6 +8,7 @@ import { Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import Link from "next/link"
+import { API_URL } from "@/lib/api-config"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -16,17 +17,39 @@ export default function LoginPage() {
     password: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError("")
     
-    // Simulate API call
-    setTimeout(() => {
-      // In real app, verify credentials with backend
-      localStorage.setItem("user", JSON.stringify({ email: formData.email }))
-      router.push("/dashboard")
-    }, 1000)
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, password: formData.password }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Invalid email or password");
+      }
+      
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      
+      if (data.user?.onboarded) {
+        router.push("/dashboard");
+      } else {
+        router.push("/onboarding/setup");
+      }
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -45,6 +68,12 @@ export default function LoginPage() {
               <h1 className="text-3xl font-bold">Welcome back</h1>
               <p className="text-muted-foreground">Sign in to your account to continue</p>
             </div>
+
+            {error && (
+              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-lg border border-destructive/20 text-center">
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">

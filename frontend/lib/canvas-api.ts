@@ -1,6 +1,7 @@
 import { CanvasState, CreateCanvasRequest, CanvasLayer, AddLayerRequest } from './canvas-types';
+import { API_URL, API_FETCH_OPTIONS, API_FETCH_OPTIONS_FORM } from './api-config';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://16.171.53.167:3000/api';
+const API_BASE_URL = API_URL;
 
 class CanvasAPI {
   /**
@@ -9,12 +10,12 @@ class CanvasAPI {
   async createCanvas(request: CreateCanvasRequest): Promise<{ success: boolean; canvas: CanvasState }> {
     const response = await fetch(`${API_BASE_URL}/canvas/create`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      ...API_FETCH_OPTIONS,
       body: JSON.stringify(request),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to create canvas');
     }
 
@@ -38,11 +39,12 @@ class CanvasAPI {
 
     const response = await fetch(`${API_BASE_URL}/canvas/create-with-image`, {
       method: 'POST',
+      ...API_FETCH_OPTIONS_FORM,
       body: formData,
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to create canvas with image');
     }
 
@@ -53,10 +55,10 @@ class CanvasAPI {
    * Get canvas by ID
    */
   async getCanvas(id: string): Promise<{ success: boolean; canvas: CanvasState }> {
-    const response = await fetch(`${API_BASE_URL}/canvas/${id}`);
+    const response = await fetch(`${API_BASE_URL}/canvas/${id}`, API_FETCH_OPTIONS);
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to get canvas');
     }
 
@@ -67,10 +69,10 @@ class CanvasAPI {
    * List all canvases
    */
   async listCanvases(): Promise<{ success: boolean; count: number; canvases: CanvasState[] }> {
-    const response = await fetch(`${API_BASE_URL}/canvas/list`);
+    const response = await fetch(`${API_BASE_URL}/canvas/list`, API_FETCH_OPTIONS);
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to list canvases');
     }
 
@@ -87,12 +89,12 @@ class CanvasAPI {
   ): Promise<{ success: boolean; canvas: CanvasState }> {
     const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/layer/${layerId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      ...API_FETCH_OPTIONS,
       body: JSON.stringify(updates),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to update layer');
     }
 
@@ -108,12 +110,12 @@ class CanvasAPI {
   ): Promise<{ success: boolean; layer: CanvasLayer; canvas: CanvasState }> {
     const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/add-layer`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      ...API_FETCH_OPTIONS,
       body: JSON.stringify(layerData),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to add layer');
     }
 
@@ -129,10 +131,11 @@ class CanvasAPI {
   ): Promise<{ success: boolean; canvas: CanvasState }> {
     const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/layer/${layerId}`, {
       method: 'DELETE',
+      ...API_FETCH_OPTIONS,
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to delete layer');
     }
 
@@ -149,12 +152,12 @@ class CanvasAPI {
   ): Promise<{ success: boolean; imageUrl: string; prompt: string; canvas: CanvasState }> {
     const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/layer/${layerId}/generate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      ...API_FETCH_OPTIONS,
       body: JSON.stringify({ customPrompt }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to generate layer image');
     }
 
@@ -171,12 +174,12 @@ class CanvasAPI {
   ): Promise<{ success: boolean; imageUrl: string; prompt: string; canvas: CanvasState }> {
     const response = await fetch(`${API_BASE_URL}/canvas/regenerate-layer`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      ...API_FETCH_OPTIONS,
       body: JSON.stringify({ canvasId, layerId, userPrompt }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to regenerate layer');
     }
 
@@ -187,10 +190,10 @@ class CanvasAPI {
    * Export canvas as JSON
    */
   async exportCanvas(id: string): Promise<Blob> {
-    const response = await fetch(`${API_BASE_URL}/canvas/${id}/export`);
+    const response = await fetch(`${API_BASE_URL}/canvas/${id}/export`, API_FETCH_OPTIONS);
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to export canvas');
     }
 
@@ -203,12 +206,12 @@ class CanvasAPI {
   async importCanvas(jsonState: string): Promise<{ success: boolean; canvas: CanvasState }> {
     const response = await fetch(`${API_BASE_URL}/canvas/import`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      ...API_FETCH_OPTIONS,
       body: JSON.stringify({ jsonState }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to import canvas');
     }
 
@@ -221,10 +224,11 @@ class CanvasAPI {
   async deleteCanvas(id: string): Promise<{ success: boolean }> {
     const response = await fetch(`${API_BASE_URL}/canvas/${id}`, {
       method: 'DELETE',
+      ...API_FETCH_OPTIONS,
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to delete canvas');
     }
 
@@ -247,12 +251,12 @@ class CanvasAPI {
   ): Promise<{ success: boolean; layer: any; canvas: CanvasState }> {
     const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/generate-element`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      ...API_FETCH_OPTIONS,
       body: JSON.stringify(elementData),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.error || 'Failed to generate element');
     }
 

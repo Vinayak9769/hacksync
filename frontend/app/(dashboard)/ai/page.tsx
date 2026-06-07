@@ -36,6 +36,7 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { API_URL } from "@/lib/api-config"
 
 interface Message {
   id: string
@@ -131,10 +132,7 @@ export default function AIPage() {
     }
 
     try {
-      // Determine backend API base. Prefer NEXT_PUBLIC_API_BASE, otherwise use deployed backend.
-      // const apiBase = (typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_API_BASE || 'http://16.171.53.167:3000/api')) || '';
-      const apiBase = "http://16.171.53.167:3000/api";
-      const url = apiBase ? `${apiBase}/nestgpt/chat` : '/api/nestgpt/chat';
+      const url = `${API_URL}/nestgpt/chat`;
 
       // Send message field for conversational chat (NestGPT will handle intake collection via progressive Q&A)
       const resp = await fetch(url, {
@@ -266,10 +264,7 @@ export default function AIPage() {
   const handleReset = async () => {
     if (sessionId) {
       try {
-        const apiBase = typeof window !== 'undefined'
-          ? (process.env.NEXT_PUBLIC_API_BASE || 'http://16.171.53.167:3000/api')
-          : ''
-        await fetch(`${apiBase}/nestgpt/session/${sessionId}`, {
+        await fetch(`${API_URL}/nestgpt/session/${sessionId}`, {
           method: 'DELETE',
         })
       } catch (e) {

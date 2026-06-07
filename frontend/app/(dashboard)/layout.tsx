@@ -1,11 +1,11 @@
 "use client";
-import type React from "react"
+import React, { useState, useEffect } from "react"
 import { SidebarProvider, SidebarInset, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
-import { Bell, ChevronDown, Plus } from "lucide-react"
+import { Bell, ChevronDown, Plus, Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { CommandMenuProvider, useCommandMenu } from "@/components/command-menu-provider"
 import { CommandMenu } from "@/components/command-menu"
@@ -20,6 +20,40 @@ function DashboardLayoutContent({
 }) {
   const router = useRouter()
   const { open, setOpen } = useCommandMenu()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    const userStr = localStorage.getItem("user")
+
+    if (!token || !userStr) {
+      router.push("/login")
+      return
+    }
+
+    try {
+      const user = JSON.parse(userStr)
+      if (!user.onboarded) {
+        router.push("/onboarding/setup")
+        return
+      }
+      setIsAuthenticated(true)
+    } catch (e) {
+      router.push("/login")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [router])
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-muted-foreground animate-pulse font-medium">Verifying authorization...</p>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -47,9 +81,13 @@ function DashboardLayoutContent({
                       </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="top" align="start" className="w-56">
-                      <DropdownMenuItem>Profile</DropdownMenuItem>
-                      <DropdownMenuItem>Billing</DropdownMenuItem>
-                      <DropdownMenuItem>Sign out</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push('/settings')}>Profile</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push('/settings')}>Billing</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        localStorage.removeItem("token")
+                        localStorage.removeItem("user")
+                        router.push("/login")
+                      }}>Sign out</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </SidebarMenuItem>

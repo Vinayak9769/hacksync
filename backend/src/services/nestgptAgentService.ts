@@ -438,6 +438,7 @@ class NestGptAgentService {
     }
 
     async processMessage(
+        userId: string,
         sessionId: string | undefined,
         userMessage: string,
     ): Promise<{
@@ -548,6 +549,7 @@ class NestGptAgentService {
 
                     // Execute the tool
                     const toolResult = await this.executeTool(
+                        userId,
                         session,
                         toolName,
                         args,
@@ -775,6 +777,7 @@ Be friendly, professional, and guide the user step by step.`;
     }
 
     private async executeTool(
+        userId: string,
         session: AgentSession,
         toolName: string,
         args: Record<string, any>,
@@ -795,7 +798,7 @@ Be friendly, professional, and guide the user step by step.`;
 
             case "generate_campaign_image":
                 try {
-                    const canvas = await canvasService.createCanvas({
+                    const canvas = await canvasService.createCanvas(userId, {
                         name: args.canvasName,
                         imagePrompt: args.imagePrompt,
                         aspectRatio: args.aspectRatio || "1:1",
@@ -828,6 +831,7 @@ Be friendly, professional, and guide the user step by step.`;
                 const calendar = await generateContentCalendar(args);
                 const persistence =
                     await calendarRdsService.saveGeneratedCalendar({
+                        userId,
                         sessionId: session.id,
                         campaignTheme: args.campaignTheme,
                         campaignName:

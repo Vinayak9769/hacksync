@@ -8,6 +8,12 @@ class CalendarController {
      */
     async saveCalendar(req: Request, res: Response): Promise<void> {
         try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                res.status(401).json({ error: "Unauthorized" });
+                return;
+            }
+
             const {
                 sessionId,
                 campaignTheme,
@@ -27,6 +33,7 @@ class CalendarController {
             }
 
             const saveResult = await calendarRdsService.saveGeneratedCalendar({
+                userId,
                 sessionId,
                 campaignTheme,
                 campaignName,
@@ -64,6 +71,12 @@ class CalendarController {
      */
     async getCalendarsBySession(req: Request, res: Response): Promise<void> {
         try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                res.status(401).json({ error: "Unauthorized" });
+                return;
+            }
+
             const { sessionId } = req.params;
             if (!sessionId) {
                 res.status(400).json({
@@ -73,6 +86,7 @@ class CalendarController {
             }
 
             const calendars = await calendarRdsService.getCalendarsBySession(
+                userId,
                 sessionId,
             );
 

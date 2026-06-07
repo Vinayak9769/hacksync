@@ -8,6 +8,7 @@ import { Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import Link from "next/link"
+import { API_URL } from "@/lib/api-config"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -18,23 +19,44 @@ export default function SignupPage() {
     confirmPassword: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
     
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match")
+      setError("Passwords don't match")
       return
     }
 
     setIsLoading(true)
     
-    // Simulate API call
-    setTimeout(() => {
-      // Store user info (in real app, this would be handled by your auth system)
-      localStorage.setItem("user", JSON.stringify({ name: formData.name, email: formData.email }))
-      router.push("/onboarding/setup")
-    }, 1000)
+    try {
+      const response = await fetch(`${API_URL}/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      router.push("/onboarding/setup");
+    } catch (err: any) {
+      setError(err.message || "Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -53,6 +75,12 @@ export default function SignupPage() {
               <h1 className="text-3xl font-bold">Create your account</h1>
               <p className="text-muted-foreground">Start managing your social media with AI</p>
             </div>
+
+            {error && (
+              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-lg border border-destructive/20 text-center">
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">

@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { uploadGeneratedPdfToS3 } from '@/lib/services/pdf-storage'
 import { Button } from "@/components/ui/button"
+import { API_URL } from '@/lib/api-config'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -196,13 +197,9 @@ export function MarketingPlanViewer({ plan, brandName, campaignName, onSave, col
     
     setIsSaving(true)
     try {
-      const apiBase = typeof window !== 'undefined'
-        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://16.171.53.167:3000/api')
-        : ''
-      
       const title = campaignName || `${brandName || 'Marketing'} Campaign Plan`
       
-      await fetch(`${apiBase}/marketing-plans`, {
+      await fetch(`${API_URL}/marketing-plans`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

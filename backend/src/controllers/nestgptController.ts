@@ -5,12 +5,17 @@ class NestGptController {
   async chat(req: Request, res: Response) {
     try {
       const { sessionId, message } = req.body;
+      const userId = (req as any).user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
       
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ error: 'Message is required' });
       }
 
-      const result = await nestgptAgentService.processMessage(sessionId, message);
+      const result = await nestgptAgentService.processMessage(userId, sessionId, message);
       
       res.json({ 
         success: true, 

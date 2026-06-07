@@ -1,22 +1,10 @@
+import { API_URL, API_FETCH_OPTIONS_FORM } from '../api-config';
+
 interface UploadGeneratedPdfParams {
   pdfBlob: Blob
   fileName: string
   documentType: string
   sessionId?: string
-}
-
-const DEFAULT_API_BASE = 'http://16.171.53.167:3000/api'
-
-const getApiBaseUrl = () => {
-  const configuredBase =
-    process.env.NEXT_PUBLIC_API_BASE ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    DEFAULT_API_BASE
-
-  const normalizedBase = configuredBase.replace(/\/$/, '')
-  return normalizedBase.endsWith('/api')
-    ? normalizedBase
-    : `${normalizedBase}/api`
 }
 
 export async function uploadGeneratedPdfToS3({
@@ -35,8 +23,9 @@ export async function uploadGeneratedPdfToS3({
     formData.append('sessionId', sessionId)
   }
 
-  const response = await fetch(`${getApiBaseUrl()}/storage/generated-pdf`, {
+  const response = await fetch(`${API_URL}/storage/generated-pdf`, {
     method: 'POST',
+    ...API_FETCH_OPTIONS_FORM,
     body: formData,
   })
 

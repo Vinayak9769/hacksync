@@ -4,39 +4,36 @@ import {
   CreateCanvasRequest,
   LayerBounds,
 } from '../types/canvas';
+import CanvasModel from '../models/canvasModel';
 
 class CanvasService {
-  private canvasStore: Map<string, CanvasState> = new Map();
-
   private readonly cloudflareModel = '@cf/black-forest-labs/flux-1-schnell';
+
+  private toCanvasState(doc: any): CanvasState {
+    return {
+      id: doc.canvasId,
+      name: doc.name,
+      width: doc.width,
+      height: doc.height,
+      aspectRatio: doc.aspectRatio,
+      backgroundColor: doc.backgroundColor,
+      primaryImagePrompt: doc.primaryImagePrompt,
+      layers: doc.layers || [],
+      version: doc.version || 1,
+      createdAt: doc.createdAt instanceof Date ? doc.createdAt.getTime() : doc.createdAt || Date.now(),
+      updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.getTime() : doc.updatedAt || Date.now(),
+      metadata: doc.metadata,
+    };
+  }
 
   /* =========================
      CANVAS CORE
   ========================== */
 
-  async createCanvas(request: CreateCanvasRequest): Promise<CanvasState> {
+  async createCanvas(userId: string, request: CreateCanvasRequest): Promise<CanvasState> {
     const canvasId = this.generateId();
     const now = Date.now();
     const dimensions = this.getCanvasDimensions(request.aspectRatio || '1:1');
-
-    // Create canvas with primary image layer
-    const canvas: CanvasState = {
-      id: canvasId,
-      name: request.name,
-      width: dimensions.width,
-      height: dimensions.height,
-      aspectRatio: request.aspectRatio || '1:1',
-      backgroundColor: '#ffffff',
-      primaryImagePrompt: request.imagePrompt,
-      layers: [],
-      version: 1,
-      createdAt: now,
-      updatedAt: now,
-      metadata: {
-        brandName: request.brandName,
-        brandColors: request.brandColors,
-      },
-    };
 
     // Create primary image layer
     const primaryLayer: CanvasLayer = {
@@ -56,21 +53,33 @@ class CanvasService {
       updatedAt: now,
     };
 
-    canvas.layers.push(primaryLayer);
-    this.canvasStore.set(canvasId, canvas);
+    const doc = await CanvasModel.create({
+      userId,
+      canvasId,
+      name: request.name,
+      width: dimensions.width,
+      height: dimensions.height,
+      aspectRatio: request.aspectRatio || '1:1',
+      backgroundColor: '#ffffff',
+      primaryImagePrompt: request.imagePrompt,
+      layers: [primaryLayer],
+      version: 1,
+      metadata: {
+        brandName: request.brandName,
+        brandColors: request.brandColors,
+      },
+    });
 
-    // Generate the primary image immediately
-    try {
-      await this.generateLayerImage(canvasId, primaryLayer.id, request.imagePrompt);
-    } catch (error) {
+    // Generate the primary image immediately (non-blocking)
+    this.generateLayerImage(userId, canvasId, primaryLayer.id, request.imagePrompt).catch(error => {
       console.error('Failed to generate primary image:', error);
-      // Canvas is still created, just with pending image
-    }
+    });
 
-    return this.canvasStore.get(canvasId) || canvas;
+    return this.toCanvasState(doc);
   }
 
   async createCanvasWithImage(
+    userId: string,
     name: string,
     imageBuffer: Buffer,
     imageMimeType: string,
@@ -79,33 +88,13 @@ class CanvasService {
     brandColors?: string[]
   ): Promise<CanvasState> {
     const canvasId = this.generateId();
-    const now = Date.now();
     const dimensions = this.getCanvasDimensions(aspectRatio || '1:1');
+    const now = Date.now();
 
     // Convert image buffer to base64 data URL
     const base64Image = imageBuffer.toString('base64');
     const imageUrl = `data:${imageMimeType};base64,${base64Image}`;
 
-    // Create canvas with uploaded image
-    const canvas: CanvasState = {
-      id: canvasId,
-      name,
-      width: dimensions.width,
-      height: dimensions.height,
-      aspectRatio: aspectRatio || '1:1',
-      backgroundColor: '#ffffff',
-      layers: [],
-      version: 1,
-      createdAt: now,
-      updatedAt: now,
-      metadata: {
-        brandName,
-        brandColors,
-      },
-    };
-
-    // Create primary image layer with uploaded image
-    // The bounds will be adjusted by the frontend renderer to fit the canvas
     const primaryLayer: CanvasLayer = {
       id: this.generateLayerId(),
       type: 'primary-image',
@@ -123,50 +112,68 @@ class CanvasService {
       updatedAt: now,
     };
 
-    canvas.layers.push(primaryLayer);
-    this.canvasStore.set(canvasId, canvas);
+    const doc = await CanvasModel.create({
+      userId,
+      canvasId,
+      name,
+      width: dimensions.width,
+      height: dimensions.height,
+      aspectRatio: aspectRatio || '1:1',
+      backgroundColor: '#ffffff',
+      layers: [primaryLayer],
+      version: 1,
+      metadata: {
+        brandName,
+        brandColors,
+      },
+    });
 
-    return canvas;
+    return this.toCanvasState(doc);
   }
 
-  getCanvas(canvasId: string): CanvasState | null {
-    return this.canvasStore.get(canvasId) || null;
+  async getCanvas(userId: string, canvasId: string): Promise<CanvasState | null> {
+    const doc = await CanvasModel.findOne({ canvasId, userId });
+    if (!doc) return null;
+    return this.toCanvasState(doc);
   }
 
-  updateLayer(
+  async updateLayer(
+    userId: string,
     canvasId: string,
     layerId: string,
     updates: Partial<CanvasLayer>
-  ): CanvasState | null {
-    const canvas = this.canvasStore.get(canvasId);
-    if (!canvas) return null;
+  ): Promise<CanvasState | null> {
+    const doc = await CanvasModel.findOne({ canvasId, userId });
+    if (!doc) return null;
 
-    const idx = canvas.layers.findIndex(l => l.id === layerId);
+    const layers = [...doc.layers];
+    const idx = layers.findIndex(l => l.id === layerId);
     if (idx === -1) return null;
 
-    canvas.layers[idx] = {
-      ...canvas.layers[idx],
+    layers[idx] = {
+      ...layers[idx],
       ...updates,
       updatedAt: Date.now(),
     };
 
-    canvas.updatedAt = Date.now();
-    canvas.version += 1;
-    this.canvasStore.set(canvasId, canvas);
-    return canvas;
+    doc.layers = layers;
+    doc.version += 1;
+    await doc.save();
+
+    return this.toCanvasState(doc);
   }
 
-  addLayer(canvasId: string, layerData: any): CanvasState | null {
-    const canvas = this.canvasStore.get(canvasId);
-    if (!canvas) return null;
+  async addLayer(userId: string, canvasId: string, layerData: any): Promise<CanvasState | null> {
+    const doc = await CanvasModel.findOne({ canvasId, userId });
+    if (!doc) return null;
 
     const now = Date.now();
-    const maxZIndex = canvas.layers.reduce((max, l) => Math.max(max, l.zIndex), 0);
+    const maxZIndex = doc.layers.reduce((max: number, l: any) => Math.max(max, l.zIndex || 0), 0);
 
     const newLayer: CanvasLayer = {
       id: this.generateLayerId(),
       type: layerData.layerType,
-      name: layerData.name || `${layerData.layerType} ${canvas.layers.length + 1}`,
+      name: layerData.name || `${layerData.layerType} ${doc.layers.length + 1}`,
       zIndex: maxZIndex + 1,
       bounds: {
         x: layerData.x || 100,
@@ -200,57 +207,50 @@ class CanvasService {
       };
     }
 
-    canvas.layers.push(newLayer);
-    canvas.updatedAt = now;
-    canvas.version += 1;
-    this.canvasStore.set(canvasId, canvas);
+    doc.layers.push(newLayer);
+    doc.version += 1;
+    await doc.save();
 
-    return canvas;
+    return this.toCanvasState(doc);
   }
 
-  deleteLayer(canvasId: string, layerId: string): CanvasState | null {
-    const canvas = this.canvasStore.get(canvasId);
-    if (!canvas) return null;
+  async deleteLayer(userId: string, canvasId: string, layerId: string): Promise<CanvasState | null> {
+    const doc = await CanvasModel.findOne({ canvasId, userId });
+    if (!doc) return null;
 
-    const layer = canvas.layers.find(l => l.id === layerId);
+    const layer = doc.layers.find((l: any) => l.id === layerId);
     if (!layer) return null;
 
-    // Don't allow deleting primary image
     if (layer.type === 'primary-image') {
       throw new Error('Cannot delete primary image layer');
     }
 
-    canvas.layers = canvas.layers.filter(l => l.id !== layerId);
-    canvas.updatedAt = Date.now();
-    canvas.version += 1;
-    this.canvasStore.set(canvasId, canvas);
+    doc.layers = doc.layers.filter((l: any) => l.id !== layerId);
+    doc.version += 1;
+    await doc.save();
 
-    return canvas;
+    return this.toCanvasState(doc);
   }
-
-  /* =========================
-     PROMPT GENERATION (Gemini)
-  ========================== */
 
   /* =========================
      IMAGE GENERATION (Cloudflare Workers AI)
   ========================== */
 
   async generateLayerImage(
+    userId: string,
     canvasId: string,
     layerId: string,
     userPrompt?: string
   ): Promise<{ imageUrl: string; prompt: string }> {
-    const canvas = this.canvasStore.get(canvasId);
-    if (!canvas) throw new Error('Canvas not found');
+    const doc = await CanvasModel.findOne({ canvasId, userId });
+    if (!doc) throw new Error('Canvas not found');
 
-    const layer = canvas.layers.find(l => l.id === layerId);
+    const layer = doc.layers.find((l: any) => l.id === layerId);
     if (!layer) throw new Error('Layer not found');
 
-    // Use provided prompt or the layer's existing prompt
     const prompt = userPrompt || layer.imageData?.userPrompt || 'A beautiful image';
 
-    this.updateLayer(canvasId, layerId, {
+    await this.updateLayer(userId, canvasId, layerId, {
       imageData: {
         ...layer.imageData,
         userPrompt: prompt,
@@ -261,7 +261,7 @@ class CanvasService {
     try {
       const imageUrl = await this.generateImageViaCloudflare(prompt, layer.bounds);
 
-      this.updateLayer(canvasId, layerId, {
+      await this.updateLayer(userId, canvasId, layerId, {
         imageData: {
           imageUrl,
           userPrompt: prompt,
@@ -271,7 +271,7 @@ class CanvasService {
 
       return { imageUrl, prompt };
     } catch (err: any) {
-      this.updateLayer(canvasId, layerId, {
+      await this.updateLayer(userId, canvasId, layerId, {
         imageData: {
           ...layer.imageData,
           generationStatus: 'error',
@@ -373,24 +373,42 @@ class CanvasService {
      CANVAS MANAGEMENT
   ========================== */
 
-  getAllCanvases(): CanvasState[] {
-    return Array.from(this.canvasStore.values());
+  async getAllCanvases(userId: string): Promise<CanvasState[]> {
+    const docs = await CanvasModel.find({ userId }).sort({ updatedAt: -1 });
+    return docs.map(doc => this.toCanvasState(doc));
   }
 
-  deleteCanvas(canvasId: string): boolean {
-    return this.canvasStore.delete(canvasId);
+  async deleteCanvas(userId: string, canvasId: string): Promise<boolean> {
+    const result = await CanvasModel.deleteOne({ canvasId, userId });
+    return result.deletedCount > 0;
   }
 
-  exportCanvasState(canvasId: string): string | null {
-    const canvas = this.canvasStore.get(canvasId);
-    if (!canvas) return null;
-    return JSON.stringify(canvas, null, 2);
+  async exportCanvasState(userId: string, canvasId: string): Promise<string | null> {
+    const doc = await CanvasModel.findOne({ canvasId, userId }).lean();
+    if (!doc) return null;
+    return JSON.stringify(this.toCanvasState(doc), null, 2);
   }
 
-  importCanvasState(jsonState: string): CanvasState {
+  async importCanvasState(userId: string, jsonState: string): Promise<CanvasState> {
     const canvas: CanvasState = JSON.parse(jsonState);
-    this.canvasStore.set(canvas.id, canvas);
-    return canvas;
+    const doc = await CanvasModel.findOneAndUpdate(
+      { canvasId: canvas.id, userId },
+      {
+        userId,
+        canvasId: canvas.id,
+        name: canvas.name,
+        width: canvas.width,
+        height: canvas.height,
+        aspectRatio: canvas.aspectRatio,
+        backgroundColor: canvas.backgroundColor,
+        primaryImagePrompt: canvas.primaryImagePrompt,
+        layers: canvas.layers,
+        version: canvas.version,
+        metadata: canvas.metadata,
+      },
+      { upsert: true, new: true }
+    );
+    return this.toCanvasState(doc);
   }
 
   /* =========================
@@ -435,18 +453,18 @@ Return ONLY the text content, no explanations or formatting markers.`;
    * Generate AI element (icon or sticker)
    */
   async generateElement(
+    userId: string,
     canvasId: string,
     elementType: 'icon' | 'sticker',
     prompt: string,
     bounds: LayerBounds
   ): Promise<CanvasState> {
-    const canvas = this.canvasStore.get(canvasId);
-    if (!canvas) throw new Error('Canvas not found');
+    const doc = await CanvasModel.findOne({ canvasId, userId });
+    if (!doc) throw new Error('Canvas not found');
 
     const now = Date.now();
-    const maxZIndex = canvas.layers.reduce((max, l) => Math.max(max, l.zIndex), 0);
+    const maxZIndex = doc.layers.reduce((max: number, l: any) => Math.max(max, l.zIndex || 0), 0);
 
-    // Create element layer
     const elementLayer: CanvasLayer = {
       id: this.generateLayerId(),
       type: elementType,
@@ -464,37 +482,34 @@ Return ONLY the text content, no explanations or formatting markers.`;
       updatedAt: now,
     };
 
-    canvas.layers.push(elementLayer);
-    canvas.updatedAt = now;
-    canvas.version += 1;
-    this.canvasStore.set(canvasId, canvas);
+    doc.layers.push(elementLayer);
+    doc.version += 1;
+    await doc.save();
 
-    // Generate the element image
-    try {
-      // For icons/stickers, use a smaller size and more focused prompt
-      const elementPrompt = `${prompt}, ${elementType === 'icon' ? 'simple icon design, minimal, clean, transparent background' : 'sticker design, fun, colorful, transparent background'}`;
-      const imageUrl = await this.generateImageViaCloudflare(elementPrompt, bounds);
-
-      this.updateLayer(canvasId, elementLayer.id, {
-        imageData: {
-          imageUrl,
-          userPrompt: prompt,
-          generationStatus: 'complete',
-        },
+    // Generate the element image (non-blocking)
+    const elementPrompt = `${prompt}, ${elementType === 'icon' ? 'simple icon design, minimal, clean, transparent background' : 'sticker design, fun, colorful, transparent background'}`;
+    this.generateImageViaCloudflare(elementPrompt, bounds)
+      .then(async imageUrl => {
+        await this.updateLayer(userId, canvasId, elementLayer.id, {
+          imageData: {
+            imageUrl,
+            userPrompt: prompt,
+            generationStatus: 'complete',
+          },
+        });
+      })
+      .catch(async error => {
+        console.error('Failed to generate element image:', error);
+        await this.updateLayer(userId, canvasId, elementLayer.id, {
+          imageData: {
+            ...elementLayer.imageData,
+            generationStatus: 'error',
+            errorMessage: (error as Error).message,
+          },
+        });
       });
-    } catch (error) {
-      console.error('Failed to generate element image:', error);
-      this.updateLayer(canvasId, elementLayer.id, {
-        imageData: {
-          ...elementLayer.imageData,
-          generationStatus: 'error',
-          errorMessage: (error as Error).message,
-        },
-      });
-      throw error;
-    }
 
-    return this.canvasStore.get(canvasId) || canvas;
+    return this.toCanvasState(doc);
   }
 }
 

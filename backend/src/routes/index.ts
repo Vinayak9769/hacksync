@@ -17,6 +17,9 @@ import antiCampaignController from "../controllers/antiCampaignController";
 import adDataController from "../controllers/adDataController";
 import storageController from "../controllers/storageController";
 import calendarController from "../controllers/calendarController";
+import campaignController from "../controllers/campaignController";
+import authController from "../controllers/authController";
+import { authMiddleware } from "../middlewares/authMiddleware";
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -80,6 +83,12 @@ const router = Router();
 router.get("/health", conversationalAIController.healthCheck);
 router.get("/calls/:callSid/transcript", conversationalAIController.getCallTranscript);
 
+// Authentication endpoints
+router.post("/auth/signup", authController.signup);
+router.post("/auth/login", authController.login);
+router.get("/auth/me", authMiddleware, authController.getMe);
+router.post("/auth/onboarding", authMiddleware, authController.saveOnboarding);
+
 // Social Media Integration endpoints
 router.post("/social/post", socialMediaController.createPost);
 router.get("/social/facebook/validate", socialMediaController.validateFacebookToken);
@@ -109,9 +118,9 @@ router.post("/strategist/generate", strategistController.generateStrategy);
 router.post("/strategist/chat", chatController.chat);
 
 // Dedicated NestGPT Agent chat (separate from Twilio sales flows)
-router.post("/nestgpt/chat", nestgptController.chat);
-router.get("/nestgpt/session/:sessionId", nestgptController.getSession);
-router.delete("/nestgpt/session/:sessionId", nestgptController.resetSession);
+router.post("/nestgpt/chat", authMiddleware, nestgptController.chat);
+router.get("/nestgpt/session/:sessionId", authMiddleware, nestgptController.getSession);
+router.delete("/nestgpt/session/:sessionId", authMiddleware, nestgptController.resetSession);
 
 // Legacy: Twilio webhook endpoints for voice calls (TwiML-based)
 router.post("/webhook/voice", conversationController.handleIncomingCall);
@@ -123,34 +132,42 @@ router.post("/webhook/pitch/response",conversationController.handlePitchResponse
 router.post("/webhook/pitch/demo", conversationController.handleDemoRequest);
 
 // Canvas endpoints - Structured visual canvas system for brand posters
-router.post("/canvas/create", canvasController.createCanvas);
-router.post("/canvas/create-with-image", upload.single("image"), canvasController.createCanvasWithImage);
-router.get("/canvas/list", canvasController.listCanvases);
-router.get("/canvas/:id", canvasController.getCanvas);
-router.put("/canvas/:canvasId/layer/:layerId", canvasController.updateLayer);
-router.post("/canvas/:canvasId/add-layer", canvasController.addLayer);
-router.delete("/canvas/:canvasId/layer/:layerId", canvasController.deleteLayer);
-router.post("/canvas/:canvasId/layer/:layerId/generate", canvasController.generateLayerImage);
-router.post("/canvas/regenerate-layer", canvasController.regenerateLayer);
-router.post("/canvas/generate-text", canvasController.generateText);
-router.post("/canvas/:canvasId/generate-element", canvasController.generateElement);
-router.get("/canvas/:id/export", canvasController.exportCanvas);
-router.post("/canvas/import", canvasController.importCanvas);
-router.delete("/canvas/:id", canvasController.deleteCanvas);
+router.post("/canvas/create", authMiddleware, canvasController.createCanvas);
+router.post("/canvas/create-with-image", authMiddleware, upload.single("image"), canvasController.createCanvasWithImage);
+router.get("/canvas/list", authMiddleware, canvasController.listCanvases);
+router.get("/canvas/:id", authMiddleware, canvasController.getCanvas);
+router.put("/canvas/:canvasId/layer/:layerId", authMiddleware, canvasController.updateLayer);
+router.post("/canvas/:canvasId/add-layer", authMiddleware, canvasController.addLayer);
+router.delete("/canvas/:canvasId/layer/:layerId", authMiddleware, canvasController.deleteLayer);
+router.post("/canvas/:canvasId/layer/:layerId/generate", authMiddleware, canvasController.generateLayerImage);
+router.post("/canvas/regenerate-layer", authMiddleware, canvasController.regenerateLayer);
+router.post("/canvas/generate-text", authMiddleware, canvasController.generateText);
+router.post("/canvas/:canvasId/generate-element", authMiddleware, canvasController.generateElement);
+router.get("/canvas/:id/export", authMiddleware, canvasController.exportCanvas);
+router.post("/canvas/import", authMiddleware, canvasController.importCanvas);
+router.delete("/canvas/:id", authMiddleware, canvasController.deleteCanvas);
 
 // Veo 3 video generation endpoints
-router.post("/veo/tune", veoController.tunePrompt);
-router.post("/veo/generate", veoController.generateVideo);
+router.post("/veo/tune", authMiddleware, veoController.tunePrompt);
+router.post("/veo/generate", authMiddleware, veoController.generateVideo);
 
 // Marketing Plans endpoints
-router.post("/marketing-plans", marketingPlanController.savePlan);
-router.get("/marketing-plans", marketingPlanController.getAllPlans);
-router.get("/marketing-plans/:id", marketingPlanController.getPlan);
-router.delete("/marketing-plans/:id", marketingPlanController.deletePlan);
+router.post("/marketing-plans", authMiddleware, marketingPlanController.savePlan);
+router.get("/marketing-plans", authMiddleware, marketingPlanController.getAllPlans);
+router.get("/marketing-plans/:id", authMiddleware, marketingPlanController.getPlan);
+router.delete("/marketing-plans/:id", authMiddleware, marketingPlanController.deletePlan);
+
+// Campaigns endpoints
+router.post("/campaigns", authMiddleware, campaignController.createCampaign);
+router.get("/campaigns", authMiddleware, campaignController.getAllCampaigns);
+router.get("/campaigns/:id", authMiddleware, campaignController.getCampaign);
+router.put("/campaigns/:id", authMiddleware, campaignController.updateCampaign);
+router.delete("/campaigns/:id", authMiddleware, campaignController.deleteCampaign);
 
 // Generated document storage (S3)
 router.post(
     "/storage/generated-pdf",
+    authMiddleware,
     pdfUpload.single("file"),
     storageController.uploadGeneratedPdf,
 );
@@ -158,18 +175,19 @@ router.post(
 // Content calendar persistence (RDS)
 router.get(
     "/calendar/session/:sessionId",
+    authMiddleware,
     calendarController.getCalendarsBySession,
 );
-router.post("/calendar", calendarController.saveCalendar);
+router.post("/calendar", authMiddleware, calendarController.saveCalendar);
 
 // Anti-Campaign Generator endpoints
-router.post("/anti-campaign/analyze", antiCampaignController.analyzeCampaign);
+router.post("/anti-campaign/analyze", authMiddleware, antiCampaignController.analyzeCampaign);
 
 // Ad Data Management endpoints
-router.post("/ads/upload", csvUpload.single("csv"), adDataController.uploadCSV);
-router.get("/ads/report", adDataController.getReport);
-router.get("/ads/data", adDataController.getAdData);
-router.delete("/ads/data", adDataController.deleteAllAdData);
+router.post("/ads/upload", authMiddleware, csvUpload.single("csv"), adDataController.uploadCSV);
+router.get("/ads/report", authMiddleware, adDataController.getReport);
+router.get("/ads/data", authMiddleware, adDataController.getAdData);
+router.delete("/ads/data", authMiddleware, adDataController.deleteAllAdData);
 
 // Video proxy endpoint with CORS headers
 router.get("/veo/video/:filename", (req: Request, res: Response) => {

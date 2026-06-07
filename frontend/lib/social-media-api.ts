@@ -3,10 +3,10 @@ import {
     API_ENDPOINTS,
     API_FETCH_OPTIONS,
     API_FETCH_OPTIONS_FORM,
+    API_URL,
 } from "./api-config";
 
-const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://16.171.53.167:3000/api";
+const API_BASE_URL = API_URL;
 
 export interface PostData {
     platform: string;

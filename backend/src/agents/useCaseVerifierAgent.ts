@@ -45,21 +45,20 @@ const getEnv = (name: string) => {
   return value
 }
 
-const googleSearch = async (query: string): Promise<SearchItem[]> => {
-  const key = getEnv("GOOGLE_API_KEY")
-  const cx = getEnv("GOOGLE_CX")
+const serpApiSearch = async (query: string): Promise<SearchItem[]> => {
+  const key = getEnv("SERPAPI_API_KEY")
   const params = new URLSearchParams({
-    key,
-    cx,
-    q: query
+    engine: "google",
+    q: query,
+    api_key: key
   })
-  const response = await fetch(`https://customsearch.googleapis.com/customsearch/v1?${params.toString()}`)
+  const response = await fetch(`https://serpapi.com/search.json?${params.toString()}`)
   if (!response.ok) {
     const message = await response.text()
-    throw new Error(`Google search failed: ${message}`)
+    throw new Error(`SerpApi search failed: ${message}`)
   }
   const data = await response.json()
-  return (data.items || []).map((item: any) => ({
+  return (data.organic_results || []).map((item: any) => ({
     title: item.title || "",
     link: item.link || "",
     snippet: item.snippet || ""
@@ -72,7 +71,7 @@ export const verifyUseCase = async (useCase: string): Promise<VerificationResult
   const evidence: EvidenceItem[] = []
   for (const domain of DOMAINS) {
     const query = buildQuery(useCase, domain)
-    const results = await googleSearch(query)
+    const results = await serpApiSearch(query)
     evidence.push({
       domain,
       query,

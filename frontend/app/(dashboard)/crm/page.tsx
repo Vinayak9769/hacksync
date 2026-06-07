@@ -16,6 +16,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
+import { API_URL } from "@/lib/api-config"
 
 const customers = [
   {
@@ -111,11 +112,7 @@ export default function CRMPage() {
     setShowCallDialog(true)
 
     try {
-      const apiBase = typeof window !== 'undefined' 
-        ? (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://16.171.53.167:3000/api' : ''))
-        : ''
-      
-  const response = await fetch(`${apiBase}/api/make-call`, {
+      const response = await fetch(`${API_URL}/make-call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -188,13 +185,9 @@ export default function CRMPage() {
     }
 
     let isMounted = true
-    const apiBase = typeof window !== 'undefined'
-      ? (process.env.NEXT_PUBLIC_API_BASE || (window.location.hostname === 'localhost' ? 'http://16.171.53.167:3000/api' : ''))
-      : ''
-
     const fetchTranscript = async () => {
       try {
-        const response = await fetch(`${apiBase}/api/calls/${callStatus.callSid}/transcript`)
+        const response = await fetch(`${API_URL}/calls/${callStatus.callSid}/transcript`)
         const data = await response.json()
         if (!isMounted) return
         if (response.ok && data.success) {

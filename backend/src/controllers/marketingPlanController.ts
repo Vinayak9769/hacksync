@@ -8,6 +8,12 @@ class MarketingPlanController {
    */
   async savePlan(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { title, plan, brandName, campaignName, collectedInfo } = req.body;
 
       if (!title || !plan) {
@@ -15,7 +21,7 @@ class MarketingPlanController {
         return;
       }
 
-      const savedPlan = await marketingPlanService.savePlan({
+      const savedPlan = await marketingPlanService.savePlan(userId, {
         title,
         plan,
         brandName,
@@ -43,7 +49,13 @@ class MarketingPlanController {
    */
   async getAllPlans(req: Request, res: Response): Promise<void> {
     try {
-      const plans = await marketingPlanService.getAllPlans();
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const plans = await marketingPlanService.getAllPlans(userId);
 
       res.json({
         success: true,
@@ -65,8 +77,14 @@ class MarketingPlanController {
    */
   async getPlan(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { id } = req.params;
-      const plan = await marketingPlanService.getPlanById(id);
+      const plan = await marketingPlanService.getPlanById(userId, id);
 
       if (!plan) {
         res.status(404).json({ error: 'Marketing plan not found' });
@@ -92,8 +110,14 @@ class MarketingPlanController {
    */
   async deletePlan(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
       const { id } = req.params;
-      const deleted = await marketingPlanService.deletePlan(id);
+      const deleted = await marketingPlanService.deletePlan(userId, id);
 
       if (!deleted) {
         res.status(404).json({ error: 'Marketing plan not found' });
@@ -115,4 +139,3 @@ class MarketingPlanController {
 }
 
 export default new MarketingPlanController();
-

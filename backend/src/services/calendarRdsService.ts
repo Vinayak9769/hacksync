@@ -1,6 +1,7 @@
-import { Pool } from "pg";
+import ContentCalendarModel from "../models/calendarModel";
 
 export interface CalendarPersistenceInput {
+    userId: string;
     sessionId: string;
     campaignTheme?: string;
     campaignName?: string;
@@ -13,184 +14,62 @@ export interface CalendarPersistenceInput {
 
 export interface CalendarPersistenceResult {
     saved: boolean;
-    calendarId?: number;
+    calendarId?: string;
     reason?: string;
 }
 
 class CalendarRdsService {
-    private pool: Pool | null = null;
-    private schemaReady = false;
-
-    private isConfigured(): boolean {
-        if (process.env.RDS_DATABASE_URL || process.env.DATABASE_URL) {
-            return true;
-        }
-
-        return !!(
-            process.env.RDS_HOST &&
-            process.env.RDS_USER &&
-            process.env.RDS_PASSWORD &&
-            process.env.RDS_DATABASE
-        );
-    }
-
-    private getPool(): Pool | null {
-        if (!this.isConfigured()) {
-            return null;
-        }
-
-        if (!this.pool) {
-            const sslEnabled = ["1", "true", "yes"].includes(
-                (process.env.RDS_SSL || "").toLowerCase(),
-            );
-
-            if (process.env.RDS_DATABASE_URL || process.env.DATABASE_URL) {
-                this.pool = new Pool({
-                    connectionString:
-                        process.env.RDS_DATABASE_URL || process.env.DATABASE_URL,
-                    ssl: sslEnabled
-                        ? {
-                              rejectUnauthorized: false,
-                          }
-                        : undefined,
-                });
-            } else {
-                this.pool = new Pool({
-                    host: process.env.RDS_HOST,
-                    port: parseInt(process.env.RDS_PORT || "5432", 10),
-                    user: process.env.RDS_USER,
-                    password: process.env.RDS_PASSWORD,
-                    database: process.env.RDS_DATABASE,
-                    ssl: sslEnabled
-                        ? {
-                              rejectUnauthorized: false,
-                          }
-                        : undefined,
-                });
-            }
-        }
-
-        return this.pool;
-    }
-
-    private async ensureSchema(): Promise<boolean> {
-        if (this.schemaReady) {
-            return true;
-        }
-
-        const pool = this.getPool();
-        if (!pool) {
-            return false;
-        }
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS content_calendars (
-                id BIGSERIAL PRIMARY KEY,
-                session_id VARCHAR(128) NOT NULL,
-                campaign_theme TEXT,
-                campaign_name TEXT,
-                brand_name TEXT,
-                start_date DATE,
-                duration_weeks INTEGER,
-                channels JSONB NOT NULL,
-                calendar JSONB NOT NULL,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            );
-        `);
-
-        await pool.query(`
-            CREATE INDEX IF NOT EXISTS idx_content_calendars_session_id
-            ON content_calendars(session_id);
-        `);
-
-        this.schemaReady = true;
-        return true;
-    }
-
     async saveGeneratedCalendar(
         input: CalendarPersistenceInput,
     ): Promise<CalendarPersistenceResult> {
-        const schemaOk = await this.ensureSchema();
-        if (!schemaOk) {
+        try {
+            const doc = await ContentCalendarModel.create({
+                userId: input.userId,
+                sessionId: input.sessionId,
+                campaignTheme: input.campaignTheme,
+                campaignName: input.campaignName,
+                brandName: input.brandName,
+                startDate: input.startDate ? new Date(input.startDate) : undefined,
+                durationWeeks: input.durationWeeks,
+                channels: input.channels,
+                calendar: input.calendar,
+            });
+
+            return {
+                saved: true,
+                calendarId: doc._id.toString(),
+            };
+        } catch (error: any) {
+            console.error("Error saving calendar to MongoDB:", error);
             return {
                 saved: false,
-                reason: "RDS is not configured",
+                reason: error.message || "Failed to save to database",
             };
         }
-
-        const pool = this.getPool();
-        if (!pool) {
-            return {
-                saved: false,
-                reason: "RDS connection unavailable",
-            };
-        }
-
-        const query = `
-            INSERT INTO content_calendars (
-                session_id,
-                campaign_theme,
-                campaign_name,
-                brand_name,
-                start_date,
-                duration_weeks,
-                channels,
-                calendar
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb)
-            RETURNING id;
-        `;
-
-        const values = [
-            input.sessionId,
-            input.campaignTheme || null,
-            input.campaignName || null,
-            input.brandName || null,
-            input.startDate || null,
-            input.durationWeeks || null,
-            JSON.stringify(input.channels || []),
-            JSON.stringify(input.calendar || []),
-        ];
-
-        const result = await pool.query(query, values);
-        return {
-            saved: true,
-            calendarId: result.rows[0]?.id,
-        };
     }
 
-    async getCalendarsBySession(sessionId: string): Promise<any[]> {
-        const schemaOk = await this.ensureSchema();
-        if (!schemaOk) {
+    async getCalendarsBySession(userId: string, sessionId: string): Promise<any[]> {
+        try {
+            const docs = await ContentCalendarModel.find({ userId, sessionId })
+                .sort({ createdAt: -1 })
+                .lean();
+
+            return docs.map(doc => ({
+                id: doc._id.toString(),
+                session_id: doc.sessionId,
+                campaign_theme: doc.campaignTheme,
+                campaign_name: doc.campaignName,
+                brand_name: doc.brandName,
+                start_date: doc.startDate,
+                duration_weeks: doc.durationWeeks,
+                channels: doc.channels,
+                calendar: doc.calendar,
+                created_at: doc.createdAt,
+            }));
+        } catch (error) {
+            console.error("Error fetching calendars from MongoDB:", error);
             return [];
         }
-
-        const pool = this.getPool();
-        if (!pool) {
-            return [];
-        }
-
-        const result = await pool.query(
-            `
-                SELECT
-                    id,
-                    session_id,
-                    campaign_theme,
-                    campaign_name,
-                    brand_name,
-                    start_date,
-                    duration_weeks,
-                    channels,
-                    calendar,
-                    created_at
-                FROM content_calendars
-                WHERE session_id = $1
-                ORDER BY created_at DESC;
-            `,
-            [sessionId],
-        );
-
-        return result.rows;
     }
 }
 

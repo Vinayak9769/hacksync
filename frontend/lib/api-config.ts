@@ -1,7 +1,7 @@
 // API Configuration
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-    "http://16.171.53.167:3000/api";
+    "http://localhost:3000/api";
 
 // Detect the current frontend URL (dev tunnel, localhost, etc.)
 const getFrontendUrl = () => {
@@ -62,24 +62,31 @@ export const API_ENDPOINTS = {
 // Default fetch options for API calls
 export const API_FETCH_OPTIONS: RequestInit = {
     credentials: "include", // Important for session cookies
-    headers: {
-        "Content-Type": "application/json",
-        // Add ngrok header to avoid warning page
-        ...(BACKEND_URL.includes("ngrok") && {
-            "ngrok-skip-browser-warning": "true",
-        }),
-    },
+    get headers() {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        return {
+            "Content-Type": "application/json",
+            ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+            // Add ngrok header to avoid warning page
+            ...(BACKEND_URL.includes("ngrok") && {
+                "ngrok-skip-browser-warning": "true",
+            }),
+        };
+    }
 };
 
 // Fetch options for form data (file uploads)
 export const API_FETCH_OPTIONS_FORM: RequestInit = {
     credentials: "include",
-    headers: {
-        // Don't set Content-Type for FormData - browser will set it with boundary
-        ...(BACKEND_URL.includes("ngrok") && {
-            "ngrok-skip-browser-warning": "true",
-        }),
-    },
+    get headers() {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        return {
+            ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+            ...(BACKEND_URL.includes("ngrok") && {
+                "ngrok-skip-browser-warning": "true",
+            }),
+        };
+    }
 };
 
 export { BACKEND_URL as API_URL, FRONTEND_URL, getFrontendUrl };

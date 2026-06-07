@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
+import { API_URL } from '@/lib/api-config'
 import {
   AlertTriangle,
   Target,
@@ -59,11 +60,7 @@ export default function AntiCampaignPage() {
 
     setIsAnalyzing(true)
     try {
-      const apiBase = typeof window !== 'undefined'
-        ? (process.env.NEXT_PUBLIC_API_BASE || 'http://16.171.53.167:3000/api')
-        : ''
-
-      const response = await fetch(`${apiBase}/anti-campaign/analyze`, {
+      const response = await fetch(`${API_URL}/anti-campaign/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
